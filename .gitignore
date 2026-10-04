@@ -19,3 +19,8 @@ staticfiles/
 .idea/
 
 *.log
+# Local backup and working-copy files
+*backup*
+*.before-*
+*_before_*
+*.bak
