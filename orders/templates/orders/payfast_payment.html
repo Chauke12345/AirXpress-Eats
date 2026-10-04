@@ -1,0 +1,39 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PayFast Payment</title>
+</head>
+<body>
+
+    <h2>Redirecting to PayFast...</h2>
+
+    <p>
+        Order #{{ order.id }} —
+        R{{ order.final_total|floatformat:2 }}
+    </p>
+
+    <form
+        id="payfast-form"
+        action="{{ payfast_url }}"
+        method="post"
+    >
+        {% for name, value in payment_data.items %}
+            <input
+                type="hidden"
+                name="{{ name }}"
+                value="{{ value }}"
+            >
+        {% endfor %}
+
+        <button type="submit">
+            Continue to PayFast
+        </button>
+    </form>
+
+    <script>
+        document.getElementById("payfast-form").submit();
+    </script>
+
+</body>
+</html>

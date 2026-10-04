@@ -1,5 +1,6 @@
-﻿from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation
 
+from django.conf import settings
 from django.contrib import messages
 
 from django.contrib.auth import (
@@ -12,6 +13,7 @@ from django.contrib.auth.decorators import (
     user_passes_test,
 )
 
+from django.http import JsonResponse
 from django.shortcuts import (
     render,
     redirect,
@@ -19,14 +21,20 @@ from django.shortcuts import (
 )
 
 from django.utils import timezone
+from django.db import transaction
+from django.db.models import Sum
+from django.urls import reverse
 
 from .forms import (
     CustomerOrderForm,
-    CounterOrderForm,
 )
 
 from .models import (
     BraaiMaster,
+    Driver,
+    DriverPayout,
+    DeliveryRequest,
+    DeliveryRate,
     MenuItem,
     Order,
     OrderItem,
@@ -35,24 +43,121 @@ from .models import (
     StaffProfile,
     ShopSubscriptionPayment
 )
+
+from .mapbox import MapboxError, calculate_driving_distance
 # =========================================================
 # CUSTOMER ORDER PAGE
 # =========================================================
 
 
 # =========================================================
-# PUBLIC SHISANYAMA CONNECT HOMEPAGE
+# PUBLIC AIRXPRESS EATS HOMEPAGE
 # =========================================================
+
+# =========================================================
+# MAPBOX ADDRESS AUTOCOMPLETE
+# =========================================================
+
+def address_suggestions(request):
+    """
+    Return Mapbox address suggestions for the checkout address field.
+    The Mapbox token stays server-side.
+    """
+    query = request.GET.get("q", "").strip()
+
+    if len(query) < 3:
+        return JsonResponse(
+            {"suggestions": []}
+        )
+
+    token = getattr(
+        settings,
+        "MAPBOX_TOKEN",
+        "",
+    )
+
+    if not token:
+        return JsonResponse(
+            {"suggestions": []},
+            status=503,
+        )
+
+    import urllib.parse
+    import urllib.request
+    import json
+
+    params = urllib.parse.urlencode(
+        {
+            "q": query,
+            "country": "ZA",
+            "language": "en",
+            "limit": 5,
+            "access_token": token,
+        }
+    )
+
+    url = (
+        "https://api.mapbox.com/search/geocode/v6/forward?"
+        + params
+    )
+
+    try:
+        with urllib.request.urlopen(
+            url,
+            timeout=5,
+        ) as response:
+            data = json.loads(
+                response.read().decode("utf-8")
+            )
+
+        suggestions = []
+
+        for feature in data.get("features", []):
+            properties = feature.get(
+                "properties",
+                {},
+            )
+
+            suggestions.append(
+                {
+                    "id": feature.get("id", ""),
+                    "name": properties.get(
+                        "name",
+                        "",
+                    ),
+                    "full_address": properties.get(
+                        "full_address",
+                        properties.get(
+                            "name",
+                            "",
+                        ),
+                    ),
+                }
+            )
+
+        return JsonResponse(
+            {
+                "suggestions": suggestions,
+            }
+        )
+
+    except Exception:
+        return JsonResponse(
+            {"suggestions": []},
+            status=502,
+        )
+
 
 def home(request):
     """
-    Public Shisanyama Connect marketplace homepage.
+    Public AirXpress Eats marketplace homepage.
     Customers can discover active businesses without logging in.
     """
     shops = Shop.objects.filter(
         is_active=True
     ).order_by("name")
 
+    # =========================================================
     context = {
         "shops": shops[:6],
         "total_shops": shops.count(),
@@ -65,6 +170,797 @@ def home(request):
     )
 
 
+def add_to_cart(request, shop_slug, menu_item_id):
+
+    shop = get_object_or_404(
+        Shop,
+        slug=shop_slug,
+        is_active=True,
+    )
+
+    menu_item = get_object_or_404(
+        MenuItem,
+        id=menu_item_id,
+        shop=shop,
+        is_available=True,
+    )
+
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+    cart = request.session.get("cart", {})
+
+    item_key = str(menu_item.id)
+
+    if menu_item.pricing_type == "fixed":
+
+        try:
+            quantity = int(
+                request.POST.get(
+                    "quantity",
+                    "1",
+                )
+            )
+        except (TypeError, ValueError):
+            quantity = 1
+
+        if quantity < 1:
+            quantity = 1
+
+        if item_key in cart:
+            cart[item_key]["quantity"] += quantity
+        else:
+            cart[item_key] = {
+                "quantity": quantity,
+            }
+
+    else:
+
+        amount = request.POST.get(
+            "amount",
+            ""
+        ).strip()
+
+        try:
+            amount_value = Decimal(amount)
+        except (
+            InvalidOperation,
+            TypeError,
+            ValueError,
+        ):
+            error_message = "Please enter a valid amount."
+
+            if is_ajax:
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "message": error_message,
+                    },
+                    status=400,
+                )
+
+            messages.error(
+                request,
+                error_message,
+            )
+
+            return redirect(
+                "customer_order",
+                shop_slug=shop.slug,
+            )
+
+        if amount_value <= 0:
+
+            error_message = (
+                "Please enter an amount greater than zero."
+            )
+
+            if is_ajax:
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "message": error_message,
+                    },
+                    status=400,
+                )
+
+            messages.error(
+                request,
+                error_message,
+            )
+
+            return redirect(
+                "customer_order",
+                shop_slug=shop.slug,
+            )
+
+        cart[item_key] = {
+            "amount": str(amount_value),
+            "quantity": 1,
+        }
+
+    request.session["cart"] = cart
+    request.session.modified = True
+
+    message = f"{menu_item.name} added to your cart."
+
+    cart_count = sum(
+        int(item.get("quantity", 0))
+        for item in cart.values()
+    )
+
+    if is_ajax:
+        return JsonResponse(
+            {
+                "success": True,
+                "message": message,
+                "cart_count": cart_count,
+            }
+        )
+
+    messages.success(
+        request,
+        message,
+    )
+
+    return redirect(
+        "customer_order",
+        shop_slug=shop.slug,
+    )
+
+def cart(request, shop_slug):
+
+    shop = get_object_or_404(
+        Shop,
+        slug=shop_slug,
+        is_active=True,
+    )
+
+    cart_data = request.session.get("cart", {})
+    cart_items = []
+    subtotal = Decimal("0.00")
+
+    for item_id, cart_item in cart_data.items():
+
+        menu_item = MenuItem.objects.filter(
+            id=item_id,
+            shop=shop,
+            is_available=True,
+        ).first()
+
+        if not menu_item:
+            continue
+
+        quantity = int(
+            cart_item.get("quantity", 1)
+        )
+
+        if menu_item.pricing_type == "fixed":
+
+            unit_price = menu_item.price or Decimal("0.00")
+            line_total = unit_price * quantity
+
+            cart_items.append({
+                "menu_item": menu_item,
+                "quantity": quantity,
+                "unit_price": unit_price,
+                "line_total": line_total,
+                "pricing_type": "fixed",
+            })
+
+        else:
+
+            amount = Decimal(
+                str(
+                    cart_item.get(
+                        "amount",
+                        "0.00",
+                    )
+                )
+            )
+
+            line_total = amount
+
+            cart_items.append({
+                "menu_item": menu_item,
+                "quantity": 1,
+                "unit_price": amount,
+                "line_total": line_total,
+                "pricing_type": "amount",
+            })
+
+        subtotal += line_total
+
+
+    # =========================================================
+    context = {
+        "shop": shop,
+        "cart_items": cart_items,
+        "subtotal": subtotal,
+    }
+
+    return render(
+        request,
+        "orders/cart.html",
+        context,
+    )
+
+
+def update_cart(request, shop_slug, menu_item_id):
+
+    shop = get_object_or_404(
+        Shop,
+        slug=shop_slug,
+        is_active=True,
+    )
+
+    if request.method != "POST":
+        return JsonResponse(
+            {
+                "success": False,
+                "message": "Invalid request.",
+            },
+            status=400,
+        )
+
+    cart = request.session.get("cart", {})
+    item_key = str(menu_item_id)
+
+    if item_key not in cart:
+        return JsonResponse(
+            {
+                "success": False,
+                "message": "This item is no longer in your cart.",
+            },
+            status=404,
+        )
+
+    menu_item = get_object_or_404(
+        MenuItem,
+        id=menu_item_id,
+        shop=shop,
+        is_available=True,
+    )
+
+    if menu_item.pricing_type != "fixed":
+        return JsonResponse(
+            {
+                "success": False,
+                "message": "This item uses an amount instead of quantity.",
+            },
+            status=400,
+        )
+
+    try:
+        quantity = int(
+            request.POST.get(
+                "quantity",
+                "1",
+            )
+        )
+    except (TypeError, ValueError):
+        return JsonResponse(
+            {
+                "success": False,
+                "message": "Invalid quantity.",
+            },
+            status=400,
+        )
+
+    if quantity < 1:
+        cart.pop(item_key, None)
+
+        request.session["cart"] = cart
+        request.session.modified = True
+
+        cart_count = sum(
+            int(item.get("quantity", 0))
+            for item in cart.values()
+        )
+
+        return JsonResponse(
+            {
+                "success": True,
+                "removed": True,
+                "cart_count": cart_count,
+                "line_total": "0.00",
+                "subtotal": "0.00",
+            }
+        )
+
+    cart[item_key]["quantity"] = quantity
+
+    request.session["cart"] = cart
+    request.session.modified = True
+
+    unit_price = menu_item.price or Decimal("0.00")
+    line_total = unit_price * quantity
+
+    subtotal = Decimal("0.00")
+
+    for cart_item_id, cart_item in cart.items():
+
+        cart_menu_item = MenuItem.objects.filter(
+            id=cart_item_id,
+            shop=shop,
+            is_available=True,
+        ).first()
+
+        if not cart_menu_item:
+            continue
+
+        cart_quantity = int(
+            cart_item.get("quantity", 1)
+        )
+
+        if cart_menu_item.pricing_type == "fixed":
+
+            cart_unit_price = (
+                cart_menu_item.price or Decimal("0.00")
+            )
+
+            subtotal += (
+                cart_unit_price * cart_quantity
+            )
+
+        else:
+
+            cart_amount = Decimal(
+                str(
+                    cart_item.get(
+                        "amount",
+                        "0.00",
+                    )
+                )
+            )
+
+            subtotal += cart_amount
+
+    cart_count = sum(
+        int(item.get("quantity", 0))
+        for item in cart.values()
+    )
+
+    return JsonResponse(
+        {
+            "success": True,
+            "removed": False,
+            "quantity": quantity,
+            "line_total": f"{line_total:.2f}",
+            "subtotal": f"{subtotal:.2f}",
+            "cart_count": cart_count,
+        }
+    )
+
+def remove_from_cart(request, shop_slug, menu_item_id):
+
+    shop = get_object_or_404(
+        Shop,
+        slug=shop_slug,
+        is_active=True,
+    )
+
+    if request.method != "POST":
+        return JsonResponse(
+            {
+                "success": False,
+                "message": "Invalid request.",
+            },
+            status=400,
+        )
+
+    cart = request.session.get("cart", {})
+    item_key = str(menu_item_id)
+
+    if item_key not in cart:
+        return JsonResponse(
+            {
+                "success": False,
+                "message": "This item is already removed.",
+            },
+            status=404,
+        )
+
+    cart.pop(item_key)
+
+    request.session["cart"] = cart
+    request.session.modified = True
+
+    cart_count = sum(
+        int(item.get("quantity", 0))
+        for item in cart.values()
+    )
+
+    return JsonResponse(
+        {
+            "success": True,
+            "cart_count": cart_count,
+            "removed": True,
+        }
+    )
+
+def checkout(request, shop_slug):
+
+    shop = get_object_or_404(
+        Shop,
+        slug=shop_slug,
+        is_active=True,
+    )
+
+    cart_data = request.session.get("cart", {})
+    cart_items = []
+    subtotal = Decimal("0.00")
+
+    for item_id, cart_item in cart_data.items():
+
+        menu_item = MenuItem.objects.filter(
+            id=item_id,
+            shop=shop,
+            is_available=True,
+        ).first()
+
+        if not menu_item:
+            continue
+
+        quantity = int(
+            cart_item.get("quantity", 1)
+        )
+
+        if menu_item.pricing_type == "fixed":
+
+            unit_price = menu_item.price or Decimal("0.00")
+            line_total = unit_price * quantity
+
+        else:
+
+            unit_price = Decimal(
+                str(
+                    cart_item.get(
+                        "amount",
+                        "0.00",
+                    )
+                )
+            )
+
+            quantity = 1
+            line_total = unit_price
+
+        cart_items.append({
+            "menu_item": menu_item,
+            "quantity": quantity,
+            "unit_price": unit_price,
+            "line_total": line_total,
+            "pricing_type": menu_item.pricing_type,
+        })
+
+        subtotal += line_total
+
+    if not cart_items:
+
+        messages.warning(
+            request,
+            "Your cart is empty. Please add items before checkout.",
+        )
+
+        return redirect(
+            "customer_order",
+            shop_slug=shop.slug,
+        )
+
+    customer_name = ""
+    whatsapp_number = ""
+    delivery_address = ""
+    notes = ""
+
+    delivery_fee = None
+    platform_fee = None
+    total = subtotal
+    delivery_distance_km = None
+    price_calculated = False
+    delivery_unavailable = False
+
+    # =========================================================
+    # RETURNING CUSTOMER MEMORY
+    # Match by customer name + WhatsApp number and restore
+    # the most recent delivery address.
+    # =========================================================
+    if request.method == "GET":
+        saved_customer_name = request.session.get(
+            "airxpress_customer_name",
+            "",
+        ).strip()
+
+        saved_whatsapp_number = request.session.get(
+            "airxpress_customer_whatsapp",
+            "",
+        ).strip()
+
+        if saved_customer_name and saved_whatsapp_number:
+            previous_order = (
+                Order.objects
+                .filter(
+                    customer_name__iexact=saved_customer_name,
+                    whatsapp_number=saved_whatsapp_number,
+                    delivery_address__isnull=False,
+                )
+                .exclude(
+                    delivery_address="",
+                )
+                .order_by("-created_at")
+                .first()
+            )
+
+            if previous_order:
+                customer_name = previous_order.customer_name
+                whatsapp_number = previous_order.whatsapp_number
+                delivery_address = previous_order.delivery_address
+
+    if request.method == "POST":
+
+        customer_name = request.POST.get(
+            "customer_name",
+            "",
+        ).strip()
+
+        whatsapp_number = request.POST.get(
+            "whatsapp_number",
+            "",
+        ).strip()
+
+        delivery_address = request.POST.get(
+            "delivery_address",
+            "",
+        ).strip()
+
+        # Remember the customer identity for future orders.
+        request.session["airxpress_customer_name"] = customer_name
+        request.session["airxpress_customer_whatsapp"] = whatsapp_number
+        request.session.modified = True
+
+        notes = request.POST.get(
+            "notes",
+            ""
+        ).strip()
+
+        action = request.POST.get(
+            "checkout_action",
+            "calculate",
+        )
+
+        if not customer_name:
+
+            messages.error(
+                request,
+                "Please enter your name.",
+            )
+
+        elif not whatsapp_number:
+
+            messages.error(
+                request,
+                "Please enter your WhatsApp or contact number.",
+            )
+
+        elif not delivery_address:
+
+            messages.error(
+                request,
+                "Please enter your delivery address.",
+            )
+
+        elif shop.latitude is None or shop.longitude is None:
+
+            messages.error(
+                request,
+                "This shop is not configured for delivery routing yet. Please contact AirXpress.",
+            )
+
+        else:
+
+            delivery_pricing = getattr(
+                shop,
+                "delivery_pricing",
+                None,
+            )
+
+            if not delivery_pricing:
+
+                messages.error(
+                    request,
+                    "Delivery pricing has not been configured for this shop yet.",
+                )
+
+            else:
+
+                try:
+
+                    route = calculate_driving_distance(
+                        shop.latitude,
+                        shop.longitude,
+                        delivery_address,
+                    )
+
+                    parsed_distance = Decimal(
+                        str(route["distance_km"])
+                    )
+
+                except MapboxError:
+                    messages.error(
+                        request,
+                        (
+                            "Address verification failed. "
+                            "We could not confirm this delivery address in the "
+                            "suburb/locality you entered. "
+                            "Please check your house number, street name, "
+                            "extension/suburb and city, then try again."
+                        ),
+                    )
+
+                else:
+
+                    if parsed_distance <= 0:
+
+                        messages.error(
+                            request,
+                            "We could not calculate a valid delivery distance. Please check your address.",
+                        )
+
+                    elif parsed_distance > delivery_pricing.max_radius_km:
+
+                        delivery_unavailable = True
+
+                        messages.error(
+                            request,
+                            (
+                                "Delivery unavailable at this address. "
+                                "AirXpress Eats currently delivers within "
+                                f"a maximum {delivery_pricing.max_radius_km} km "
+                                "driving distance from this shop."
+                            ),
+                        )
+
+                    else:
+
+                        delivery_rate = (
+                            DeliveryRate.objects
+                            .filter(
+                                delivery_pricing=delivery_pricing,
+                                max_distance_km__gte=parsed_distance,
+                            )
+                            .order_by("max_distance_km")
+                            .first()
+                        )
+
+                        if not delivery_rate:
+
+                            messages.error(
+                                request,
+                                "A delivery fee could not be determined for this address.",
+                            )
+
+                        else:
+
+                            delivery_fee = delivery_rate.delivery_fee
+
+                            # =============================================
+                            # AIRXPRESS SERVICE CHARGE
+                            # 15% of the food subtotal.
+                            # Backend calculation only.
+                            # =============================================
+
+                            platform_fee = (
+                                subtotal * Decimal("0.15")
+                            ).quantize(
+                                Decimal("0.01")
+                            )
+
+                            # =============================================
+                            # DRIVER PAYOUT
+                            # 40% of the delivery fee.
+                            # Backend calculation only.
+                            # =============================================
+
+                            driver_payout = (
+                                delivery_fee * Decimal("0.40")
+                            ).quantize(
+                                Decimal("0.01")
+                            )
+
+                            # =============================================
+                            # FINAL CUSTOMER TOTAL
+                            # =============================================
+
+                            total = (
+                                subtotal
+                                + delivery_fee
+                                + platform_fee
+                            )
+
+                            delivery_distance_km = parsed_distance
+                            price_calculated = True
+
+                            if action == "confirm":
+
+                                order = Order.objects.create(
+                                    shop=shop,
+                                    customer_name=customer_name,
+                                    whatsapp_number=whatsapp_number,
+                                    delivery_address=delivery_address,
+                                    order_type="delivery",
+                                    order_source="online",
+                                    status="new",
+                                    estimated_total=subtotal,
+                                    delivery_fee=delivery_fee,
+                                    delivery_distance_km=parsed_distance,
+                                    final_total=total,
+                                    platform_fee=platform_fee,
+                                    driver_payout=driver_payout,
+                                    payment_status="pending",
+                                    notes=notes,
+                                )
+
+                                for item in cart_items:
+
+                                    OrderItem.objects.create(
+                                        order=order,
+                                        menu_item=item["menu_item"],
+                                        requested_amount=item["line_total"],
+                                        quantity=item["quantity"],
+                                        unit_price=(
+                                            item["unit_price"]
+                                            if item["pricing_type"] == "fixed"
+                                            else None
+                                        ),
+                                    )
+
+                                OrderStatusHistory.objects.create(
+                                    order=order,
+                                    status="new",
+                                    notes=(
+                                        "Customer confirmed the complete "
+                                        "food, delivery and AirXpress total "
+                                        "at checkout."
+                                    ),
+                                )
+
+                                request.session["cart"] = {}
+                                request.session.modified = True
+
+                                return redirect(
+                    "payfast_payment",
+                    order_id=order.id,
+                )
+
+                            messages.success(
+                                request,
+                                (
+                                    "Delivery calculated successfully. "
+                                    "Please review and confirm your complete order total."
+                                ),
+                            )
+
+
+    # =========================================================
+    context = {
+        "shop": shop,
+        "cart_items": cart_items,
+        "subtotal": subtotal,
+        "delivery_fee": delivery_fee,
+        "platform_fee": platform_fee,
+        "total": total,
+        "customer_name": customer_name,
+        "whatsapp_number": whatsapp_number,
+        "delivery_address": delivery_address,
+        "notes": notes,
+        "delivery_distance_km": delivery_distance_km,
+        "price_calculated": price_calculated,
+        "delivery_unavailable": delivery_unavailable,
+    }
+
+    return render(
+        request,
+        "orders/checkout.html",
+        context,
+    )
 def customer_order(request, shop_slug):
 
     shop = get_object_or_404(
@@ -94,6 +990,42 @@ def customer_order(request, shop_slug):
     # POST REQUEST
     # =====================================================
 
+    # =========================================================
+    # RETURNING CUSTOMER MEMORY
+    # Match by customer name + WhatsApp number and restore
+    # the most recent delivery address.
+    # =========================================================
+    if request.method == "GET":
+        saved_customer_name = request.session.get(
+            "airxpress_customer_name",
+            "",
+        ).strip()
+
+        saved_whatsapp_number = request.session.get(
+            "airxpress_customer_whatsapp",
+            "",
+        ).strip()
+
+        if saved_customer_name and saved_whatsapp_number:
+            previous_order = (
+                Order.objects
+                .filter(
+                    customer_name__iexact=saved_customer_name,
+                    whatsapp_number=saved_whatsapp_number,
+                    delivery_address__isnull=False,
+                )
+                .exclude(
+                    delivery_address="",
+                )
+                .order_by("-created_at")
+                .first()
+            )
+
+            if previous_order:
+                customer_name = previous_order.customer_name
+                whatsapp_number = previous_order.whatsapp_number
+                delivery_address = previous_order.delivery_address
+
     if request.method == "POST":
 
         form = CustomerOrderForm(
@@ -109,6 +1041,7 @@ def customer_order(request, shop_slug):
 
             order.shop = shop
             order.order_source = "online"
+            order.order_type = "delivery"
             order.status = "new"
             order.payment_status = "pending"
             order.estimated_total = Decimal(
@@ -271,6 +1204,8 @@ def customer_order(request, shop_slug):
     # PAGE CONTEXT
     # =====================================================
 
+
+    # =========================================================
     context = {
         "shop": shop,
         "form": form,
@@ -371,198 +1306,109 @@ def is_owner(user):
     )
 
 
+
 # =========================================================
-# STAFF CREATE COUNTER ORDER
+# DRIVER LOGIN
 # =========================================================
 
-@user_passes_test(
-    is_tenant_staff,
-    login_url="/staff/login/"
-)
-def staff_counter_order(request):
+def driver_login(request):
 
-    shop = get_user_shop(request.user)
+    if request.user.is_authenticated:
 
+        try:
+            driver = request.user.driver_profile
+        except Exception:
+            driver = None
 
-    if not shop:
-        return render(
-            request,
-            "orders/no_shop.html",
-        )
+        if driver is not None:
+            return redirect("driver_dashboard")
 
-    menu_items = (
-        MenuItem.objects
-        .filter(
-            shop=shop,
-            is_available=True,
-        )
-        .select_related(
-            "category"
-        )
-        .order_by(
-            "category__display_order",
-            "category__name",
-            "display_order",
-            "name",
-        )
-    )
+        logout(request)
+
+    # =========================================================
+    # RETURNING CUSTOMER MEMORY
+    # Match by customer name + WhatsApp number and restore
+    # the most recent delivery address.
+    # =========================================================
+    if request.method == "GET":
+        saved_customer_name = request.session.get(
+            "airxpress_customer_name",
+            "",
+        ).strip()
+
+        saved_whatsapp_number = request.session.get(
+            "airxpress_customer_whatsapp",
+            "",
+        ).strip()
+
+        if saved_customer_name and saved_whatsapp_number:
+            previous_order = (
+                Order.objects
+                .filter(
+                    customer_name__iexact=saved_customer_name,
+                    whatsapp_number=saved_whatsapp_number,
+                    delivery_address__isnull=False,
+                )
+                .exclude(
+                    delivery_address="",
+                )
+                .order_by("-created_at")
+                .first()
+            )
+
+            if previous_order:
+                customer_name = previous_order.customer_name
+                whatsapp_number = previous_order.whatsapp_number
+                delivery_address = previous_order.delivery_address
 
     if request.method == "POST":
 
-        form = CounterOrderForm(
-            request.POST
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        user = authenticate(
+            request,
+            username=username,
+            password=password,
         )
 
-        if form.is_valid():
+        if user is None:
 
-            order = form.save(
-                commit=False
+            messages.error(
+                request,
+                "Incorrect username or password."
             )
 
-            order.shop = shop
-            order.order_source = "counter"
-            order.order_type = "premises"
-            order.status = "new"
-            order.payment_status = "pending"
-            order.estimated_total = Decimal("0.00")
+        else:
 
-            order.save()
+            try:
+                driver = user.driver_profile
+            except Exception:
+                driver = None
 
-            requested_total = Decimal("0.00")
+            if driver is not None:
 
-            for menu_item in menu_items:
-
-                if menu_item.pricing_type == "amount":
-
-                    amount_value = request.POST.get(
-                        f"amount_{menu_item.id}"
-                    )
-
-                    if not amount_value:
-                        continue
-
-                    try:
-                        requested_amount = Decimal(
-                            amount_value
-                        )
-                    except (
-                        InvalidOperation,
-                        TypeError,
-                        ValueError,
-                    ):
-                        continue
-
-                    if requested_amount <= 0:
-                        continue
-
-                    OrderItem.objects.create(
-                        order=order,
-                        menu_item=menu_item,
-                        requested_amount=requested_amount,
-                        quantity=1,
-                        unit_price=None,
-                    )
-
-                    requested_total += requested_amount
-
-                elif menu_item.pricing_type == "fixed":
-
-                    quantity_value = request.POST.get(
-                        f"quantity_{menu_item.id}",
-                        "0",
-                    )
-
-                    try:
-                        quantity = int(
-                            quantity_value
-                        )
-                    except (
-                        TypeError,
-                        ValueError,
-                    ):
-                        quantity = 0
-
-                    if quantity <= 0:
-                        continue
-
-                    if menu_item.price is None:
-                        continue
-
-                    line_total = (
-                        menu_item.price
-                        * quantity
-                    )
-
-                    OrderItem.objects.create(
-                        order=order,
-                        menu_item=menu_item,
-                        requested_amount=line_total,
-                        quantity=quantity,
-                        unit_price=menu_item.price,
-                    )
-
-                    requested_total += line_total
-
-            if not order.items.exists():
-
-                order.delete()
-
-                form.add_error(
-                    None,
-                    "Please select at least one item."
-                )
-
-            else:
-
-                order.estimated_total = requested_total
-
-                order.save(
-                    update_fields=[
-                        "estimated_total"
-                    ]
-                )
-
-                OrderStatusHistory.objects.create(
-                    order=order,
-                    status="new",
-                    notes=(
-                        "Over-the-counter order "
-                        "created by staff."
-                    ),
-                )
-
-                messages.success(
-                    request,
-                    (
-                        f"Counter order #{order.id} "
-                        "created successfully."
-                    )
-                )
+                login(request, user)
 
                 return redirect(
-                    "staff_dashboard"
+                    "driver_dashboard"
                 )
 
-    else:
-
-        form = CounterOrderForm()
-
-    context = {
-        "shop": shop,
-        "form": form,
-        "menu_items": menu_items,
-    }
+            messages.error(
+                request,
+                "This account does not have driver access."
+            )
 
     return render(
         request,
-        "orders/staff_counter_order.html",
-        context,
+        "orders/driver_login.html",
     )
 
 
 # =========================================================
 # STAFF LOGIN
 # =========================================================
+
 
 def staff_login(request):
 
@@ -572,6 +1418,42 @@ def staff_login(request):
             return redirect("staff_dashboard")
 
         logout(request)
+
+    # =========================================================
+    # RETURNING CUSTOMER MEMORY
+    # Match by customer name + WhatsApp number and restore
+    # the most recent delivery address.
+    # =========================================================
+    if request.method == "GET":
+        saved_customer_name = request.session.get(
+            "airxpress_customer_name",
+            "",
+        ).strip()
+
+        saved_whatsapp_number = request.session.get(
+            "airxpress_customer_whatsapp",
+            "",
+        ).strip()
+
+        if saved_customer_name and saved_whatsapp_number:
+            previous_order = (
+                Order.objects
+                .filter(
+                    customer_name__iexact=saved_customer_name,
+                    whatsapp_number=saved_whatsapp_number,
+                    delivery_address__isnull=False,
+                )
+                .exclude(
+                    delivery_address="",
+                )
+                .order_by("-created_at")
+                .first()
+            )
+
+            if previous_order:
+                customer_name = previous_order.customer_name
+                whatsapp_number = previous_order.whatsapp_number
+                delivery_address = previous_order.delivery_address
 
     if request.method == "POST":
 
@@ -626,6 +1508,42 @@ def owner_login(request):
 
         logout(request)
 
+    # =========================================================
+    # RETURNING CUSTOMER MEMORY
+    # Match by customer name + WhatsApp number and restore
+    # the most recent delivery address.
+    # =========================================================
+    if request.method == "GET":
+        saved_customer_name = request.session.get(
+            "airxpress_customer_name",
+            "",
+        ).strip()
+
+        saved_whatsapp_number = request.session.get(
+            "airxpress_customer_whatsapp",
+            "",
+        ).strip()
+
+        if saved_customer_name and saved_whatsapp_number:
+            previous_order = (
+                Order.objects
+                .filter(
+                    customer_name__iexact=saved_customer_name,
+                    whatsapp_number=saved_whatsapp_number,
+                    delivery_address__isnull=False,
+                )
+                .exclude(
+                    delivery_address="",
+                )
+                .order_by("-created_at")
+                .first()
+            )
+
+            if previous_order:
+                customer_name = previous_order.customer_name
+                whatsapp_number = previous_order.whatsapp_number
+                delivery_address = previous_order.delivery_address
+
     if request.method == "POST":
 
         username = request.POST.get(
@@ -674,8 +1592,524 @@ def owner_login(request):
 
 
 # =========================================================
+# DRIVER DASHBOARD
+# =========================================================
+
+@user_passes_test(
+    lambda user: (
+        user.is_authenticated
+        and hasattr(user, "driver_profile")
+    ),
+    login_url="/driver/login/",
+)
+def driver_dashboard(request):
+
+    driver = request.user.driver_profile
+
+    pending_requests = (
+        DeliveryRequest.objects
+        .filter(
+            driver=driver,
+            status="pending",
+        )
+        .select_related(
+            "order",
+            "order__shop",
+        )
+        .order_by(
+            "-created_at"
+        )
+    )
+
+    assigned_orders = (
+        Order.objects
+        .filter(
+            driver=driver,
+            status__in=[
+                "driver_assigned",
+                "picked_up",
+                "delivered",
+            ],
+        )
+        .select_related(
+            "shop",
+        )
+        .order_by(
+            "-updated_at"
+        )
+    )
+
+
+    # =========================================================
+    # DRIVER PRIVATE EARNINGS
+    # =========================================================
+
+    driver_payouts = (
+        DriverPayout.objects
+        .filter(
+            driver=driver,
+        )
+        .select_related(
+            "order",
+            "order__shop",
+        )
+        .order_by(
+            "-created_at"
+        )
+    )
+
+    total_earned = (
+        driver_payouts.aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    pending_payout = (
+        driver_payouts
+        .filter(
+            status="pending",
+        )
+        .aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    paid_to_date = (
+        driver_payouts
+        .filter(
+            status="paid",
+        )
+        .aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    completed_deliveries = (
+        Order.objects
+        .filter(
+            driver=driver,
+            status="collected",
+        )
+        .count()
+    )
+
+    context = {
+        "driver": driver,
+        "pending_requests": pending_requests,
+        "assigned_orders": assigned_orders,
+        "driver_payouts": driver_payouts,
+        "total_earned": total_earned,
+        "pending_payout": pending_payout,
+        "paid_to_date": paid_to_date,
+        "completed_deliveries": completed_deliveries,
+    }
+
+    return render(
+        request,
+        "orders/driver_dashboard.html",
+        context,
+    )
+
+
+# =========================================================
+# DRIVER ACCEPT DELIVERY REQUEST
+# =========================================================
+
+@user_passes_test(
+    lambda user: (
+        user.is_authenticated
+        and hasattr(user, "driver_profile")
+    ),
+    login_url="/driver/login/",
+)
+def driver_accept_request(
+    request,
+    request_id,
+):
+
+    if request.method != "POST":
+        return redirect("driver_dashboard")
+
+    driver = request.user.driver_profile
+
+    with transaction.atomic():
+
+        delivery_request = get_object_or_404(
+            DeliveryRequest.objects.select_for_update(),
+            id=request_id,
+            driver=driver,
+            status="pending",
+        )
+
+        order = (
+            Order.objects
+            .select_for_update()
+            .get(
+                id=delivery_request.order_id
+            )
+        )
+
+        # Another driver may have accepted first.
+        if order.driver_id:
+
+            delivery_request.status = "declined"
+            delivery_request.responded_at = timezone.now()
+            delivery_request.save(
+                update_fields=[
+                    "status",
+                    "responded_at",
+                ]
+            )
+
+            messages.warning(
+                request,
+                (
+                    f"Order #{order.id} has already "
+                    "been assigned to another driver."
+                )
+            )
+
+            return redirect("driver_dashboard")
+
+        # The order must still be ready for delivery.
+        if order.status != "ready":
+
+            delivery_request.status = "declined"
+            delivery_request.responded_at = timezone.now()
+            delivery_request.save(
+                update_fields=[
+                    "status",
+                    "responded_at",
+                ]
+            )
+
+            messages.warning(
+                request,
+                (
+                    f"Order #{order.id} is no longer "
+                    "available for delivery."
+                )
+            )
+
+            return redirect("driver_dashboard")
+
+        # Assign this driver.
+        order.driver = driver
+        order.status = "driver_assigned"
+        order.save(
+            update_fields=[
+                "driver",
+                "status",
+                "updated_at",
+            ]
+        )
+
+        # Accept this request.
+        delivery_request.status = "accepted"
+        delivery_request.responded_at = timezone.now()
+        delivery_request.save(
+            update_fields=[
+                "status",
+                "responded_at",
+            ]
+        )
+
+        # Make the driver unavailable while handling this delivery.
+        driver.is_available = False
+        driver.save(
+            update_fields=[
+                "is_available",
+            ]
+        )
+
+        # Close all other pending requests for this order.
+        DeliveryRequest.objects.filter(
+            order=order,
+            status="pending",
+        ).exclude(
+            id=delivery_request.id,
+        ).update(
+            status="expired",
+            responded_at=timezone.now(),
+        )
+
+        OrderStatusHistory.objects.create(
+            order=order,
+            status="driver_assigned",
+            notes=(
+                f"Driver {driver.name} accepted "
+                f"the delivery request."
+            ),
+        )
+
+    messages.success(
+        request,
+        (
+            f"Order #{order.id} has been assigned to you."
+        )
+    )
+
+    return redirect("driver_dashboard")
+
+
+# =========================================================
+# DRIVER DECLINE DELIVERY REQUEST
+# =========================================================
+
+@user_passes_test(
+    lambda user: (
+        user.is_authenticated
+        and hasattr(user, "driver_profile")
+    ),
+    login_url="/driver/login/",
+)
+def driver_decline_request(
+    request,
+    request_id,
+):
+
+    if request.method != "POST":
+        return redirect("driver_dashboard")
+
+    driver = request.user.driver_profile
+
+    delivery_request = get_object_or_404(
+        DeliveryRequest,
+        id=request_id,
+        driver=driver,
+        status="pending",
+    )
+
+    delivery_request.status = "declined"
+    delivery_request.responded_at = timezone.now()
+
+    delivery_request.save(
+        update_fields=[
+            "status",
+            "responded_at",
+        ]
+    )
+
+    messages.info(
+        request,
+        (
+            f"Delivery request for Order "
+            f"#{delivery_request.order_id} declined."
+        )
+    )
+
+    return redirect("driver_dashboard")
+
+
+# =========================================================
+# DRIVER PICK UP ORDER
+# =========================================================
+
+@user_passes_test(
+    lambda user: (
+        user.is_authenticated
+        and hasattr(user, "driver_profile")
+    ),
+    login_url="/driver/login/",
+)
+def driver_pickup_order(request, order_id):
+
+    if request.method != "POST":
+        return redirect("driver_dashboard")
+
+    driver = request.user.driver_profile
+
+    with transaction.atomic():
+
+        order = get_object_or_404(
+            Order.objects.select_for_update(),
+            id=order_id,
+            driver=driver,
+        )
+
+        if order.status != "driver_assigned":
+            messages.warning(
+                request,
+                f"Order #{order.id} is not ready to be picked up."
+            )
+            return redirect("driver_dashboard")
+
+        order.status = "picked_up"
+
+        order.save(
+            update_fields=[
+                "status",
+                "updated_at",
+            ]
+        )
+
+        OrderStatusHistory.objects.create(
+            order=order,
+            status="picked_up",
+            notes=(
+                f"Driver {driver.name} picked up "
+                f"Order #{order.id}."
+            ),
+        )
+
+    messages.success(
+        request,
+        f"Order #{order.id} has been marked as picked up."
+    )
+
+    return redirect("driver_dashboard")
+
+
+# =========================================================
+# DRIVER DELIVER ORDER
+# =========================================================
+
+@user_passes_test(
+    lambda user: (
+        user.is_authenticated
+        and hasattr(user, "driver_profile")
+    ),
+    login_url="/driver/login/",
+)
+def driver_deliver_order(request, order_id):
+
+    if request.method != "POST":
+        return redirect("driver_dashboard")
+
+    driver = request.user.driver_profile
+
+    with transaction.atomic():
+
+        order = get_object_or_404(
+            Order.objects.select_for_update(),
+            id=order_id,
+            driver=driver,
+        )
+
+        if order.status != "picked_up":
+            messages.warning(
+                request,
+                f"Order #{order.id} cannot be marked as delivered yet."
+            )
+            return redirect("driver_dashboard")
+
+        order.status = "delivered"
+
+        order.save(
+            update_fields=[
+                "status",
+                "updated_at",
+            ]
+        )
+
+        OrderStatusHistory.objects.create(
+            order=order,
+            status="delivered",
+            notes=(
+                f"Driver {driver.name} marked "
+                f"Order #{order.id} as delivered."
+            ),
+        )
+
+    messages.success(
+        request,
+        f"Order #{order.id} has been marked as delivered."
+    )
+
+    return redirect("driver_dashboard")
+
+
+# =========================================================
+# DRIVER COMPLETE DELIVERY
+# =========================================================
+
+@user_passes_test(
+    lambda user: (
+        user.is_authenticated
+        and hasattr(user, "driver_profile")
+    ),
+    login_url="/driver/login/",
+)
+def driver_complete_delivery(request, order_id):
+
+    if request.method != "POST":
+        return redirect("driver_dashboard")
+
+    driver = request.user.driver_profile
+
+    with transaction.atomic():
+
+        order = get_object_or_404(
+            Order.objects.select_for_update(),
+            id=order_id,
+            driver=driver,
+        )
+
+        if order.status != "delivered":
+            messages.warning(
+                request,
+                f"Order #{order.id} must be delivered before it can be completed."
+            )
+            return redirect("driver_dashboard")
+
+        order.status = "collected"
+
+        order.save(
+            update_fields=[
+                "status",
+                "updated_at",
+            ]
+        )
+
+        # =============================================
+        # DRIVER PAYOUT
+        # =============================================
+
+        DriverPayout.objects.get_or_create(
+            order=order,
+            defaults={
+                "driver": driver,
+                "amount": order.driver_payout,
+                "status": "pending",
+            },
+        )
+
+        # Driver is available for another delivery.
+        driver.is_available = True
+
+        driver.save(
+            update_fields=[
+                "is_available",
+            ]
+        )
+
+        OrderStatusHistory.objects.create(
+            order=order,
+            status="collected",
+            notes=(
+                f"Driver {driver.name} completed "
+                f"Order #{order.id} and is available again."
+            ),
+        )
+
+    messages.success(
+        request,
+        (
+            f"Order #{order.id} has been completed. "
+            "You are now available for another delivery."
+        )
+    )
+
+    return redirect("driver_dashboard")
+
+
+# =========================================================
 # STAFF DASHBOARD
 # =========================================================
+
 
 @user_passes_test(
     is_tenant_staff,
@@ -714,6 +2148,17 @@ def staff_dashboard(request):
         )
     )
 
+    drivers = (
+        Driver.objects
+        .filter(
+            shop=shop,
+            is_available=True,
+        )
+        .order_by(
+            "name"
+        )
+    )
+
     braai_masters = (
         BraaiMaster.objects
         .filter(
@@ -725,10 +2170,12 @@ def staff_dashboard(request):
         )
     )
 
+    # =========================================================
     context = {
         "shop": shop,
         "orders": orders,
         "braai_masters": braai_masters,
+        "drivers": drivers,
     }
 
     return render(
@@ -736,6 +2183,63 @@ def staff_dashboard(request):
         "orders/staff_dashboard.html",
         context,
     )
+
+
+# =========================================================
+# AUTOMATIC DRIVER DISPATCH HELPER
+# =========================================================
+
+def dispatch_order_to_available_drivers(order):
+
+    # Payment must be confirmed before dispatch.
+    if order.payment_status != "paid":
+        return 0
+
+    # Do not dispatch an order that already has a driver.
+    if order.driver_id:
+        return 0
+
+    # Only delivery orders require a driver.
+    if order.order_type != "delivery":
+        return 0
+
+    available_drivers = (
+        Driver.objects
+        .filter(
+            shop=order.shop,
+            is_available=True,
+        )
+        .order_by(
+            "name"
+        )
+    )
+
+    created_count = 0
+
+    for driver in available_drivers:
+
+        existing_request = (
+            DeliveryRequest.objects
+            .filter(
+                order=order,
+                driver=driver,
+                status="pending",
+            )
+            .exists()
+        )
+
+        if existing_request:
+            continue
+
+        DeliveryRequest.objects.create(
+            order=order,
+            driver=driver,
+            status="pending",
+        )
+
+        created_count += 1
+
+    return created_count
 
 
 # =========================================================
@@ -761,6 +2265,42 @@ def staff_update_order(
         id=order_id,
         shop=shop,
     )
+
+    # =========================================================
+    # RETURNING CUSTOMER MEMORY
+    # Match by customer name + WhatsApp number and restore
+    # the most recent delivery address.
+    # =========================================================
+    if request.method == "GET":
+        saved_customer_name = request.session.get(
+            "airxpress_customer_name",
+            "",
+        ).strip()
+
+        saved_whatsapp_number = request.session.get(
+            "airxpress_customer_whatsapp",
+            "",
+        ).strip()
+
+        if saved_customer_name and saved_whatsapp_number:
+            previous_order = (
+                Order.objects
+                .filter(
+                    customer_name__iexact=saved_customer_name,
+                    whatsapp_number=saved_whatsapp_number,
+                    delivery_address__isnull=False,
+                )
+                .exclude(
+                    delivery_address="",
+                )
+                .order_by("-created_at")
+                .first()
+            )
+
+            if previous_order:
+                customer_name = previous_order.customer_name
+                whatsapp_number = previous_order.whatsapp_number
+                delivery_address = previous_order.delivery_address
 
     if request.method == "POST":
 
@@ -788,59 +2328,87 @@ def staff_update_order(
         # STATUS
         # =============================================
 
-        status = request.POST.get(
-            "status"
-        )
-
-        valid_statuses = dict(
-            Order.STATUS_CHOICES
-        )
-
-        if status in valid_statuses:
-            order.status = status
-
         # =============================================
-        # FINAL TOTAL
+        # STATUS - ENFORCED
         # =============================================
 
-        final_total = request.POST.get(
-            "final_total"
-        )
+        status = request.POST.get("status")
 
-        if final_total:
+        previous_status = order.status
 
-            try:
+        valid_statuses = dict(Order.STATUS_CHOICES)
 
-                parsed_total = Decimal(
-                    final_total
+        if not status:
+            messages.error(
+                request,
+                "Please select an order status."
+            )
+            return redirect("staff_dashboard")
+
+        if status not in valid_statuses:
+            messages.error(
+                request,
+                "Invalid order status."
+            )
+            return redirect("staff_dashboard")
+
+        order.status = status
+        # =============================================
+        # =============================================
+        # DELIVERY PRICE LOCK
+        # =============================================
+
+        if order.status == "picked_up":
+
+            if order.order_type != "delivery":
+                messages.error(
+                    request,
+                    "Only delivery orders can be picked up for delivery."
                 )
+                return redirect("staff_dashboard")
 
-                if parsed_total >= 0:
-                    order.final_total = parsed_total
+            # Delivery distance and pricing are confirmed at checkout.
+            # Never recalculate the customer's price at pickup.
 
-            except (
-                InvalidOperation,
-                TypeError,
-                ValueError,
-            ):
-                pass
+            if order.delivery_distance_km <= 0:
+                messages.error(
+                    request,
+                    "Delivery pricing has not been confirmed at checkout."
+                )
+                return redirect("staff_dashboard")
 
+            if order.delivery_fee <= 0:
+                messages.error(
+                    request,
+                    "The delivery fee has not been confirmed at checkout."
+                )
+                return redirect("staff_dashboard")
+
+            if not order.final_total:
+                messages.error(
+                    request,
+                    "The customer's final total has not been confirmed at checkout."
+                )
+                return redirect("staff_dashboard")
+        # DRIVER
         # =============================================
-        # COUNTER ORDER PAYMENT
-        # =============================================
 
-        if order.order_source == "counter":
+        driver_id = request.POST.get(
+            "driver"
+        )
 
-            payment_status = request.POST.get(
-                "payment_status"
+        if driver_id:
+
+            order.driver = get_object_or_404(
+                Driver,
+                id=driver_id,
+                shop=order.shop,
             )
 
-            valid_payment_statuses = dict(
-                Order.PAYMENT_STATUS
-            )
+        else:
 
-            if payment_status in valid_payment_statuses:
-                order.payment_status = payment_status
+            order.driver = None
+
 
         # =============================================
         # SAVE ORDER
@@ -857,6 +2425,54 @@ def staff_update_order(
             status=order.status,
             notes="Order updated by staff.",
         )
+
+        # =============================================
+        # AUTOMATIC DRIVER DISPATCH
+        # =============================================
+
+        if (
+            order.status == "ready"
+            and previous_status != "ready"
+            and not order.driver_id
+        ):
+
+            requests_created = (
+                dispatch_order_to_available_drivers(
+                    order
+                )
+            )
+
+            if requests_created > 0:
+
+                messages.success(
+                    request,
+                    (
+                        f"Order #{order.id} is ready. "
+                        f"Delivery request sent to "
+                        f"{requests_created} available driver(s)."
+                    )
+                )
+
+            elif order.payment_status != "paid":
+
+                messages.warning(
+                    request,
+                    (
+                        f"Order #{order.id} is ready, "
+                        "but payment has not yet been confirmed. "
+                        "Driver dispatch will occur after payment is confirmed."
+                    )
+                )
+
+            else:
+
+                messages.warning(
+                    request,
+                    (
+                        f"Order #{order.id} is ready, "
+                        "but no available drivers were found."
+                    )
+                )
 
     return redirect(
         "staff_dashboard"
@@ -936,7 +2552,8 @@ def staff_daily_report(request):
 
     from django.utils import timezone
     from datetime import datetime
-    from django.db.models import Sum, Count, Q
+    from django.db.models import Sum
+# Imports already defined at the top of this file.
     from django.db.models.functions import Coalesce
 
     selected_date_string = request.GET.get(
@@ -1024,22 +2641,9 @@ def staff_daily_report(request):
     online_orders = orders.filter(
         order_source="online"
     ).count()
-
-    counter_orders = orders.filter(
-        order_source="counter"
-    ).count()
-
-    # =====================================================
+# =====================================================
     # ORDER TYPES
     # =====================================================
-
-    premises_orders = orders.filter(
-        order_type="premises"
-    ).count()
-
-    collection_orders = orders.filter(
-        order_type="collection"
-    ).count()
 
     # =====================================================
     # PAYMENT COUNTS
@@ -1196,16 +2800,16 @@ def staff_daily_report(request):
     )
 
     # =====================================================
-    # BRAAI MASTER ACTIVITY
+    # DRIVER ACTIVITY
     # =====================================================
 
-    braai_master_report = (
+    driver_report = (
         orders
         .exclude(
-            braai_master__isnull=True
+            driver__isnull=True
         )
         .values(
-            "braai_master__name"
+            "driver__name"
         )
         .annotate(
             order_count=Count("id")
@@ -1219,8 +2823,9 @@ def staff_daily_report(request):
     # CONTEXT
     # =====================================================
 
-    context = {
 
+    # =========================================================
+    context = {
         "shop": shop,
         "selected_date": selected_date,
 
@@ -1237,39 +2842,18 @@ def staff_daily_report(request):
         "braaiing_orders": braaiing_orders,
         "ready_orders": ready_orders,
 
-        # Sources
-        "online_orders": online_orders,
-        "counter_orders": counter_orders,
-
-        # Types
-        "premises_orders": premises_orders,
-        "collection_orders": collection_orders,
-
-        # Payments
-        "paid_orders": paid_orders,
-        "pending_payment_orders": (
-            pending_payment_orders
-        ),
-
         # Sales
         "total_sales": total_sales,
         "paid_sales": paid_sales,
-        "outstanding_sales": (
-            outstanding_sales
-        ),
-        "average_order_value": (
-            average_order_value
-        ),
+        "outstanding_sales": outstanding_sales,
+        "average_order_value": average_order_value,
 
         # Items
         "top_items": top_items,
 
-        # Braai masters
-        "braai_master_report": (
-            braai_master_report
-        ),
+        # Drivers
+        "driver_report": driver_report,
     }
-
     return render(
         request,
         "orders/staff_daily_report.html",
@@ -1285,6 +2869,115 @@ def staff_daily_report(request):
     is_owner,
     login_url="/owner/login/"
 )
+
+# =========================================================
+# DRIVER PAYOUT MANAGEMENT
+# =========================================================
+
+@user_passes_test(
+    is_owner,
+    login_url="/owner/login/"
+)
+def owner_driver_payouts(request):
+
+    payouts = (
+        DriverPayout.objects
+        .select_related(
+            "driver",
+            "order",
+            "order__shop",
+        )
+        .order_by(
+            "status",
+            "-created_at",
+        )
+    )
+
+    pending_payouts = payouts.filter(
+        status="pending",
+    )
+
+    paid_payouts = payouts.filter(
+        status="paid",
+    )
+
+    pending_total = (
+        pending_payouts.aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    paid_total = (
+        paid_payouts.aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    # =========================================================
+    context = {
+        "payouts": payouts,
+        "pending_payouts": pending_payouts,
+        "paid_payouts": paid_payouts,
+        "pending_total": pending_total,
+        "paid_total": paid_total,
+    }
+
+    return render(
+        request,
+        "orders/owner_driver_payouts.html",
+        context,
+    )
+
+
+@user_passes_test(
+    is_owner,
+    login_url="/owner/login/"
+)
+def mark_driver_payout_paid(
+    request,
+    payout_id,
+):
+
+    if request.method != "POST":
+        return redirect("owner_driver_payouts")
+
+    with transaction.atomic():
+
+        payout = get_object_or_404(
+            DriverPayout.objects.select_for_update(),
+            id=payout_id,
+        )
+
+        if payout.status == "paid":
+            messages.info(
+                request,
+                f"Payout for Order #{payout.order.id} has already been marked as paid.",
+            )
+            return redirect("owner_driver_payouts")
+
+        payout.status = "paid"
+        payout.paid_at = timezone.now()
+
+        payout.save(
+            update_fields=[
+                "status",
+                "paid_at",
+                "updated_at",
+            ]
+        )
+
+    messages.success(
+        request,
+        (
+            f"Driver payout for Order #{payout.order.id} "
+            f"has been marked as paid."
+        ),
+    )
+
+    return redirect("owner_driver_payouts")
+
 def owner_dashboard(request):
 
     MONTHLY_PLATFORM_FEE = Decimal("500.00")
@@ -1420,6 +3113,8 @@ def owner_dashboard(request):
         .dates("updated_at", "month", order="DESC")
     )
 
+
+    # =========================================================
     context = {
         "shops": shops,
         "shop_summaries": shop_summaries,
@@ -1490,5 +3185,253 @@ def mark_platform_fees_paid(request):
     return redirect(
         f"/owner/dashboard/?year={year}&month={month}"
     )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# =========================================================
+# PAYFAST PAYMENT
+# =========================================================
+
+def payfast_itn(request):
+    """
+    Receive and process PayFast Instant Transaction Notifications.
+
+    Orders remain pending until PayFast confirms the payment.
+    """
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"status": "method_not_allowed"},
+            status=405,
+        )
+
+    payment_data = request.POST.dict()
+
+    order_id = payment_data.get("m_payment_id")
+
+    if not order_id:
+        return JsonResponse(
+            {"status": "missing_payment_id"},
+            status=400,
+        )
+
+    try:
+        order_id = int(order_id)
+    except (TypeError, ValueError):
+        return JsonResponse(
+            {"status": "invalid_payment_id"},
+            status=400,
+        )
+
+    try:
+        order = Order.objects.get(
+            id=order_id,
+        )
+    except Order.DoesNotExist:
+        return JsonResponse(
+            {"status": "order_not_found"},
+            status=404,
+        )
+
+    try:
+        paid_amount = Decimal(
+            str(payment_data.get("amount", "0.00"))
+        )
+    except (InvalidOperation, TypeError, ValueError):
+        return JsonResponse(
+            {"status": "invalid_amount"},
+            status=400,
+        )
+
+    expected_amount = (
+        order.final_total or Decimal("0.00")
+    )
+
+    if paid_amount != expected_amount:
+        return JsonResponse(
+            {"status": "amount_mismatch"},
+            status=400,
+        )
+
+    payment_status = payment_data.get(
+        "payment_status",
+        "",
+    ).lower()
+
+    if payment_status != "complete":
+        return JsonResponse(
+            {"status": "payment_not_complete"},
+            status=200,
+        )
+
+    with transaction.atomic():
+        order = (
+            Order.objects
+            .select_for_update()
+            .get(id=order.id)
+        )
+
+        if order.payment_status != "paid":
+            order.payment_status = "paid"
+
+            order.save(
+                update_fields=[
+                    "payment_status",
+                    "updated_at",
+                ]
+            )
+
+            OrderStatusHistory.objects.create(
+                order=order,
+                status=order.status,
+                notes=(
+                    f"PayFast payment confirmed for "
+                    f"Order #{order.id}."
+                ),
+            )
+
+    return JsonResponse(
+        {"status": "payment_confirmed"},
+        status=200,
+    )
+
+def payfast_payment(request, order_id):
+    """
+    Start the PayFast payment process for an existing order.
+
+    The order must remain pending until PayFast confirms
+    the transaction through ITN.
+    """
+    order = get_object_or_404(
+        Order.objects.select_related("shop"),
+        id=order_id,
+    )
+
+    if order.payment_status == "paid":
+        return redirect(
+            "order_success",
+            shop_slug=order.shop.slug,
+            order_id=order.id,
+        )
+
+    if not order.final_total or order.final_total <= Decimal("0.00"):
+        messages.error(
+            request,
+            "This order does not have a valid payment amount.",
+        )
+        return redirect(
+            "order_success",
+            shop_slug=order.shop.slug,
+            order_id=order.id,
+        )
+
+    return_url = request.build_absolute_uri(
+        reverse(
+            "order_success",
+            kwargs={
+                "shop_slug": order.shop.slug,
+                "order_id": order.id,
+            },
+        )
+    )
+
+    cancel_url = request.build_absolute_uri(
+        reverse(
+            "order_success",
+            kwargs={
+                "shop_slug": order.shop.slug,
+                "order_id": order.id,
+            },
+        )
+    )
+
+    notify_url = (
+        settings.PAYFAST_PUBLIC_URL.rstrip("/")
+        + reverse("payfast_itn")
+    )
+
+    from .payfast import (
+        get_payfast_url,
+        build_payment_data,
+    )
+
+    payment_data = build_payment_data(
+        order=order,
+        return_url=return_url,
+        cancel_url=cancel_url,
+        notify_url=notify_url,
+    )
+
+    return render(
+        request,
+        "orders/payfast_payment.html",
+        {
+            "payfast_url": get_payfast_url(),
+            "payment_data": payment_data,
+            "order": order,
+        },
+    )
+
+
+
+
+
+
+
+
+
+
 
 

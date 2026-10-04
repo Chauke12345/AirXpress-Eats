@@ -1,445 +1,562 @@
-<style>
-
-    * {
-        box-sizing: border-box;
-    }
-
-    body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background: #f4f4f4;
-        color: #222;
-    }
-
-
-    /* =========================
-       HEADER
-    ========================= */
-
-    .dashboard-header {
-        background: #161616;
-        color: white;
-        padding: 24px 20px;
-    }
-
-    .dashboard-header-inner {
-        max-width: 1000px;
-        margin: 0 auto;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-    }
-
-    .dashboard-header h1 {
-        margin: 0;
-        font-size: 30px;
-    }
-
-    .dashboard-header p {
-        margin: 6px 0 0;
-        color: #f1b24a;
-    }
-
-    .dashboard-header-actions {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .logout-form {
-        margin: 0;
-    }
-
-    .history-link,
-    .logout-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 42px;
-        padding: 10px 18px;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 700;
-        text-decoration: none;
-    }
-
-    .history-link {
-        background: #ffffff;
-        color: #222222;
-    }
-
-    .history-link:hover {
-        background: #eeeeee;
-    }
-
-    .logout-btn {
-        background: #dc3545;
-        color: #ffffff;
-        border: none;
-        cursor: pointer;
-    }
-
-    .logout-btn:hover {
-        opacity: 0.9;
-    }
-
-
-    /* =========================
-       DASHBOARD
-    ========================= */
-
-    .dashboard-container {
-        max-width: 1000px;
-        margin: 30px auto;
-        padding: 0 20px 30px;
-    }
-
-    .order-card {
-        background: white;
-        border-radius: 14px;
-        padding: 24px;
-        margin-bottom: 22px;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
-    }
-
-    .order-card h2 {
-        margin: 0 0 18px;
-        font-size: 24px;
-    }
-
-    .order-meta {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        margin-bottom: 20px;
-    }
-
-    .meta-box {
-        background: #f7f7f7;
-        padding: 12px;
-        border-radius: 8px;
-    }
-
-    .meta-label {
-        display: block;
-        font-size: 13px;
-        color: #777;
-        margin-bottom: 4px;
-    }
-
-    .meta-value {
-        font-weight: 700;
-    }
-
-    .order-items {
-        border-top: 1px solid #eee;
-        border-bottom: 1px solid #eee;
-        padding: 14px 0;
-        margin: 18px 0;
-    }
-
-    .order-item {
-        display: flex;
-        justify-content: space-between;
-        gap: 15px;
-        padding: 8px 0;
-    }
-
-
-    /* =========================
-       ESTIMATED PRICE
-    ========================= */
-
-    .estimated-price {
-        background: #fff5dc;
-        border: 2px solid #e7a52a;
-        padding: 14px;
-        border-radius: 10px;
-        font-weight: 700;
-        margin-bottom: 20px;
-    }
-
-
-    /* =========================
-       UPDATE FORM
-    ========================= */
-
-    .update-form {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-        align-items: end;
-    }
-
-    .form-group label {
-        display: block;
-        font-weight: 700;
-        margin-bottom: 7px;
-    }
-
-    .form-group select,
-    .form-group input {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        font-size: 15px;
-        background: white;
-    }
-
-    .update-btn {
-        width: 100%;
-        padding: 13px 16px;
-        border: none;
-        border-radius: 8px;
-        background: #c9362b;
-        color: white;
-        font-weight: 700;
-        font-size: 16px;
-        cursor: pointer;
-    }
-
-    .update-btn:hover {
-        background: #a82b22;
-    }
-
-
-    /* =========================
-       ORDER STATUS COLOURS
-    ========================= */
-
-    .status-box {
-        border: 2px solid transparent;
-        transition: 0.2s ease;
-    }
-
-    .status-box .meta-label {
-        color: inherit;
-        opacity: 0.75;
-    }
-
-    .status-value {
-        font-size: 17px;
-        font-weight: 800;
-    }
-
-    .status-new {
-        background: #fff4cc;
-        border-color: #e7b52c;
-        color: #795600;
-    }
-
-    .status-preparing {
-        background: #fff0dc;
-        border-color: #e98b2a;
-        color: #8a4700;
-    }
-
-    .status-braaiing {
-        background: #ffe4e1;
-        border-color: #d7473e;
-        color: #9b211a;
-    }
-
-    .status-ready {
-        background: #e1f6e8;
-        border-color: #39a85b;
-        color: #176b31;
-    }
-
-    .status-collected {
-        background: #e1efff;
-        border-color: #4389d8;
-        color: #1d5d9f;
-    }
-
-    .status-cancelled {
-        background: #eeeeee;
-        border-color: #888888;
-        color: #555555;
-    }
-
-
-    /* =========================
-       STATUS UPDATE
-    ========================= */
-
-    .status-update-box {
-        background: #fff8e8;
-        border: 2px solid #e7a52a;
-        border-radius: 10px;
-        padding: 15px;
-    }
-
-    .status-update-box label {
-        display: block;
-        font-weight: 800;
-        margin-bottom: 8px;
-        color: #8a5700;
-    }
-
-    .status-update-box select {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #d8a13b;
-        border-radius: 8px;
-        background: white;
-        font-size: 16px;
-        font-weight: 600;
-    }
-
-
-    /* =========================
-       WHATSAPP
-    ========================= */
-
-    .whatsapp-btn {
-        display: block;
-        margin-top: 16px;
-        padding: 14px 18px;
-        background: #1f8f4d;
-        color: white;
-        text-decoration: none;
-        border-radius: 8px;
-        font-weight: 700;
-        text-align: center;
-    }
-
-    .whatsapp-btn:hover {
-        background: #176f3b;
-    }
-    .counter-order-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 42px;
-    padding: 10px 18px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 700;
-    text-decoration: none;
-
-    background: #c9362b;
-    color: #ffffff;
-}
-
-.counter-order-link:hover {
-    background: #a82b22;
-}
-
-/* =========================================================
-   ORDER SOURCE BADGES
-========================================================= */
-
-.order-title-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 18px;
-}
-
-.order-title-row h2 {
-    margin: 0;
-}
-
-.source-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 7px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
-.counter-source {
-    background: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffe69c;
-}
-
-.online-source {
-    background: #e8f4ff;
-    color: #0b5fa5;
-    border: 1px solid #b6dcff;
-}
-
-
-    /* =========================
-       MOBILE
-    ========================= */
-
-    @media (max-width: 750px) {
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta http-equiv="refresh" content="15">
+
+    <title>{{ shop.name }} | AirXpress Eats Staff Dashboard</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --black: #050505;
+            --dark: #0b0b0b;
+            --dark2: #141414;
+            --dark3: #1c1c1c;
+            --silver: #bdbdbd;
+            --light: #eeeeee;
+            --white: #ffffff;
+            --muted: #8d8d8d;
+            --border: #2d2d2d;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                radial-gradient(circle at top right, #202020 0%, var(--black) 42%, #000000 100%);
+            color: var(--light);
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        button,
+        input,
+        select {
+            font-family: inherit;
+        }
+
+        /* HEADER */
+
+        .dashboard-header {
+            background: rgba(5, 5, 5, 0.97);
+            border-bottom: 1px solid var(--border);
+            padding: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+        }
 
         .dashboard-header-inner {
-            flex-direction: column;
-            align-items: flex-start;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
         }
+
+        .dashboard-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-logo {
+            width: 68px;
+            height: 68px;
+            padding: 6px;
+            background: var(--white);
+            border-radius: 50%;
+            object-fit: contain;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.08);
+        }
+
+        .dashboard-brand h1 {
+            margin: 0;
+            color: var(--white);
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+        }
+
+        .dashboard-brand p {
+            margin: 6px 0 0;
+            color: var(--silver);
+            font-size: 14px;
+        }
+
+        /* HEADER BUTTONS */
 
         .dashboard-header-actions {
-            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        .history-link,
-        .logout-form {
-            flex: 1;
-        }
+        .dashboard-header-actions a,
+        .logout-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
 
-        .history-link {
-            width: 100%;
-            text-align: center;
+            min-height: 42px;
+            padding: 11px 16px;
+
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+.history-link {
+            background: var(--dark2);
+            color: var(--white);
+            border: 1px solid #444444 !important;
         }
 
         .logout-btn {
-            width: 100%;
+            background: #1b1b1b;
+            color: var(--white);
+            border: 1px solid #444444;
+        }
+        .history-link:hover,
+        .logout-btn:hover {
+            transform: translateY(-1px);
+            background: #2a2a2a;
+            color: var(--white);
+        }
+.logout-form {
+            margin: 0;
         }
 
-        .order-meta {
-            grid-template-columns: 1fr;
-        }
-
-        .update-form {
-            grid-template-columns: 1fr;
-        }
+        /* MAIN */
 
         .dashboard-container {
-            padding: 0 12px 24px;
+            width: 100%;
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px 50px;
         }
 
+        /* ORDER CARD */
+
         .order-card {
-            padding: 18px;
+            background:
+                linear-gradient(145deg, #151515, #0d0d0d);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+
+            margin-bottom: 25px;
+            padding: 24px;
+
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+        }
+
+        .order-card:hover {
+            border-color: #454545;
+        }
+
+        /* ORDER HEADER */
+
+        .order-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+
+            border-bottom: 1px solid var(--border);
+        }
+
+        .order-title-row h2 {
+            margin: 0;
+            color: var(--white);
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        /* BADGES */
+
+        .source-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 7px 12px;
+            border-radius: 20px;
+
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+.online-source {
+            background: #eeeeee;
+            color: #111111;
+            border: 1px solid #bbbbbb;
+        }
+
+        /* ORDER META */
+
+        .order-meta {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .meta-box {
+            background: #101010;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .meta-label {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .meta-value {
+            display: block;
+            color: var(--white);
+            font-size: 15px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        /* STATUS */
+
+        .status-box {
+            border-left: 4px solid #777777;
+        }
+
+        .status-value {
+            font-weight: 800;
+        }
+
+        .status-new {
+            border-left-color: #888888;
+        }
+
+        .status-confirmed {
+            border-left-color: #aaaaaa;
+        }
+
+        .status-preparing {
+            border-left-color: #d4d4d4;
+        }
+
+        .status-ready,
+        .status-delivered,
+        .status-collected {
+            border-left-color: #ffffff;
+        }
+
+        .status-assigned,
+        .status-picked_up,
+        .status-on_the_way {
+            border-left-color: #9d9d9d;
+        }
+
+        .status-cancelled {
+            border-left-color: #555555;
+        }
+
+        /* ORDER TYPE / DELIVERY */
+
+        .order-type-box {
+            margin-bottom: 18px;
+        }
+
+        .delivery-information {
+            margin-bottom: 18px;
+        }
+
+        .delivery-instructions {
+            margin-top: 10px;
+        }
+
+        /* ITEMS */
+
+        .order-items {
+            margin: 20px 0;
+            padding: 10px 0;
+
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .order-items-title {
+            margin: 0 0 8px;
+            color: var(--white);
+            font-size: 15px;
+            font-weight: 800;
         }
 
         .order-item {
-            flex-direction: column;
-            gap: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 15px;
+            padding: 12px 0;
+
+            border-bottom: 1px solid #252525;
         }
-    }
 
+        .order-item:last-child {
+            border-bottom: none;
+        }
 
-</style>
+        .order-item-name {
+            color: var(--light);
+            font-weight: 600;
+            line-height: 1.4;
+        }
 
+        .order-item-price {
+            color: var(--white);
+            white-space: nowrap;
+            font-weight: 700;
+        }
 
+        /* TOTAL */
 
-<!DOCTYPE html>
-<html lang="en">
+        .estimated-price {
+            background: #191919;
+            border: 1px solid #4a4a4a;
+            border-radius: 9px;
 
-<head>
+            padding: 15px;
+            margin-bottom: 20px;
 
-    <meta charset="UTF-8">
+            color: var(--white);
+            font-size: 16px;
+            font-weight: 800;
+        }
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+        /* UPDATE FORM */
 
-    <!-- Automatically refresh the staff dashboard every 15 seconds -->
-    <meta http-equiv="refresh" content="15">
+        .update-form {
+            background: #0c0c0c;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
 
-    <title>{{ shop.name }} Staff Dashboard</title>
+        .update-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
 
+        .form-group {
+            margin-bottom: 4px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 7px;
+            color: var(--silver);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+
+            background: #171717;
+            color: var(--white);
+
+            border: 1px solid #3a3a3a;
+            border-radius: 8px;
+
+            font-size: 14px;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #999999;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
+        }
+
+        option {
+            background: #171717;
+            color: var(--white);
+        }
+
+        /* STATUS UPDATE */
+
+        .status-update-box {
+            border-left: 4px solid #777777;
+            padding-left: 14px;
+        }
+
+        /* UPDATE BUTTON */
+
+        .update-button-container {
+            margin-top: 18px;
+        }
+
+        .update-btn {
+            width: 100%;
+            border: 1px solid #555555;
+            border-radius: 8px;
+
+            padding: 14px;
+
+            background: var(--white);
+            color: var(--black);
+
+            font-size: 14px;
+            font-weight: 800;
+
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .update-btn:hover {
+            background: var(--silver);
+        }
+
+        /* WHATSAPP */
+
+        .whatsapp-btn {
+            display: block;
+            margin-top: 12px;
+            padding: 13px 15px;
+
+            background: #1b1b1b;
+            color: var(--white);
+
+            border: 1px solid #444444;
+            border-radius: 8px;
+
+            text-align: center;
+            font-size: 14px;
+            font-weight: 800;
+
+            transition: 0.2s ease;
+        }
+
+        .whatsapp-btn:hover {
+            background: #2b2b2b;
+        }
+
+        /* EMPTY STATE */
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+
+        .empty-state h2 {
+            margin: 0 0 10px;
+            color: var(--white);
+            font-size: 24px;
+        }
+
+        .empty-state p {
+            margin: 0;
+            font-size: 15px;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 900px) {
+            .dashboard-header-inner {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .dashboard-header-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .order-meta,
+            .update-form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .dashboard-header {
+                padding: 16px;
+            }
+
+            .dashboard-brand {
+                align-items: flex-start;
+            }
+
+            .brand-logo {
+                width: 58px;
+                height: 58px;
+            }
+
+            .dashboard-brand h1 {
+                font-size: 22px;
+            }
+
+            .dashboard-header-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .dashboard-header-actions a,
+            .dashboard-header-actions .logout-form,
+            .logout-btn {
+                width: 100%;
+            }
+
+            .dashboard-container {
+                margin: 20px auto;
+                padding: 0 12px 30px;
+            }
+
+            .order-card {
+                padding: 17px;
+            }
+
+            .order-title-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .order-item {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .order-item-price {
+                white-space: normal;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -448,40 +565,40 @@
 
     <div class="dashboard-header-inner">
 
-        <!-- LEFT SIDE -->
-        <div>
-            <h1>
-                {{ shop.name }} Staff Dashboard
-            </h1>
+        <div class="dashboard-brand">
 
-            <p>
-                Manage incoming customer orders
-            </p>
+            <img
+                src="{% static 'orders/images/Airxpress-logo.png' %}"
+                alt="AirXpress Eats"
+                class="brand-logo"
+            >
+
+            <div>
+                <h1>
+                    AirXpress Eats
+                </h1>
+
+                <p>
+                    {{ shop.name }} â€¢ Staff Dashboard
+                </p>
+            </div>
+
         </div>
 
-
-        <!-- RIGHT SIDE -->
         <div class="dashboard-header-actions">
-
-            <a
-                href="{% url 'staff_counter_order' %}"
-                class="counter-order-link"
-            >
-                🏪 New Counter Order
-            </a>
-
-            <a
+<a
                 href="{% url 'staff_order_history' %}"
                 class="history-link"
             >
                 Order History
             </a>
+
             <a
-    href="{% url 'staff_daily_report' %}"
-    class="history-link"
->
-    Daily Report
-</a>
+                href="{% url 'staff_daily_report' %}"
+                class="history-link"
+            >
+                Daily Report
+            </a>
 
             <form
                 method="POST"
@@ -496,7 +613,6 @@
                 >
                     Logout
                 </button>
-
             </form>
 
         </div>
@@ -505,34 +621,22 @@
 
 </header>
 
-<div class="dashboard-container">
+<main class="dashboard-container">
 
     {% for order in orders %}
 
-        <div class="order-card">
+        <section class="order-card">
 
-           <div class="order-title-row">
+            <div class="order-title-row">
 
-    <h2>
-        Order #{{ order.id }}
-    </h2>
+                <h2>
+                    Order #{{ order.id }}
+                </h2>
+                <span class="source-badge online-source">
+                    Online Order
+                </span>
 
-    {% if order.order_source == "counter" %}
-
-        <span class="source-badge counter-source">
-            🏪 Counter Order
-        </span>
-
-    {% else %}
-
-        <span class="source-badge online-source">
-            🌐 Online Order
-        </span>
-
-    {% endif %}
-
-</div>
-
+            </div>
 
             <div class="order-meta">
 
@@ -543,75 +647,166 @@
                     </span>
 
                     <span class="meta-value">
-                        {{ order.customer_name }}
+                        {{ order.customer_name|default:"Not provided" }}
                     </span>
 
                 </div>
-
 
                 <div class="meta-box">
 
                     <span class="meta-label">
-                        Contact
+                        WhatsApp
                     </span>
 
                     <span class="meta-value">
-                        {{ order.whatsapp_number }}
+                        {{ order.whatsapp_number|default:"Not provided" }}
                     </span>
 
                 </div>
 
+                <div
+                    class="meta-box status-box status-{{ order.status }}"
+                >
 
-               <div class="meta-box status-box status-{{ order.status }}">
+                    <span class="meta-label">
+                        Current Status
+                    </span>
 
-    <span class="meta-label">
-        Current Status
-    </span>
+                    <span class="meta-value status-value">
+                        {{ order.get_status_display }}
+                    </span>
 
-    <span class="meta-value status-value">
-        {{ order.get_status_display }}
-    </span>
-
-</div>
+                </div>
 
             </div>
 
+            <div class="meta-box order-type-box">
+
+                <span class="meta-label">
+                    Order Type
+                </span>
+
+                <span class="meta-value">
+
+                    Delivery
+
+                </span>
+
+            </div>
+
+            {% if order.order_type == "delivery" %}
+
+                <div class="delivery-information">
+
+                    {% if order.delivery_address %}
+
+                        <div class="meta-box">
+
+                            <span class="meta-label">
+                                Delivery Address
+                            </span>
+
+                            <span class="meta-value">
+
+                                {{ order.delivery_address }}
+
+                                {% if order.delivery_suburb %}
+                                    , {{ order.delivery_suburb }}
+                                {% endif %}
+
+                                {% if order.delivery_city %}
+                                    , {{ order.delivery_city }}
+                                {% endif %}
+
+                                {% if order.delivery_postal_code %}
+                                    , {{ order.delivery_postal_code }}
+                                {% endif %}
+
+                            </span>
+
+                        </div>
+
+                    {% endif %}
+
+                    {% if order.delivery_instructions %}
+
+                        <div class="meta-box delivery-instructions">
+
+                            <span class="meta-label">
+                                Delivery Instructions
+                            </span>
+
+                            <span class="meta-value">
+                                {{ order.delivery_instructions }}
+                            </span>
+
+                        </div>
+
+                    {% endif %}
+
+                    {% if order.delivery_distance_km %}
+
+                        <div class="meta-box delivery-instructions">
+
+                            <span class="meta-label">
+                                Delivery Distance
+                            </span>
+
+                            <span class="meta-value">
+                                {{ order.delivery_distance_km }} km
+                            </span>
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            {% endif %}
 
             <div class="order-items">
+
+                <p class="order-items-title">
+                    Order Items
+                </p>
 
                 {% for item in order.items.all %}
 
                     <div class="order-item">
 
-                        <span>
+                        <span class="order-item-name">
 
                             {{ item.menu_item.name }}
 
                             {% if item.menu_item.pricing_type == "fixed" %}
-                                ×{{ item.quantity }}
+                                Ã— {{ item.quantity }}
                             {% endif %}
 
                         </span>
 
-
-                        <strong>
+                        <strong class="order-item-price">
                             R{{ item.requested_amount }}
                         </strong>
 
                     </div>
 
+                {% empty %}
+
+                    <p>
+                        No items found for this order.
+                    </p>
+
                 {% endfor %}
 
             </div>
 
-
             <div class="estimated-price">
 
-                Estimated Price:
-                R{{ order.estimated_total }}
+                Estimated Order Total:
+
+                R{{ order.estimated_total|default:"0.00" }}
 
             </div>
-
 
             <form
                 method="POST"
@@ -621,166 +816,255 @@
 
                 {% csrf_token %}
 
+                <div class="update-form-grid">
 
-                <div class="form-group">
+                    {% if order.order_type == "delivery" %}
 
-                    <label>
-                        Braai Master
-                    </label>
+                        <div class="form-group">
 
-                    <select name="braai_master">
+                            <label for="driver-{{ order.id }}">
+                                Delivery Driver
+                            </label>
 
-                        <option value="">
-                            Not assigned
-                        </option>
+                            <select
+                                name="driver"
+                                id="driver-{{ order.id }}"
+                            >
 
-                        {% for master in braai_masters %}
+                                <option value="">
+                                    Not assigned
+                                </option>
+
+                                {% for driver in drivers %}
+
+                                    <option
+                                        value="{{ driver.id }}"
+                                        {% if order.driver_id == driver.id %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        {{ driver.name }}
+                                    </option>
+
+                                {% empty %}
+
+                                    <option value="" disabled>
+                                        No drivers available
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+                    {% endif %}
+
+                    <div class="form-group">
+
+                        <label for="payment-status-{{ order.id }}">
+                            Payment Status
+                        </label>
+
+                        <select
+                            name="payment_status"
+                            id="payment-status-{{ order.id }}"
+                        >
 
                             <option
-                                value="{{ master.id }}"
-                                {% if order.braai_master_id == master.id %}
+                                value="pending"
+                                {% if order.payment_status == "pending" %}
                                     selected
                                 {% endif %}
                             >
-                                {{ master.name }}
+                                Payment Pending
                             </option>
 
-                        {% endfor %}
-
-                    </select>
-
-                </div>
-
-                {% if order.order_source == "counter" %}
-
-    <div class="form-group">
-
-        <label>
-            Payment Status
-        </label>
-
-        <select name="payment_status">
-
-            <option
-                value="pending"
-                {% if order.payment_status == "pending" %}
-                    selected
-                {% endif %}
-            >
-                Payment Pending
-            </option>
-
-            <option
-                value="paid"
-                {% if order.payment_status == "paid" %}
-                    selected
-                {% endif %}
-            >
-                ✓ Paid
-            </option>
-
-        </select>
-
-    </div>
-
-{% endif %}
-
-
-               <div class="form-group status-update-box">
-
-    <label>
-        Update Status
-    </label>
-
-    <select name="status">
-
-                        {% for value, label in order.STATUS_CHOICES %}
-
                             <option
-                                value="{{ value }}"
-                                {% if order.status == value %}
+                                value="paid"
+                                {% if order.payment_status == "paid" %}
                                     selected
                                 {% endif %}
                             >
-                                {{ label }}
+                                Paid
                             </option>
 
-                        {% endfor %}
+                            <option
+                                value="failed"
+                                {% if order.payment_status == "failed" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Payment Failed
+                            </option>
 
-                    </select>
+                            <option
+                                value="refunded"
+                                {% if order.payment_status == "refunded" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Refunded
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="form-group status-update-box">
+
+                        <label for="status-{{ order.id }}">
+                            Update Order Status
+                        </label>
+
+                        <select
+                            name="status"
+                            id="status-{{ order.id }}"
+                        >
+
+                            {% for value, label in order.STATUS_CHOICES %}
+
+                                <option
+                                    value="{{ value }}"
+                                    {% if order.status == value %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ label }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>
+                            Delivery Distance
+                        </label>
+
+                        <div class="delivery-fee-display">
+                            {% if order.delivery_distance_km %}
+                                {{ order.delivery_distance_km }} km
+                            {% else %}
+                                Automatically calculated at pickup
+                            {% endif %}
+                        </div>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>
+                            Delivery Fee
+                        </label>
+
+                        <div class="delivery-fee-display">
+                            R{{ order.delivery_fee|default:"0.00" }}
+                        </div>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>
+                            Final Total
+                        </label>
+
+                        <div class="delivery-fee-display">
+                            {% if order.final_total %}
+                                R{{ order.final_total }}
+                            {% else %}
+                                Automatically calculated at pickup
+                            {% endif %}
+                        </div>
+
+                    </div>
 
                 </div>
 
+                <div class="update-button-container">
 
-                <div class="form-group">
-
-                    <label>
-                        Final Total
-                    </label>
-
-                    <input
-                        type="number"
-                        name="final_total"
-                        step="0.01"
-                        min="0"
-                        value="{{ order.final_total|default_if_none:'' }}"
-                        placeholder="Enter final total"
+                    <button
+                        type="submit"
+                        class="update-btn"
                     >
+                        Update Order
+                    </button>
 
                 </div>
 
+            </form>
 
-                <button
-                    type="submit"
-                    class="update-btn"
+            {% if order.status == "preparing" and order.final_total %}
+
+                <a
+                    href="https://wa.me/27{{ order.whatsapp_number|slice:'1:' }}?text=Hi%20{{ order.customer_name|urlencode }}%2C%20your%20{{ shop.name|urlencode }}%20order%20%23{{ order.id }}%20has%20been%20confirmed%20and%20is%20being%20prepared.%20Your%20confirmed%20order%20total%20is%20R{{ order.final_total }}.%20We%20will%20notify%20you%20when%20your%20order%20is%20ready.%20Thank%20you."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="whatsapp-btn"
                 >
-                    Update Order
-                </button>
+                    Send Confirmed Price on WhatsApp
+                </a>
 
-          </form>
+            {% endif %}
 
+            {% if order.status == "ready" %}
 
-<!-- =========================================
-     PREPARING ORDER WHATSAPP
-========================================== -->
+                <a
+                    href="https://wa.me/27{{ order.whatsapp_number|slice:'1:' }}?text=Hi%20{{ order.customer_name|urlencode }}%2C%20your%20{{ shop.name|urlencode }}%20order%20%23{{ order.id }}%20is%20ready.%20Final%20total%3A%20R{{ order.final_total|default:order.estimated_total }}.%20Thank%20you."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="whatsapp-btn"
+                >
+                    Send Ready Notification on WhatsApp
+                </a>
 
-{% if order.status == "preparing" and order.final_total %}
+            {% endif %}
 
-    <a
-        href="https://wa.me/27{{ order.whatsapp_number|slice:'1:' }}?text=Hi%20{{ order.customer_name|urlencode }}%2C%20your%20{{ shop.name|urlencode }}%20order%20%23{{ order.id }}%20has%20been%20confirmed%20and%20is%20being%20prepared.%20Your%20confirmed%20order%20total%20is%20R{{ order.final_total }}.%20We%27ll%20notify%20you%20when%20your%20order%20is%20ready.%20Thank%20you.%20🔥"
-        target="_blank"
-        class="whatsapp-btn"
-    >
-        Send Confirmed Price on WhatsApp
-    </a>
+            {% if order.status == "on_the_way" %}
 
-{% endif %}
+                <a
+                    href="https://wa.me/27{{ order.whatsapp_number|slice:'1:' }}?text=Hi%20{{ order.customer_name|urlencode }}%2C%20your%20{{ shop.name|urlencode }}%20order%20%23{{ order.id }}%20is%20on%20the%20way.%20Thank%20you%20for%20using%20AirXpress%20Eats."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="whatsapp-btn"
+                >
+                    Send Delivery Update on WhatsApp
+                </a>
 
+            {% endif %}
 
-<!-- =========================================
-     READY FOR COLLECTION WHATSAPP
-========================================== -->
-
-{% if order.status == "ready" %}
-
-    <a
-        href="https://wa.me/27{{ order.whatsapp_number|slice:'1:' }}?text=Hi%20{{ order.customer_name|urlencode }}%2C%20your%20{{ shop.name|urlencode }}%20order%20%23{{ order.id }}%20is%20ready%20for%20collection.%20Final%20total%3A%20R{{ order.final_total|default:order.estimated_total }}.%20Thank%20you.%20🔥"
-        target="_blank"
-        class="whatsapp-btn"
-    >
-        Send Ready Notification on WhatsApp
-    </a>
-
-{% endif %}
-
-        </div>
+        </section>
 
     {% empty %}
 
-        <div class="order-card">
-            No active orders.
-        </div>
+        <section class="order-card empty-state">
+
+            <h2>
+                No Active Orders
+            </h2>
+
+            <p>
+                New AirXpress Eats orders will appear here.
+            </p>
+
+        </section>
 
     {% endfor %}
 
-</div>
+</main>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+

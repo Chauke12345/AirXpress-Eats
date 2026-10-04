@@ -1,9 +1,10 @@
-from django.contrib import admin
+﻿from django.contrib import admin
 
 from .models import (
     Shop,
     StaffProfile,
     BraaiMaster,
+    Driver,
     Category,
     MenuItem,
     Order,
@@ -323,3 +324,34 @@ class OrderStatusHistoryAdmin(admin.ModelAdmin):
     ordering = (
         "-created_at",
     )
+# =========================================================
+# DRIVER ADMIN
+# =========================================================
+
+@admin.register(Driver)
+class DriverAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "name",
+        "shop",
+        "is_available",
+        "created_at",
+    )
+
+    list_filter = (
+        "shop",
+        "is_available",
+    )
+
+    search_fields = (
+        "name",
+        "shop__name",
+    )
+
+    readonly_fields = (
+        "created_at",
+    )
+
+
+# =========================================================
+

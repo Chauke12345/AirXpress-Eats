@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -10,9 +10,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>
-        Order Confirmed
-    </title>
+    <title>Order Confirmed | AirXpress Eats</title>
 
     <style>
 
@@ -23,7 +21,7 @@
         body {
             margin: 0;
             padding: 20px;
-            font-family: Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             background: #f5f5f5;
             color: #222;
         }
@@ -34,24 +32,57 @@
             margin: 40px auto;
             background: #ffffff;
             padding: 30px;
-            border-radius: 14px;
+            border-radius: 16px;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
         }
 
+        .brand {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .brand img {
+            width: 150px;
+            max-width: 60%;
+            height: auto;
+            display: inline-block;
+        }
+
         .success-icon {
-            font-size: 42px;
+            text-align: center;
+            font-size: 46px;
             margin-bottom: 10px;
         }
 
         h1 {
-            margin: 0 0 5px;
+            margin: 0 0 8px;
             font-size: 32px;
+            text-align: center;
+            color: #161616;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin: 0 0 20px;
+            line-height: 1.6;
         }
 
         .order-number {
+            text-align: center;
             color: #777;
             margin-bottom: 25px;
             font-weight: 600;
+        }
+
+        .customer-message {
+            text-align: center;
+            line-height: 1.7;
+            margin-bottom: 25px;
+        }
+
+        .customer-message strong {
+            color: #161616;
         }
 
         .order-items {
@@ -59,6 +90,13 @@
             border-top: 1px solid #eee;
             border-bottom: 1px solid #eee;
             padding: 15px 0;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #161616;
         }
 
         .order-item {
@@ -72,11 +110,13 @@
         .item-details {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 5px;
+            min-width: 0;
         }
 
         .item-name {
             font-weight: 600;
+            word-break: break-word;
         }
 
         .item-meta {
@@ -93,25 +133,27 @@
             background: #fff5dc;
             border: 2px solid #e7a52a;
             padding: 20px;
-            border-radius: 10px;
+            border-radius: 12px;
             margin-bottom: 25px;
         }
 
         .total-label {
             color: #666;
-            font-size: 15px;
+            font-size: 14px;
+            margin-bottom: 5px;
         }
 
         .total-amount {
             font-size: 30px;
             font-weight: bold;
             margin-top: 5px;
+            color: #161616;
         }
 
         .info-box {
             background: #f3f3f3;
             padding: 20px;
-            border-radius: 10px;
+            border-radius: 12px;
             margin-top: 20px;
             line-height: 1.6;
         }
@@ -120,67 +162,78 @@
             margin: 8px 0;
         }
 
+        .info-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #161616;
+        }
+
         .status {
             display: inline-block;
             font-weight: bold;
             color: #c9362b;
         }
 
-        .back-link {
-            display: inline-block;
-            margin-top: 25px;
-            padding: 12px 18px;
-            background: #161616;
-            color: #ffffff;
-            text-decoration: none;
+        .status-box {
+            margin-top: 15px;
+            padding: 12px 15px;
+            background: #ffffff;
             border-radius: 8px;
-            font-weight: bold;
+            border: 1px solid #ddd;
         }
 
-        .back-link:hover {
-            background: #c9362b;
+        .address-box {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 12px;
+            border: 1px solid #ddd;
         }
 
         .action-buttons {
-    display: flex;
-    gap: 12px;
-    margin-top: 25px;
-}
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+        }
 
-.done-btn,
-.back-link {
-    flex: 1;
-    display: block;
-    margin-top: 0;
-    padding: 14px 18px;
-    text-align: center;
-    text-decoration: none;
-    border-radius: 8px;
-    font-weight: bold;
-}
+        .done-btn,
+        .back-link {
+            flex: 1;
+            display: block;
+            padding: 14px 18px;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: 0.2s ease;
+        }
 
-.done-btn {
-    background: #c9362b;
-    color: white;
-}
+        .done-btn {
+            background: #c9362b;
+            color: #ffffff;
+        }
 
-.done-btn:hover {
-    background: #a82b22;
-}
+        .done-btn:hover {
+            background: #a82b22;
+        }
 
-.back-link {
-    background: #161616;
-    color: white;
-}
+        .back-link {
+            background: #161616;
+            color: #ffffff;
+        }
 
-.back-link:hover {
-    background: #333;
-}
+        .back-link:hover {
+            background: #333333;
+        }
 
-
-        /* ================================
-           MOBILE
-        ================================= */
+        .footer-note {
+            text-align: center;
+            color: #888;
+            font-size: 13px;
+            margin-top: 25px;
+            line-height: 1.5;
+        }
 
         @media (max-width: 700px) {
 
@@ -190,7 +243,12 @@
 
             .confirmation-card {
                 margin: 15px auto;
-                padding: 22px 18px;
+                padding: 24px 18px;
+                border-radius: 12px;
+            }
+
+            .brand img {
+                width: 125px;
             }
 
             h1 {
@@ -198,7 +256,7 @@
             }
 
             .success-icon {
-                font-size: 36px;
+                font-size: 38px;
             }
 
             .total-amount {
@@ -210,10 +268,15 @@
                 align-items: flex-start;
             }
 
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .done-btn,
             .back-link {
                 width: 100%;
-                text-align: center;
             }
+
         }
 
     </style>
@@ -223,12 +286,25 @@
 
 <body>
 
-
 <div class="confirmation-card">
 
 
+    <!-- AIRXPRESS EATS BRAND -->
+
+    <div class="brand">
+
+        <img
+            src="/static/orders/images/Airxpress-logo.png"
+            alt="AirXpress Eats"
+        >
+
+    </div>
+
+
+    <!-- SUCCESS -->
+
     <div class="success-icon">
-        🔥
+        âœ“
     </div>
 
 
@@ -237,42 +313,39 @@
     </h1>
 
 
+    <p class="subtitle">
+        Thank you for choosing AirXpress Eats.
+    </p>
+
+
     <div class="order-number">
         Order #{{ order.id }}
     </div>
 
 
-    <p>
-        Thank you,
-        <strong>
-            {{ order.customer_name }}
-        </strong>.
-    </p>
-
-
-    <p>
-        Your order has been received by {{ order.shop.name }}.
-    </p>
-
-
-    {% if order.braai_master %}
+    <div class="customer-message">
 
         <p>
-            <strong>
-                Braai Master:
-            </strong>
-
-            {{ order.braai_master.name }}
+            Thank you,
+            <strong>{{ order.customer_name }}</strong>.
         </p>
 
-    {% endif %}
+        <p>
+            Your order has been received by
+            <strong>{{ order.shop.name }}</strong>.
+        </p>
+
+    </div>
 
 
-    <!-- ==========================================
-         ORDER ITEMS
-    =========================================== -->
+    <!-- ORDER ITEMS -->
 
     <div class="order-items">
+
+        <div class="section-title">
+            Your Order
+        </div>
+
 
         {% for item in order.items.all %}
 
@@ -285,7 +358,7 @@
                         {{ item.menu_item.name }}
 
                         {% if item.menu_item.pricing_type == "fixed" %}
-                            ×{{ item.quantity }}
+                            Ã—{{ item.quantity }}
                         {% endif %}
 
                     </div>
@@ -294,10 +367,7 @@
                     {% if item.menu_item.pricing_type == "fixed" %}
 
                         <div class="item-meta">
-
-                            R{{ item.unit_price }}
-                            each
-
+                            R{{ item.unit_price }} each
                         </div>
 
                     {% endif %}
@@ -306,12 +376,11 @@
 
 
                 <div class="item-amount">
-
                     R{{ item.requested_amount }}
-
                 </div>
 
             </div>
+
 
         {% empty %}
 
@@ -321,102 +390,208 @@
 
         {% endfor %}
 
-    </div>
-
-
-    <!-- ==========================================
-         TOTAL
-    =========================================== -->
+    </div>    
+    <!-- ORDER TOTAL -->
 
     <div class="total-box">
 
         <div class="total-label">
-            Requested Total
+            Order Pricing
         </div>
 
-        <div class="total-amount">
-            R{{ order.estimated_total }}
+        <div class="pricing-row">
+            <span>
+                Food Subtotal
+            </span>
+
+            <strong>
+                R{{ order.estimated_total }}
+            </strong>
+        </div>
+
+        <div class="pricing-row">
+            <span>
+                Delivery Fee
+            </span>
+
+            <strong>
+                R{{ order.delivery_fee }}
+            </strong>
+        </div>
+
+        <div class="pricing-row">
+            <span>
+                AirXpress Fee
+            </span>
+
+            <strong>
+                R{{ order.platform_fee }}
+            </strong>
+        </div>
+
+        {% if order.delivery_distance_km %}
+
+            <div class="pricing-row">
+                <span>
+                    Delivery Distance
+                </span>
+
+                <strong>
+                    {{ order.delivery_distance_km }} km
+                </strong>
+            </div>
+
+        {% endif %}
+
+        <div class="pricing-row pricing-total">
+            <span>
+                Total Confirmed
+            </span>
+
+            <strong>
+                R{{ order.final_total }}
+            </strong>
         </div>
 
     </div>
 
-
-    <!-- ==========================================
-         ORDER INFORMATION
-    =========================================== -->
+<!-- ORDER INFORMATION -->
 
     <div class="info-box">
 
-        {% if order.order_type == "premises" %}
+        <div class="info-title">
+            Order Information
+        </div>
+
+
+        
 
             <p>
                 <strong>
-                    Ordering at {{ order.shop.name }}
+                    Delivery Order
                 </strong>
             </p>
 
             <p>
-                Please proceed to the counter to confirm your order
-                and make payment.
+                Your order has been received by
+                {{ order.shop.name }}
+                and will now be prepared.
             </p>
 
-        {% else %}
+
+            {% if order.delivery_address %}
+
+                <div class="address-box">
+
+                    <strong>
+                        Delivery Address
+                    </strong>
+
+                    <br>
+
+                    {{ order.delivery_address }}
+
+
+                    {% if order.delivery_suburb %}
+                        <br>
+                        {{ order.delivery_suburb }}
+                    
+
+
+                    {% if order.delivery_city %}
+                        <br>
+                        {{ order.delivery_city }}
+                    {% endif %}
+
+
+                    {% if order.delivery_postal_code %}
+                        <br>
+                        {{ order.delivery_postal_code }}
+                    {% endif %}
+
+                </div>
+
+            {% endif %}
+
+
+            {% if order.delivery_instructions %}
+
+                <div class="address-box">
+
+                    <strong>
+                        Delivery Instructions
+                    </strong>
+
+                    <br>
+
+                    {{ order.delivery_instructions }}
+
+                </div>
+
+            {% endif %}
+
 
             <p>
-                <strong>
-                    Collection Order
-                </strong>
-            </p>
-
-            <p>
-                Your order has been received and will be prepared.
-            </p>
-
-            <p>
-                You will be notified when your order is ready
-                for collection.
-            </p>
-
-            <p>
-                Payment will be made when you collect your order.
+                You will receive updates as your order
+                moves through preparation and delivery.
             </p>
 
         {% endif %}
 
 
-        <p>
-            Current status:
+        <!-- CURRENT STATUS -->
+
+        <div class="status-box">
+
+            <strong>
+                Current Status:
+            </strong>
 
             <span class="status">
                 {{ order.get_status_display }}
             </span>
 
-        </p>
+        </div>
 
     </div>
 
 
-   <div class="action-buttons">
+    <!-- ACTION BUTTONS -->
 
-    <a
-        href="{% url 'customer_order' shop_slug=order.shop.slug %}"
-        class="done-btn"
-    >
-        ✓ Done
-    </a>
+    <div class="action-buttons">
 
-    <a
-        href="{% url 'customer_order' shop_slug=order.shop.slug %}"
-        class="back-link"
-    >
-        Place Another Order →
-    </a>
+        <a
+            href="{% url 'customer_order' shop_slug=order.shop.slug %}"
+            class="done-btn"
+        >
+            âœ“ Done
+        </a>
+
+
+        <a
+            href="{% url 'customer_order' shop_slug=order.shop.slug %}"
+            class="back-link"
+        >
+            Place Another Order â†’
+        </a>
+
+    </div>
+
+
+    <!-- FOOTER -->
+
+    <div class="footer-note">
+
+        AirXpress Eats Â· Your food. Your way.
+
+        <br>
+
+        Thank you for ordering with us.
+
+    </div>
+
 
 </div>
-
-
-</div>
-
 
 </body>
 

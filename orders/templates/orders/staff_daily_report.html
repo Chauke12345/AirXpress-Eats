@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -21,8 +21,8 @@
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            background: #f4f4f4;
-            color: #222;
+            background: #050505;
+            color: #eeeeee;
         }
 
 
@@ -76,12 +76,12 @@
         }
 
         .back-btn {
-            background: white;
-            color: #222;
+            background: #111111;
+            color: #eeeeee;
         }
 
         .print-btn {
-            background: #c9362b;
+            background: #333333;
             color: white;
         }
 
@@ -102,7 +102,7 @@
         ========================================== */
 
         .date-card {
-            background: white;
+            background: #111111;
             border-radius: 14px;
             padding: 22px;
             margin-bottom: 24px;
@@ -133,14 +133,14 @@
             border: 1px solid #ccc;
             border-radius: 8px;
             font-size: 15px;
-            background: white;
+            background: #111111;
         }
 
         .generate-btn {
             padding: 13px 20px;
             border: none;
             border-radius: 8px;
-            background: #c9362b;
+            background: #333333;
             color: white;
             font-size: 15px;
             font-weight: 700;
@@ -163,7 +163,7 @@
 
         .report-title p {
             margin: 0;
-            color: #777;
+            color: #999999;
         }
 
 
@@ -179,7 +179,7 @@
         }
 
         .summary-card {
-            background: white;
+            background: #111111;
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
@@ -187,7 +187,7 @@
 
         .summary-label {
             display: block;
-            color: #777;
+            color: #999999;
             font-size: 13px;
             margin-bottom: 8px;
         }
@@ -220,7 +220,7 @@
         ========================================== */
 
         .report-section {
-            background: white;
+            background: #111111;
             border-radius: 14px;
             padding: 24px;
             margin-bottom: 24px;
@@ -241,14 +241,14 @@
         }
 
         .stat-box {
-            background: #f7f7f7;
+            background: #181818;
             padding: 15px;
             border-radius: 9px;
         }
 
         .stat-label {
             display: block;
-            color: #777;
+            color: #999999;
             font-size: 13px;
             margin-bottom: 5px;
         }
@@ -310,12 +310,12 @@
         }
 
         .status-new {
-            background: #fff4cc;
+            background: #252525;
             color: #795600;
         }
 
         .status-preparing {
-            background: #fff0dc;
+            background: #252525;
             color: #8a4700;
         }
 
@@ -325,17 +325,17 @@
         }
 
         .status-ready {
-            background: #e1f6e8;
+            background: #252525;
             color: #176b31;
         }
 
         .status-collected {
-            background: #e1efff;
+            background: #252525;
             color: #1d5d9f;
         }
 
         .status-cancelled {
-            background: #eeeeee;
+            background: #202020;
             color: #555;
         }
 
@@ -356,10 +356,10 @@
 
         .empty-message {
             padding: 20px;
-            background: #f7f7f7;
+            background: #181818;
             border-radius: 8px;
             text-align: center;
-            color: #777;
+            color: #999999;
         }
 
 
@@ -428,11 +428,11 @@
         @media print {
 
             body {
-                background: white;
+                background: #111111;
             }
 
             .report-header {
-                background: white;
+                background: #111111;
                 color: black;
                 padding: 0 0 20px;
             }
@@ -500,7 +500,7 @@
                 href="{% url 'staff_dashboard' %}"
                 class="header-btn back-btn"
             >
-                ← Staff Dashboard
+                â† Staff Dashboard
             </a>
 
             <button
@@ -755,20 +755,6 @@
                 <span class="stat-value">{{ online_orders }}</span>
             </div>
 
-            <div class="stat-box">
-                <span class="stat-label">Over the Counter</span>
-                <span class="stat-value">{{ counter_orders }}</span>
-            </div>
-
-            <div class="stat-box">
-                <span class="stat-label">Premises Orders</span>
-                <span class="stat-value">{{ premises_orders }}</span>
-            </div>
-
-            <div class="stat-box">
-                <span class="stat-label">Collection</span>
-                <span class="stat-value">{{ collection_orders }}</span>
-            </div>
 
             <div class="stat-box">
                 <span class="stat-label">Paid Orders</span>
@@ -868,16 +854,16 @@
 
 
     <!-- =========================================
-         BRAAI MASTER
+         DRIVER
     ========================================== -->
 
     <section class="report-section">
 
         <h3>
-            Braai Master Activity
+            DRIVER Activity
         </h3>
 
-        {% if braai_master_report %}
+        {% if driver_report %}
 
             <div class="table-wrapper">
 
@@ -885,22 +871,22 @@
 
                     <thead>
                         <tr>
-                            <th>Braai Master</th>
+                            <th>DRIVER</th>
                             <th>Orders Assigned</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                        {% for master in braai_master_report %}
+                        {% for driver in driver_report %}
 
                             <tr>
                                 <td>
-                                    {{ master.braai_master__name }}
+                                    {{ driver.braai_driver__name }}
                                 </td>
 
                                 <td>
-                                    {{ master.order_count }}
+                                    {{ driver.order_count }}
                                 </td>
                             </tr>
 
@@ -915,7 +901,7 @@
         {% else %}
 
             <div class="empty-message">
-                No Braai Master activity for this date.
+                No DRIVER activity for this date.
             </div>
 
         {% endif %}
@@ -1046,3 +1032,5 @@
 
 </body>
 </html>
+
+

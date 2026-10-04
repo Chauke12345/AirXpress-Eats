@@ -1,3 +1,5 @@
+﻿{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -10,9 +12,24 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>{{ shop.name }} Order History</title>
+    <title>AirXpress Eats | Order History</title>
 
     <style>
+
+        :root {
+            --black: #050505;
+            --dark: #0b0b0b;
+            --dark2: #141414;
+            --dark3: #1c1c1c;
+            --silver: #bdbdbd;
+            --light: #eeeeee;
+            --white: #ffffff;
+            --muted: #8d8d8d;
+            --green: #5fd17b;
+            --green-dark: #123d20;
+            --red: #ff6666;
+            --red-dark: #421818;
+        }
 
         * {
             box-sizing: border-box;
@@ -20,9 +37,16 @@
 
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            color: #222;
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                radial-gradient(
+                    circle at top,
+                    #202020 0%,
+                    #0b0b0b 42%,
+                    #050505 100%
+                );
+            color: var(--white);
+            min-height: 100vh;
         }
 
 
@@ -31,35 +55,64 @@
         ========================= */
 
         .history-header {
-            background: #161616;
-            color: white;
-            padding: 28px 20px;
+            background: rgba(5, 5, 5, 0.96);
+            border-bottom: 1px solid rgba(255,255,255,0.10);
+            padding: 30px 20px;
         }
 
         .history-header-inner {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 22px;
         }
 
-        .history-header h1 {
+        .brand-logo {
+            width: 82px;`r`n            height: 82px;
+            object-fit: contain;
+            background: white;
+            border-radius: 50%;
+            padding: 6px;`r`n            flex-shrink: 0;
+            box-shadow:
+                0 0 0 1px rgba(255,255,255,0.15),
+                0 8px 25px rgba(0,0,0,0.45);
+        }
+
+        .header-text h1 {
             margin: 0;
             font-size: 30px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
         }
 
-        .history-header p {
+        .header-text p {
             margin: 7px 0 0;
-            color: #f1b24a;
+            color: var(--silver);
+            font-size: 15px;
+        }
+
+        .silver-line {
+            width: 55px;
+            height: 3px;
+            margin-top: 13px;
+            background: linear-gradient(
+                90deg,
+                #ffffff,
+                #777777
+            );
+            border-radius: 10px;
         }
 
 
         /* =========================
-           CONTAINER
+           MAIN CONTAINER
         ========================= */
 
         .history-container {
-            max-width: 1000px;
-            margin: 30px auto;
-            padding: 0 20px;
+            max-width: 1100px;
+            margin: 35px auto;
+            padding: 0 20px 50px;
         }
 
 
@@ -68,21 +121,28 @@
         ========================= */
 
         .history-nav {
-            margin-bottom: 25px;
+            margin-bottom: 24px;
         }
 
         .dashboard-link {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
             padding: 12px 18px;
-            background: #161616;
-            color: white;
+            background: var(--dark2);
+            color: var(--white);
             text-decoration: none;
-            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            font-size: 14px;
             font-weight: 700;
+            transition: 0.2s ease;
         }
 
         .dashboard-link:hover {
-            background: #c9362b;
+            background: #242424;
+            border-color: rgba(255,255,255,0.30);
+            transform: translateY(-1px);
         }
 
 
@@ -91,45 +151,133 @@
         ========================= */
 
         .order-card {
-            background: white;
-            border-radius: 14px;
-            padding: 24px;
-            margin-bottom: 22px;
-            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+            background:
+                linear-gradient(
+                    145deg,
+                    #181818,
+                    #0d0d0d
+                );
+
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 18px;
+            padding: 26px;
+            margin-bottom: 25px;
+
+            box-shadow:
+                0 18px 45px rgba(0,0,0,0.35);
+
+            transition:
+                transform 0.2s ease,
+                border-color 0.2s ease;
         }
 
-        .order-card h2 {
-            margin: 0 0 20px;
+        .order-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.20);
         }
 
 
         /* =========================
-           ORDER INFORMATION
+           ORDER TITLE
+        ========================= */
+
+        .order-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 18px;
+        }
+
+        .order-heading h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .order-number {
+            color: var(--silver);
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+
+        /* =========================
+           BADGES
+        ========================= */
+
+        .history-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-bottom: 22px;
+        }
+
+        .source-badge,
+        .payment-badge {
+            display: inline-flex;
+            align-items: center;
+            min-height: 32px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+        }
+
+        .source-badge {
+            background: #242424;
+            color: #eeeeee;
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .payment-badge.paid {
+            background: var(--green-dark);
+            color: #8df0a5;
+            border: 1px solid rgba(95,209,123,0.30);
+        }
+
+        .payment-badge.pending {
+            background: #292929;
+            color: #cccccc;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+
+        /* =========================
+           CUSTOMER INFORMATION
         ========================= */
 
         .order-meta {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 22px;
         }
 
         .meta-box {
-            background: #f7f7f7;
-            border-radius: 10px;
-            padding: 14px;
+            background: rgba(255,255,255,0.045);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 15px;
         }
 
         .meta-label {
             display: block;
-            color: #777;
-            font-size: 13px;
-            margin-bottom: 5px;
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            margin-bottom: 7px;
         }
 
         .meta-value {
             display: block;
+            color: var(--white);
+            font-size: 15px;
             font-weight: 700;
+            word-break: break-word;
         }
 
 
@@ -137,79 +285,78 @@
            STATUS
         ========================= */
 
-        .status {
-            display: inline-block;
-            padding: 6px 10px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 700;
+        .history-status-box {
+            border: 1px solid rgba(255,255,255,0.12);
         }
 
-        .status-collected {
-            background: #e5f6ea;
-            color: #217a3c;
+        .history-status-collected {
+            background: rgba(55, 150, 75, 0.14);
+            border-color: rgba(95,209,123,0.45);
         }
 
-        .status-cancelled {
-            background: #fde8e6;
-            color: #b52e24;
+        .history-status-collected .meta-label {
+            color: #79d98e;
         }
-        /* =========================
-   HISTORY STATUS COLOURS
-========================= */
 
-.history-status-box {
-    border: 2px solid transparent;
-}
+        .history-status-collected .meta-value {
+            color: #8df0a5;
+        }
 
-.history-status-collected {
-    background: #e4f7e9;
-    border-color: #39a85b;
-    color: #176b31;
-}
+        .history-status-cancelled {
+            background: rgba(180,50,50,0.12);
+            border-color: rgba(255,102,102,0.35);
+        }
 
-.history-status-cancelled {
-    background: #f1f1f1;
-    border-color: #888;
-    color: #555;
-}
+        .history-status-cancelled .meta-label {
+            color: #ff8585;
+        }
 
-.history-status-box .meta-label {
-    color: inherit;
-    opacity: 0.75;
-}
-
-.history-status-box .meta-value {
-    font-size: 17px;
-    font-weight: 800;
-}
+        .history-status-cancelled .meta-value {
+            color: #ff9999;
+        }
 
 
         /* =========================
            ORDER ITEMS
         ========================= */
 
+        .section-title {
+            color: var(--silver);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
         .order-items {
-            border-top: 1px solid #eee;
-            border-bottom: 1px solid #eee;
-            padding: 10px 0;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 7px 0;
             margin: 20px 0;
         }
 
         .order-item {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            gap: 15px;
-            padding: 10px 0;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 13px 4px;
+        }
+
+        .order-item + .order-item {
+            border-top: 1px solid rgba(255,255,255,0.05);
         }
 
         .item-name {
+            color: #eeeeee;
+            font-size: 15px;
             font-weight: 600;
         }
 
         .item-price {
-            font-weight: 700;
+            color: white;
+            font-size: 15px;
+            font-weight: 800;
             white-space: nowrap;
         }
 
@@ -219,22 +366,61 @@
         ========================= */
 
         .totals {
-            background: #fff5dc;
-            border: 1px solid #e7a52a;
-            border-radius: 10px;
-            padding: 16px;
+            background:
+                linear-gradient(
+                    145deg,
+                    #202020,
+                    #111111
+                );
+
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 13px;
+            padding: 16px 18px;
+            margin-top: 20px;
         }
 
         .total-row {
             display: flex;
+            align-items: center;
             justify-content: space-between;
             gap: 15px;
-            padding: 5px 0;
+            padding: 6px 0;
+            color: #bdbdbd;
+        }
+
+        .total-row strong {
+            color: white;
         }
 
         .final-total {
+            margin-top: 9px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255,255,255,0.10);
             font-size: 19px;
-            font-weight: 800;
+            color: white;
+        }
+
+        .final-total span:last-child {
+            font-weight: 900;
+            color: white;
+        }
+
+
+        /* =========================
+           ORDER FOOTER
+        ========================= */
+
+        .order-footer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            margin-top: 20px;
+            color: #999999;
+            font-size: 13px;
+        }
+
+        .footer-item strong {
+            color: #dddddd;
         }
 
 
@@ -243,81 +429,113 @@
         ========================= */
 
         .empty-history {
-            background: white;
-            border-radius: 14px;
-            padding: 40px 20px;
+            background:
+                linear-gradient(
+                    145deg,
+                    #181818,
+                    #0d0d0d
+                );
+
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 18px;
+            padding: 55px 25px;
             text-align: center;
-            color: #666;
+            box-shadow: 0 18px 45px rgba(0,0,0,0.30);
         }
 
-        .history-badges {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin: 10px 0 20px;
-}
+        .empty-icon {
+            width: 65px;
+            height: 65px;
+            margin: 0 auto 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #222222;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #cccccc;
+            font-size: 25px;
+            font-weight: 800;
+        }
 
-.source-badge,
-.payment-badge {
-    display: inline-block;
-    padding: 7px 12px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 700;
-}
+        .empty-history h2 {
+            margin: 0 0 8px;
+            font-size: 22px;
+        }
 
-.counter-source {
-    background: #fff3cd;
-    color: #856404;
-}
-
-.online-source {
-    background: #dbeafe;
-    color: #1e40af;
-}
-
-.payment-badge.paid {
-    background: #d1fae5;
-    color: #065f46;
-}
-
-.payment-badge.pending {
-    background: #fee2e2;
-    color: #991b1b;
-}
+        .empty-history p {
+            margin: 0;
+            color: var(--muted);
+        }
 
 
         /* =========================
            MOBILE
         ========================= */
 
-        @media (max-width: 700px) {
+        @media (max-width: 750px) {
 
-            .history-header h1 {
-                font-size: 24px;
+            .history-header {
+                padding: 24px 16px;
+            }
+
+            .history-header-inner {
+                align-items: flex-start;
+            }
+
+            .brand-logo {
+                width: 52px;
+                height: 52px;
+            }
+
+            .header-text h1 {
+                font-size: 23px;
+            }
+
+            .header-text p {
+                font-size: 13px;
             }
 
             .history-container {
-                margin-top: 18px;
-                padding: 0 12px;
+                margin-top: 22px;
+                padding: 0 12px 35px;
             }
 
             .order-card {
-                padding: 18px;
+                padding: 19px;
+                border-radius: 15px;
+            }
+
+            .order-heading {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .order-heading h2 {
+                font-size: 21px;
             }
 
             .order-meta {
                 grid-template-columns: 1fr;
-                gap: 10px;
             }
 
             .order-item {
                 align-items: flex-start;
             }
 
+            .item-price {
+                font-size: 14px;
+            }
+
             .dashboard-link {
                 width: 100%;
-                text-align: center;
+                justify-content: center;
+            }
+
+            .order-footer {
+                flex-direction: column;
+                gap: 9px;
             }
         }
 
@@ -333,13 +551,21 @@
 
     <div class="history-header-inner">
 
-        <h1>
-            {{ shop.name }} Order History
-        </h1>
+        <img
+            src="{% static 'orders/images/Airxpress-logo.png' %}"
+            alt="AirXpress Eats"
+            class="brand-logo"
+        >
 
-        <p>
-            Completed and cancelled customer orders
-        </p>
+        <div class="header-text">
+
+            <h1>AirXpress Eats</h1>
+
+            <p>EdVance Demo • Order History</p><p class="history-description">Completed and cancelled customer orders</p>
+
+            <div class="silver-line"></div>
+
+        </div>
 
     </div>
 
@@ -348,10 +574,6 @@
 
 <div class="history-container">
 
-
-    <!-- =========================
-         BACK TO DASHBOARD
-    ========================== -->
 
     <div class="history-nav">
 
@@ -365,105 +587,104 @@
     </div>
 
 
-  <!-- =========================
-     ORDER HISTORY
-========================== -->
+    {% for order in orders %}
 
-{% for order in orders %}
-
-    <div class="order-card">
-
-        <h2>
-            Order #{{ order.id }}
-        </h2>
+        <div class="order-card">
 
 
-        <!-- =========================
-             ORDER SOURCE / PAYMENT
-        ========================== -->
+            <div class="order-heading">
 
-        <div class="history-badges">
+                <h2>
+                    Order #{{ order.id }}
+                </h2>
 
-            {% if order.order_source == "counter" %}
+                <span class="order-number">
+                    AirXpress Order
+                </span>
 
-                <span class="source-badge counter-source">
-                    🏪 Counter Order
+            </div>
+
+
+            <!-- =========================
+                 ORDER SOURCE / PAYMENT
+            ========================== -->
+
+            <div class="history-badges">
+                <span class="source-badge">
+                    ONLINE ORDER
                 </span>
 
                 {% if order.payment_status == "paid" %}
 
                     <span class="payment-badge paid">
-                        ✓ Paid
+                        PAID
                     </span>
 
                 {% else %}
 
                     <span class="payment-badge pending">
-                        Payment Pending
+                        PAYMENT PENDING
                     </span>
 
                 {% endif %}
 
-            {% else %}
-
-                <span class="source-badge online-source">
-                    🌐 Online Order
-                </span>
-
-            {% endif %}
-
-        </div>
-
-
-        <!-- =========================
-             CUSTOMER INFORMATION
-        ========================== -->
-
-        <div class="order-meta">
-
-            <div class="meta-box">
-
-                <span class="meta-label">
-                    Customer
-                </span>
-
-                <span class="meta-value">
-                    {{ order.customer_name }}
-                </span>
-
             </div>
 
 
-            <div class="meta-box">
+            <!-- =========================
+                 CUSTOMER INFORMATION
+            ========================== -->
 
-                <span class="meta-label">
-                    Contact
-                </span>
+            <div class="order-meta">
 
-                <span class="meta-value">
-                    {{ order.whatsapp_number }}
-                </span>
+                <div class="meta-box">
+
+                    <span class="meta-label">
+                        Customer
+                    </span>
+
+                    <span class="meta-value">
+                        {{ order.customer_name }}
+                    </span>
+
+                </div>
+
+
+                <div class="meta-box">
+
+                    <span class="meta-label">
+                        Contact
+                    </span>
+
+                    <span class="meta-value">
+                        {{ order.whatsapp_number }}
+                    </span>
+
+                </div>
+
+
+                <div class="meta-box history-status-box history-status-{{ order.status }}">
+
+                    <span class="meta-label">
+                        Status
+                    </span>
+
+                    <span class="meta-value">
+                        {{ order.get_status_display }}
+                    </span>
+
+                </div>
 
             </div>
 
-
-            <div class="meta-box history-status-box history-status-{{ order.status }}">
-
-                <span class="meta-label">
-                    Status
-                </span>
-
-                <span class="meta-value">
-                    {{ order.get_status_display }}
-                </span>
-
-            </div>
-
-        </div>
 
             <!-- =========================
                  ITEMS
             ========================== -->
+
+            <div class="section-title">
+                Order Items
+            </div>
 
             <div class="order-items">
 
@@ -502,9 +723,13 @@
 
                 {% empty %}
 
-                    <p>
-                        No items recorded for this order.
-                    </p>
+                    <div class="order-item">
+
+                        <div class="item-name">
+                            No items recorded for this order.
+                        </div>
+
+                    </div>
 
                 {% endfor %}
 
@@ -549,27 +774,45 @@
             </div>
 
 
-            {% if order.braai_master %}
+            <!-- =========================
+                 ORDER FOOTER
+            ========================== -->
 
-                <p>
-                    <strong>Braai Master:</strong>
-                    {{ order.braai_master.name }}
-                </p>
+            <div class="order-footer">
 
-            {% endif %}
+                {% if order.braai_master %}
+
+                    <div class="footer-item">
+
+                        <strong>Braai Master:</strong>
+                        {{ order.braai_master.name }}
+
+                    </div>
+
+                {% endif %}
 
 
-            <p>
-                <strong>Order Date:</strong>
-                {{ order.created_at|date:"d M Y, H:i" }}
-            </p>
+                <div class="footer-item">
+
+                    <strong>Order Date:</strong>
+                    {{ order.created_at|date:"d M Y, H:i" }}
+
+                </div>
+
+            </div>
+
 
         </div>
 
 
     {% empty %}
 
+
         <div class="empty-history">
+
+            <div class="empty-icon">
+                —
+            </div>
 
             <h2>
                 No Order History
@@ -581,6 +824,7 @@
 
         </div>
 
+
     {% endfor %}
 
 
@@ -590,3 +834,6 @@
 </body>
 
 </html>
+
+
+

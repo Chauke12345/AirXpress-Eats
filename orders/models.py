@@ -1,4 +1,4 @@
-from decimal import Decimal
+﻿from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -39,6 +39,22 @@ class Shop(models.Model):
     location = models.CharField(
         max_length=150,
         blank=True
+    )
+
+    
+    # Exact map coordinates used for delivery routing.
+    latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+    )
+
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
     )
 
     is_active = models.BooleanField(
@@ -118,6 +134,42 @@ class BraaiMaster(models.Model):
         Shop,
         on_delete=models.CASCADE,
         related_name="braai_masters"
+    )
+
+    name = models.CharField(
+        max_length=100
+    )
+
+    is_available = models.BooleanField(
+        default=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"{self.name} - {self.shop.name}"
+
+
+# =========================================================
+# DRIVER
+# =========================================================
+
+class Driver(models.Model):
+
+    shop = models.ForeignKey(
+        Shop,
+        on_delete=models.CASCADE,
+        related_name="drivers"
+    )
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="driver_profile",
     )
 
     name = models.CharField(
@@ -260,12 +312,8 @@ class Order(models.Model):
 
     ORDER_TYPES = [
         (
-            "premises",
-            "Ordering at Premises",
-        ),
-        (
-            "collection",
-            "Order for Collection",
+            "delivery",
+            "Delivery",
         ),
     ]
 
@@ -274,10 +322,6 @@ class Order(models.Model):
         (
             "online",
             "Online",
-        ),
-        (
-            "counter",
-            "Over the Counter",
         ),
     ]
 
@@ -296,11 +340,23 @@ class Order(models.Model):
         ),
         (
             "ready",
-            "Ready for Collection",
+            "Ready for Delivery",
+        ),
+        (
+            "driver_assigned",
+            "Driver Assigned",
+        ),
+        (
+            "picked_up",
+            "Picked Up",
+        ),
+        (
+            "delivered",
+            "Delivered",
         ),
         (
             "collected",
-            "Collected",
+            "Completed",
         ),
         (
             "cancelled",
@@ -316,6 +372,14 @@ class Order(models.Model):
         (
             "paid",
             "Paid",
+        ),
+        (
+            "failed",
+            "Payment Failed",
+        ),
+        (
+            "refunded",
+            "Refunded",
         ),
     ]
 
@@ -333,7 +397,14 @@ class Order(models.Model):
         related_name="orders"
     )
 
-    # Customer information.
+    driver = models.ForeignKey(
+        Driver,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orders"
+    )
+
     customer_name = models.CharField(
         max_length=150
     )
@@ -343,6 +414,9 @@ class Order(models.Model):
         blank=True
     )
 
+    delivery_address = models.TextField(
+        blank=True
+    )
     # Where the customer is ordering from.
     order_type = models.CharField(
         max_length=20,
@@ -370,6 +444,20 @@ class Order(models.Model):
         default=Decimal("0.00")
     )
 
+    # Delivery fee activated when the order is picked up.
+    delivery_fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00")
+    )
+
+    # Delivery distance recorded when the order is picked up.
+    delivery_distance_km = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=Decimal("0.00")
+    )
+
     # Final amount confirmed by the tenant/shop.
     final_total = models.DecimalField(
         max_digits=10,
@@ -378,16 +466,26 @@ class Order(models.Model):
         blank=True
     )
 
-    # Internal EdVance platform fee.
-    # Not displayed to the customer.
+    # Internal AirXpress service charge.
+    # Calculated as 15% of the food subtotal.
+    # Not displayed separately to the customer.
     platform_fee = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=Decimal("15.00")
+        default=Decimal("0.00")
     )
 
-    # Whether the tenant has settled this
-    # platform fee with EdVance Tech.
+    # Internal driver payout.
+    # Calculated as 40% of the delivery fee.
+    # Not displayed to the customer.
+    driver_payout = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00")
+    )
+
+    # Whether the tenant has settled the
+    # AirXpress service charge with EdVance Tech.
     platform_fee_paid = models.BooleanField(
         default=False
     )
@@ -396,6 +494,25 @@ class Order(models.Model):
         max_length=20,
         choices=PAYMENT_STATUS,
         default="pending"
+    )
+
+    # PayFast payment provider.
+    payment_provider = models.CharField(
+        max_length=30,
+        default="payfast",
+        blank=True
+    )
+
+    # Unique PayFast/order payment reference.
+    payment_reference = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    # Recorded only after PayFast confirms the payment.
+    payment_paid_at = models.DateTimeField(
+        null=True,
+        blank=True
     )
 
     notes = models.TextField(
@@ -513,6 +630,69 @@ class OrderStatusHistory(models.Model):
             f"{self.get_status_display()}"
         )
 
+class DeliveryPricing(models.Model):
+
+    shop = models.OneToOneField(
+        Shop,
+        on_delete=models.CASCADE,
+        related_name="delivery_pricing",
+    )
+
+    max_radius_km = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("12.00"),
+    )
+
+    driver_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("40.00"),
+    )
+
+    service_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("15.00"),
+    )
+
+    business_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("45.00"),
+    )
+
+    def __str__(self):
+        return f"{self.shop.name} - Delivery Pricing"
+
+class DeliveryRate(models.Model):
+
+    delivery_pricing = models.ForeignKey(
+        DeliveryPricing,
+        on_delete=models.CASCADE,
+        related_name="rates",
+    )
+
+    max_distance_km = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+    )
+
+    delivery_fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+    )
+
+    class Meta:
+        ordering = ["max_distance_km"]
+
+    def __str__(self):
+        return (
+            f"{self.delivery_pricing.shop.name} - "
+            f"{self.max_distance_km} km - "
+            f"R{self.delivery_fee}"
+        )
+
 class ShopSubscriptionPayment(models.Model):
     shop = models.ForeignKey(
         Shop,
@@ -549,5 +729,142 @@ class ShopSubscriptionPayment(models.Model):
             f"{self.shop.name} - "
             f"{self.year}-{self.month:02d} - "
             f"R{self.amount}"
+        )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# =========================================================
+# DRIVER PAYOUT
+# =========================================================
+
+class DriverPayout(models.Model):
+
+    STATUS_CHOICES = [
+        (
+            "pending",
+            "Pending",
+        ),
+        (
+            "paid",
+            "Paid",
+        ),
+    ]
+
+    driver = models.ForeignKey(
+        Driver,
+        on_delete=models.CASCADE,
+        related_name="payouts",
+    )
+
+    order = models.OneToOneField(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="driver_payout_record",
+    )
+
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending",
+    )
+
+    paid_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    def __str__(self):
+        return (
+            f"Driver Payout - "
+            f"Order #{self.order.id} - "
+            f"{self.driver.name} - "
+            f"R{self.amount}"
+        )
+
+
+# =========================================================
+# DELIVERY REQUEST
+# =========================================================
+
+class DeliveryRequest(models.Model):
+
+    STATUS_CHOICES = [
+        (
+            "pending",
+            "Pending",
+        ),
+        (
+            "accepted",
+            "Accepted",
+        ),
+        (
+            "declined",
+            "Declined",
+        ),
+        (
+            "expired",
+            "Expired",
+        ),
+    ]
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="delivery_requests",
+    )
+
+    driver = models.ForeignKey(
+        Driver,
+        on_delete=models.CASCADE,
+        related_name="delivery_requests",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending",
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    responded_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self):
+        return (
+            f"Delivery Request - "
+            f"Order #{self.order.id} - "
+            f"{self.driver.name} - "
+            f"{self.status}"
         )
 

@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AirXpress Driver Dashboard</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #111111;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+        }
+
+        .header {
+            padding: 20px;
+            background: #1b1b1b;
+            border-bottom: 1px solid #333333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .brand p {
+            margin: 5px 0 0;
+            color: #aaaaaa;
+            font-size: 13px;
+        }
+
+        .logout {
+            color: #ffffff;
+            text-decoration: none;
+            border: 1px solid #444444;
+            padding: 9px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .welcome {
+            margin-bottom: 25px;
+        }
+
+        .welcome h2 {
+            margin: 0 0 6px;
+            font-size: 26px;
+        }
+
+        .welcome p {
+            margin: 0;
+            color: #aaaaaa;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            margin-bottom: 14px;
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .card {
+            background: #1b1b1b;
+            border: 1px solid #333333;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 14px;
+        }
+
+        .empty {
+            color: #999999;
+            padding: 25px;
+            text-align: center;
+            background: #181818;
+            border-radius: 14px;
+            border: 1px dashed #444444;
+        }
+
+        .order-number {
+            font-size: 19px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .detail {
+            margin: 7px 0;
+            color: #cccccc;
+            line-height: 1.5;
+        }
+
+        .label {
+            color: #888888;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 7px 10px;
+            border-radius: 8px;
+            background: #2b2b2b;
+            font-size: 13px;
+            font-weight: 700;
+        }
+            .earnings-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .earning-card {
+            background: #1b1b1b;
+            border: 1px solid #333333;
+            border-radius: 16px;
+            padding: 18px;
+        }
+
+        .earning-label {
+            color: #888888;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 9px;
+        }
+
+        .earning-value {
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .earning-subtitle {
+            margin-top: 6px;
+            color: #888888;
+            font-size: 12px;
+        }
+
+        .history-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 12px;
+            padding: 15px 0;
+            border-bottom: 1px solid #2d2d2d;
+        }
+
+        .history-row:last-child {
+            border-bottom: none;
+        }
+
+        .payout-status {
+            display: inline-block;
+            padding: 6px 9px;
+            border-radius: 7px;
+            background: #2b2b2b;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 800px) {
+            .earnings-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .history-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .earnings-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .history-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+
+        <div class="brand">
+            <h1>AirXpress</h1>
+            <p>Driver Portal</p>
+        </div>
+
+        <a
+            href="{% url 'driver_logout' %}"
+            class="logout"
+        >
+            Logout
+        </a>
+
+    </header>
+
+    <main class="container">
+
+        <div class="welcome">
+            <h2>Welcome, {{ driver.name }}</h2>
+            <p>{{ driver.shop.name }}</p>
+        </div>
+
+        <section class="section">
+
+            <div class="section-title">
+                New Delivery Requests
+            </div>
+
+            {% for request in pending_requests %}
+
+                <div class="card">
+
+                    <div class="order-number">
+                        Order #{{ request.order.id }}
+                    </div>
+
+                    <div class="detail">
+                        <span class="label">Pickup</span><br>
+                        {{ request.order.shop.name }}
+                    </div>
+
+                    <div class="detail">
+                        <span class="label">Delivery Address</span><br>
+                        {{ request.order.delivery_address }}
+                    </div>
+
+                    <div class="detail">
+                        <span class="label">Delivery Distance</span><br>
+                        {{ request.order.delivery_distance_km }} km
+                    </div>
+
+                    <div class="detail">
+                        <span class="label">Driver Payout</span><br>
+                        R{{ request.order.driver_payout }}
+                    </div>
+
+                    <div class="status">
+                        Delivery Request Pending
+                    </div>
+
+                    <div
+                        style="
+                            display: flex;
+                            gap: 10px;
+                            margin-top: 16px;
+                            flex-wrap: wrap;
+                        "
+                    >
+
+                        <form
+                            method="post"
+                            action="{% url 'driver_accept_request' request.id %}"
+                            style="margin: 0;"
+                        >
+
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                style="
+                                    background: #ffffff;
+                                    color: #111111;
+                                    border: none;
+                                    padding: 11px 18px;
+                                    border-radius: 9px;
+                                    font-weight: 800;
+                                    cursor: pointer;
+                                "
+                            >
+                                Accept Delivery
+                            </button>
+
+                        </form>
+
+                        <form
+                            method="post"
+                            action="{% url 'driver_decline_request' request.id %}"
+                            style="margin: 0;"
+                        >
+
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                style="
+                                    background: transparent;
+                                    color: #ffffff;
+                                    border: 1px solid #555555;
+                                    padding: 10px 18px;
+                                    border-radius: 9px;
+                                    font-weight: 700;
+                                    cursor: pointer;
+                                "
+                            >
+                                Decline
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            {% empty %}
+
+                <div class="empty">
+                    No new delivery requests.
+                </div>
+
+            {% endfor %}
+
+        </section>
+
+
+        <section class="section">
+
+            <div class="section-title">
+                My Active Deliveries
+            </div>
+
+            {% for order in assigned_orders %}
+
+                <div class="card">
+
+                    <div class="order-number">
+                        Order #{{ order.id }}
+                    </div>
+
+                    <div class="detail">
+                        <span class="label">Shop</span><br>
+                        {{ order.shop.name }}
+                    </div>
+
+                    <div class="detail">
+                        <span class="label">Customer</span><br>
+                        {{ order.customer_name }}
+                    </div>
+
+                    <div class="detail">
+                        <span class="label">Delivery Address</span><br>
+                        {{ order.delivery_address }}
+                    </div>
+
+                    <div class="detail">
+                        <span class="label">Distance</span><br>
+                        {{ order.delivery_distance_km }} km
+                    </div>
+
+                    <div class="detail">
+                        <span class="label">Your Payout</span><br>
+                        R{{ order.driver_payout }}
+                    </div>
+
+                    <div class="status">
+                        {{ order.get_status_display }}
+                    </div>
+
+                    <div
+                        style="
+                            margin-top: 16px;
+                            display: flex;
+                            gap: 10px;
+                            flex-wrap: wrap;
+                        "
+                    >
+
+                        {% if order.status == "driver_assigned" %}
+
+                            <form
+                                method="post"
+                                action="{% url 'driver_pickup_order' order.id %}"
+                                style="margin: 0;"
+                            >
+
+                                {% csrf_token %}
+
+                                <button
+                                    type="submit"
+                                    style="
+                                        background: #ffffff;
+                                        color: #111111;
+                                        border: none;
+                                        padding: 11px 18px;
+                                        border-radius: 9px;
+                                        font-weight: 800;
+                                        cursor: pointer;
+                                    "
+                                >
+                                    Pick Up Order
+                                </button>
+
+                            </form>
+
+                        {% elif order.status == "picked_up" %}
+
+                            <form
+                                method="post"
+                                action="{% url 'driver_deliver_order' order.id %}"
+                                style="margin: 0;"
+                            >
+
+                                {% csrf_token %}
+
+                                <button
+                                    type="submit"
+                                    style="
+                                        background: #ffffff;
+                                        color: #111111;
+                                        border: none;
+                                        padding: 11px 18px;
+                                        border-radius: 9px;
+                                        font-weight: 800;
+                                        cursor: pointer;
+                                    "
+                                >
+                                    Mark as Delivered
+                                </button>
+
+                            </form>
+
+                        {% elif order.status == "delivered" %}
+
+                            <form
+                                method="post"
+                                action="{% url 'driver_complete_delivery' order.id %}"
+                                style="margin: 0;"
+                            >
+
+                                {% csrf_token %}
+
+                                <button
+                                    type="submit"
+                                    style="
+                                        background: #ffffff;
+                                        color: #111111;
+                                        border: none;
+                                        padding: 11px 18px;
+                                        border-radius: 9px;
+                                        font-weight: 800;
+                                        cursor: pointer;
+                                    "
+                                >
+                                    Complete Delivery
+                                </button>
+
+                            </form>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            {% empty %}
+
+                <div class="empty">
+                    You currently have no active deliveries.
+                </div>
+
+            {% endfor %}
+
+        </section>
+
+            <!-- =====================================================
+             DRIVER EARNINGS
+        ====================================================== -->
+
+        <section class="section">
+
+            <div class="section-title">
+                My Earnings
+            </div>
+
+            <div class="earnings-grid">
+
+                <div class="earning-card">
+                    <div class="earning-label">
+                        Total Earned
+                    </div>
+
+                    <div class="earning-value">
+                        R{{ total_earned|floatformat:2 }}
+                    </div>
+
+                    <div class="earning-subtitle">
+                        All recorded driver earnings
+                    </div>
+                </div>
+
+                <div class="earning-card">
+                    <div class="earning-label">
+                        Pending Payout
+                    </div>
+
+                    <div class="earning-value">
+                        R{{ pending_payout|floatformat:2 }}
+                    </div>
+
+                    <div class="earning-subtitle">
+                        Awaiting Monday payment
+                    </div>
+                </div>
+
+                <div class="earning-card">
+                    <div class="earning-label">
+                        Paid To Date
+                    </div>
+
+                    <div class="earning-value">
+                        R{{ paid_to_date|floatformat:2 }}
+                    </div>
+
+                    <div class="earning-subtitle">
+                        Successfully paid
+                    </div>
+                </div>
+
+                <div class="earning-card">
+                    <div class="earning-label">
+                        Completed Deliveries
+                    </div>
+
+                    <div class="earning-value">
+                        {{ completed_deliveries }}
+                    </div>
+
+                    <div class="earning-subtitle">
+                        Deliveries completed
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             DRIVER DELIVERY HISTORY
+        ====================================================== -->
+
+        <section class="section">
+
+            <div class="section-title">
+                My Delivery History
+            </div>
+
+            {% if driver_payouts %}
+
+                <div class="card">
+
+                    {% for payout in driver_payouts %}
+
+                        <div class="history-row">
+
+                            <div>
+                                <div class="label">Order</div>
+                                <strong>#{{ payout.order.id }}</strong>
+                            </div>
+
+                            <div>
+                                <div class="label">Shop</div>
+                                {{ payout.order.shop.name }}
+                            </div>
+
+                            <div>
+                                <div class="label">Distance</div>
+                                {{ payout.order.delivery_distance_km }} km
+                            </div>
+
+                            <div>
+                                <div class="label">Your Earnings</div>
+                                <strong>
+                                    R{{ payout.amount|floatformat:2 }}
+                                </strong>
+                            </div>
+
+                            <div>
+                                <div class="label">Delivery Fee</div>
+                                R{{ payout.order.delivery_fee|floatformat:2 }}
+                            </div>
+
+                            <div>
+                                <div class="label">Status</div>
+                                <span class="payout-status">
+                                    {{ payout.get_status_display }}
+                                </span>
+                            </div>
+
+                            <div>
+                                <div class="label">Completed</div>
+                                {{ payout.created_at|date:"d M Y, H:i" }}
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty">
+                    You do not have any completed delivery earnings yet.
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+</body>
+</html>
+
+
+
+
+

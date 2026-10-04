@@ -1,5 +1,5 @@
 """
-Django settings for Shisanyama Connect.
+Django settings for AirXpress Eats.
 """
 
 from pathlib import Path
@@ -13,6 +13,25 @@ import dj_database_url
 # =========================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+# Load local environment variables from .env
+env_file = BASE_DIR / ".env"
+
+if env_file.exists():
+    with open(env_file, "r", encoding="utf-8") as file:
+        for line in file:
+            line = line.strip()
+
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+
+            key, value = line.split("=", 1)
+
+            os.environ.setdefault(
+                key.strip(),
+                value.strip(),
+            )
 
 
 # =========================================================
@@ -37,6 +56,7 @@ DEBUG = os.environ.get(
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
+    "endorse-scroll-affix.ngrok-free.dev",
     ".railway.app",
 ]
 
@@ -47,6 +67,7 @@ ALLOWED_HOSTS = [
 
 CSRF_TRUSTED_ORIGINS = [
     "https://*.railway.app",
+    "https://endorse-scroll-affix.ngrok-free.dev",
 ]
 
 
@@ -247,3 +268,77 @@ EMAIL_BACKEND = (
 LOGIN_REDIRECT_URL = "/staff/dashboard/"
 
 LOGIN_URL = "/staff/login/"
+
+# =========================================================
+# PAYFAST
+# =========================================================
+
+# PayFast merchant credentials are loaded from environment variables.
+# NEVER hard-code these values into the source code.
+PAYFAST_PUBLIC_URL = os.environ.get(
+    "PAYFAST_PUBLIC_URL",
+    "",
+)
+PAYFAST_MERCHANT_ID = os.environ.get(
+    "PAYFAST_MERCHANT_ID",
+    ""
+).strip()
+
+PAYFAST_MERCHANT_KEY = os.environ.get(
+    "PAYFAST_MERCHANT_KEY",
+    ""
+).strip()
+
+PAYFAST_PASSPHRASE = os.environ.get(
+    "PAYFAST_PASSPHRASE",
+    ""
+).strip()
+
+# Use sandbox while testing. Set to False for live payments.
+PAYFAST_SANDBOX = os.environ.get(
+    "PAYFAST_SANDBOX",
+    "True"
+).lower() == "true"
+
+# =========================================================
+# MAPBOX
+# =========================================================
+
+# =========================================================
+# MAPBOX
+# =========================================================
+
+MAPBOX_TOKEN = os.environ.get("MAPBOX_TOKEN", "").strip()
+
+# Enforce the local .env token if the environment variable is empty.
+if not MAPBOX_TOKEN:
+    _mapbox_env = BASE_DIR / ".env"
+
+    if _mapbox_env.exists():
+        for _line in _mapbox_env.read_text(
+            encoding="utf-8"
+        ).splitlines():
+
+            _line = _line.strip()
+
+            if not _line or _line.startswith("#"):
+                continue
+
+            if _line.startswith("MAPBOX_TOKEN="):
+                MAPBOX_TOKEN = (
+                    _line.split("=", 1)[1]
+                    .strip()
+                    .strip("\"'")
+                )
+                break
+
+            if _line.startswith("pk."):
+                MAPBOX_TOKEN = _line
+                break
+
+
+
+
+
+
+

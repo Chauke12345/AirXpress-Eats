@@ -1,0 +1,860 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Checkout | AirXpress Eats</title>
+
+    <style>
+
+        :root {
+            --black: #050505;
+            --dark: #0b0b0b;
+            --white: #ffffff;
+            --light: #f4f4f4;
+            --border: #dddddd;
+            --muted: #777777;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--light);
+            color: #111;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .topbar {
+            background: var(--black);
+            padding: 14px 20px;
+        }
+
+        .topbar a {
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 24px 20px;
+        }
+
+        .header-inner {
+            max-width: 900px;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .brand-logo {
+            width: 150px;
+            height: auto;
+        }
+
+        .header-text h1 {
+            margin: 0 0 6px;
+            font-size: 28px;
+        }
+
+        .header-text p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .checkout-card {
+            background: white;
+            border-radius: 14px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 18px rgba(0,0,0,.07);
+        }
+
+        .checkout-card h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: 700;
+        }
+
+        .field input,
+        .field textarea {
+            width: 100%;
+            padding: 13px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .field textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        .field input:focus,
+        .field textarea:focus {
+            outline: none;
+            border-color: #111;
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .item-name {
+            font-weight: 700;
+        }
+
+        .item-details {
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .item-total {
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 0;
+        }
+
+        .total-row {
+            border-top: 2px solid #111;
+            margin-top: 12px;
+            padding-top: 17px;
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .fee-note {
+            margin-top: 15px;
+            padding: 13px;
+            background: #f1f1f1;
+            border-radius: 8px;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .payment-box {
+            padding: 16px;
+            background: #f8f8f8;
+            border: 1px solid #e1e1e1;
+            border-radius: 8px;
+        }
+
+        .payment-box strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            background: #050505;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-secondary {
+            background: #e5e5e5;
+            color: #111;
+        }
+
+        @media (max-width: 600px) {
+
+            .header-inner {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .order-item {
+                align-items: flex-start;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .btn-primary,
+            .btn-secondary {
+                width: 100%;
+            }
+
+        }
+
+
+        .delivery-unavailable-card {
+            border: 1px solid #f1b5b5;
+            background: #fff8f8;
+        }
+
+        .delivery-unavailable-card h2 {
+            margin-bottom: 12px;
+        }
+
+        .delivery-unavailable-message {
+            padding: 18px;
+            border-radius: 12px;
+            background: #fff;
+            border-left: 5px solid #d9534f;
+            line-height: 1.6;
+        }
+
+        .delivery-unavailable-message strong {
+            color: #b42318;
+        }
+
+        .delivery-unavailable-message p {
+            margin: 10px 0 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="topbar">
+
+    <a href="{% url 'cart' shop.slug %}">
+        ? Back to Cart
+    </a>
+
+</div>
+
+<header class="header">
+
+    <div class="header-inner">
+
+        <img
+            src="{% static 'orders/images/Airxpress-main-logo.png' %}"
+            alt="AirXpress Eats"
+            class="brand-logo"
+        >
+
+        <div class="header-text">
+
+            <h1>{{ shop.name }}</h1>
+
+            <p>Checkout & Delivery</p>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<main class="container">
+
+<form method="POST">
+{% csrf_token %}
+
+
+    <!-- CUSTOMER DETAILS -->
+
+    <div class="checkout-card">
+
+        <h2>Delivery Details</h2>
+
+        <div class="field">
+
+            <label for="customer_name">
+                Full Name
+            </label>
+
+            <input
+                type="text"
+                id="customer_name"
+                name="customer_name"
+                placeholder="Enter your full name" value="{{ customer_name }}"
+                required
+            >
+
+        </div>
+
+
+        <div class="field">
+
+            <label for="whatsapp_number">
+                WhatsApp / Contact Number
+            </label>
+
+            <input
+                type="tel"
+                id="whatsapp_number"
+                name="whatsapp_number"
+                placeholder="Enter your WhatsApp or contact number" value="{{ whatsapp_number }}"
+                required
+            >
+
+        </div>
+
+
+        <div class="field">
+
+            <label for="delivery_address">
+                Full Delivery Address
+            </label>
+
+            <textarea
+                id="delivery_address"
+                name="delivery_address"
+                placeholder="House number, street, suburb, city and any useful delivery details"
+                required
+            >{{ delivery_address }}</textarea>
+
+        </div>
+
+
+        <div class="field">
+
+            <label for="notes">
+                Special Instructions
+            </label>
+
+            <textarea
+                id="notes"
+                name="notes"
+                placeholder="Anything we should know about your order?"
+            >{{ notes }}</textarea>
+
+        </div>
+
+    </div>
+
+
+    {% if delivery_unavailable %}
+
+        <div class="checkout-card delivery-unavailable-card">
+
+            <h2>
+                Delivery unavailable
+            </h2>
+
+            <div class="delivery-unavailable-message">
+
+                <strong>
+                    We’re sorry, but delivery is currently unavailable at this address.
+
+            <p>
+                Please enter another delivery address to continue
+                with your order.
+            </p>
+
+            <p>
+                Thank you for understanding.
+            </p>
+                </strong>
+
+                <p>
+
+            </div>
+
+        </div>
+
+    {% endif %}
+
+
+    <!-- ORDER SUMMARY -->
+
+    <div class="checkout-card">
+
+        <h2>Your Order</h2>
+
+        {% for item in cart_items %}
+
+            <div class="order-item">
+
+                <div>
+
+                    <div class="item-name">
+                        {{ item.menu_item.name }}
+                    </div>
+
+                    <div class="item-details">
+
+                        {% if item.pricing_type == "fixed" %}
+
+                            R{{ item.unit_price }}
+                            x
+                            {{ item.quantity }}
+
+                        {% else %}
+
+                            Amount selected:
+                            R{{ item.unit_price }}
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+                <div class="item-total">
+                    R{{ item.line_total }}
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+
+        <div style="margin-top: 20px;">
+
+            <div class="summary-row">
+
+                <span>
+                    Subtotal
+                </span>
+
+                <strong>
+                    R{{ subtotal }}
+                </strong>
+
+            </div>
+
+
+            <div class="summary-row">
+
+                <span>
+                    Delivery Distance
+                </span>
+
+                <strong>
+
+                    {% if delivery_distance_km %}
+                        {{ delivery_distance_km }} km
+                    {% else %}
+                        Enter address to calculate
+                    {% endif %}
+
+                </strong>
+
+            </div>
+
+
+            <div class="summary-row">
+
+                <span>
+                    Delivery Fee
+                </span>
+
+                <strong>
+
+                    {% if delivery_fee %}
+                        R{{ delivery_fee }}
+                    {% else %}
+                        Not calculated yet
+                    {% endif %}
+
+                </strong>
+
+            </div>
+
+
+            <div class="summary-row total-row">
+
+                <span>
+                    Total
+                </span>
+
+                <span>
+
+                    {% if price_calculated %}
+                        R{{ total }}
+                    {% else %}
+                        Calculate first
+                    {% endif %}
+
+                </span>
+
+            </div>
+
+
+            {% if price_calculated %}
+
+                <div class="fee-note">
+
+                    <strong>
+                        Complete price confirmed before preparation
+                    </strong>
+
+                    <br><br>
+
+                    Your delivery distance and complete order price have been calculated.<br><br>Your total includes all applicable AirXpress charges. The amount shown above is the final amount for this order.
+
+                </div>
+
+            {% else %}
+
+                <div class="fee-note">
+
+                    Enter your complete delivery address and click
+                    <strong>Verify Address &amp; Calculate Delivery</strong>.
+
+                    Your delivery distance and complete order price will
+                    be calculated before your order is created.
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- PAYMENT -->
+
+    <div class="checkout-card">
+
+        <h2>Payment</h2>
+
+        <div class="payment-box">
+
+            <strong>
+                Secure Online Payment
+            </strong>
+
+            <span>
+
+                {% if price_calculated %}
+
+                    Your complete order total has been calculated.
+                    Confirm your order below before continuing to payment.
+
+                {% else %}
+
+                    Your complete price will be shown before you confirm
+                    the order.
+
+                {% endif %}
+
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="actions">
+
+        <a
+            href="{% url 'cart' shop.slug %}"
+            class="btn btn-secondary"
+        >
+            Back to Cart
+        </a>
+
+
+        {% if price_calculated %}
+
+            <button
+                type="submit"
+                name="checkout_action"
+                value="confirm"
+                class="btn btn-primary"
+            >
+                Confirm Order - R{{ total }}
+            </button>
+
+        {% else %}
+
+            <button
+                type="submit"
+                name="checkout_action"
+                value="calculate"
+                class="btn btn-primary"
+            >
+                Verify Address &amp; Calculate Delivery
+            </button>
+
+        {% endif %}
+
+    </div>
+</form>
+</main>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const nameField = document.querySelector(
+        'input[name="customer_name"]'
+    );
+
+    const whatsappField = document.querySelector(
+        'input[name="whatsapp_number"]'
+    );
+
+    const addressField = document.querySelector(
+        'textarea[name="delivery_address"]'
+    );
+
+    const savedName = sessionStorage.getItem(
+        "airxpress_customer_name"
+    );
+
+    const savedWhatsApp = sessionStorage.getItem(
+        "airxpress_customer_whatsapp"
+    );
+
+    if (nameField && savedName) {
+        nameField.value = savedName;
+    }
+
+    if (whatsappField && savedWhatsApp) {
+        whatsappField.value = savedWhatsApp;
+    }
+
+
+    // =========================================================
+    // MAPBOX ADDRESS SUGGESTIONS
+    // =========================================================
+
+    if (addressField) {
+
+        const suggestionBox = document.createElement("div");
+
+        suggestionBox.style.position = "absolute";
+        suggestionBox.style.left = "0";
+        suggestionBox.style.right = "0";
+        suggestionBox.style.top = "100%";
+        suggestionBox.style.background = "#ffffff";
+        suggestionBox.style.border = "1px solid #ddd";
+        suggestionBox.style.borderRadius = "8px";
+        suggestionBox.style.boxShadow = "0 4px 12px rgba(0,0,0,0.12)";
+        suggestionBox.style.zIndex = "9999";
+        suggestionBox.style.display = "none";
+        suggestionBox.style.maxHeight = "260px";
+        suggestionBox.style.overflowY = "auto";
+
+        const addressFieldContainer = addressField.parentElement;
+
+        addressFieldContainer.style.position = "relative";
+        addressFieldContainer.appendChild(
+            suggestionBox
+        );
+
+        let searchTimer = null;
+        let requestNumber = 0;
+
+        addressField.addEventListener(
+            "input",
+            function () {
+
+                const query = addressField.value.trim();
+
+                clearTimeout(searchTimer);
+
+                if (query.length < 3) {
+                    suggestionBox.innerHTML = "";
+                    suggestionBox.style.display = "none";
+                    return;
+                }
+
+                searchTimer = setTimeout(
+                    async function () {
+
+                        const currentRequest =
+                            ++requestNumber;
+
+                        try {
+
+                            const response =
+                                await fetch(
+                                    "{% url 'address_suggestions' %}?q="
+                                    + encodeURIComponent(query)
+                                );
+
+                            if (!response.ok) {
+                                suggestionBox.style.display =
+                                    "none";
+                                return;
+                            }
+
+                            const data =
+                                await response.json();
+
+                            if (
+                                currentRequest !==
+                                requestNumber
+                            ) {
+                                return;
+                            }
+
+                            suggestionBox.innerHTML = "";
+
+                            const suggestions =
+                                data.suggestions || [];
+
+                            if (
+                                suggestions.length === 0
+                            ) {
+                                suggestionBox.style.display =
+                                    "none";
+                                return;
+                            }
+
+                            suggestions.forEach(
+                                function (suggestion) {
+
+                                    const item =
+                                        document.createElement(
+                                            "div"
+                                        );
+
+                                    item.textContent =
+                                        suggestion.full_address ||
+                                        suggestion.name ||
+                                        "";
+
+                                    item.style.padding =
+                                        "12px 14px";
+
+                                    item.style.cursor =
+                                        "pointer";
+
+                                    item.style.borderBottom =
+                                        "1px solid #eeeeee";
+
+                                    item.style.background =
+                                        "#ffffff";
+
+                                    item.addEventListener(
+                                        "mouseenter",
+                                        function () {
+                                            item.style.background =
+                                                "#f5f5f5";
+                                        }
+                                    );
+
+                                    item.addEventListener(
+                                        "mouseleave",
+                                        function () {
+                                            item.style.background =
+                                                "#ffffff";
+                                        }
+                                    );
+
+                                    item.addEventListener(
+                                        "click",
+                                        function () {
+
+                                            addressField.value =
+                                                suggestion.full_address ||
+                                                suggestion.name ||
+                                                "";
+
+                                            suggestionBox.innerHTML =
+                                                "";
+
+                                            suggestionBox.style.display =
+                                                "none";
+
+                                            addressField.focus();
+                                        }
+                                    );
+
+                                    suggestionBox.appendChild(
+                                        item
+                                    );
+                                }
+                            );
+
+                            suggestionBox.style.display =
+                                "block";
+
+                        } catch (error) {
+
+                            suggestionBox.innerHTML = "";
+                            suggestionBox.style.display =
+                                "none";
+                        }
+
+                    },
+                    300
+                );
+            }
+        );
+
+        document.addEventListener(
+            "click",
+            function (event) {
+
+                if (
+                    !addressFieldContainer.contains(
+                        event.target
+                    )
+                ) {
+                    suggestionBox.style.display =
+                        "none";
+                }
+            }
+        );
+    }
+
+});
+</script>
+
+
