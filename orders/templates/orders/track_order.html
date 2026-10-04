@@ -1,0 +1,1007 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+<link
+    href="https://api.mapbox.com/mapbox-gl-js/v3.32.0/mapbox-gl.css"
+    rel="stylesheet"
+>
+
+<script
+    src="https://api.mapbox.com/mapbox-gl-js/v3.32.0/mapbox-gl.js"
+></script>
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Track Order #{{ order.id }} | AirXpress Eats</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f5f5f5;
+            color: #222;
+        }
+
+        .tracking-card {
+            width: 100%;
+            max-width: 760px;
+            margin: 30px auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .brand img {
+            width: 150px;
+            max-width: 60%;
+            height: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 0 0 8px;
+            font-size: 30px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .order-number {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        .current-status {
+            text-align: center;
+            padding: 18px;
+            background: #fff5dc;
+            border: 2px solid #e7a52a;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .current-status-label {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .current-status-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+          .order-update {
+              margin-top: 15px;
+              padding: 14px 16px;
+              border-radius: 10px;
+              background: #f5f5f5;
+              border: 1px solid #dddddd;
+              font-size: 14px;
+              line-height: 1.5;
+          }
+
+          .order-update-message {
+              margin-top: 4px;
+          }
+
+        
+          .done-button {
+              display: inline-block;
+              margin-top: 12px;
+              padding: 12px 28px;
+              border-radius: 8px;
+              background: #222;
+              color: #fff;
+              text-decoration: none;
+              font-weight: 700;
+              text-align: center;
+              cursor: pointer;
+          }
+
+          .done-button:hover {
+              opacity: 0.9;
+          }
+          .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .timeline {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .timeline-item {
+            position: relative;
+            display: flex;
+            gap: 15px;
+            padding-bottom: 22px;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 14px;
+            top: 30px;
+            bottom: 0;
+            width: 2px;
+            background: #ddd;
+        }
+
+        .timeline-item:last-child .timeline-line {
+            display: none;
+        }
+
+        .timeline-dot {
+            position: relative;
+            z-index: 2;
+            width: 30px;
+            height: 30px;
+            min-width: 30px;
+            border-radius: 50%;
+            background: #ddd;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 1px #ddd;
+        }
+
+        .timeline-item.completed .timeline-dot,
+        .timeline-item.current .timeline-dot {
+            background: #c9362b;
+            box-shadow: 0 0 0 1px #c9362b;
+        }
+
+        .timeline-item.current .timeline-dot {
+            box-shadow: 0 0 0 4px rgba(201, 54, 43, 0.12);
+        }
+
+        .timeline-content {
+            flex: 1;
+            padding-top: 2px;
+        }
+
+        .timeline-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .timeline-time {
+            color: #888;
+            font-size: 13px;
+        }
+
+        .info-box {
+            background: #f3f3f3;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .info-box p {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .driver-box {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+          .map-legend {
+              display: flex;
+              gap: 18px;
+              flex-wrap: wrap;
+              align-items: center;
+              margin: 12px 0 10px 0;
+              font-size: 13px;
+          }
+
+          .legend-item {
+              display: flex;
+              align-items: center;
+              gap: 7px;
+          }
+
+          .legend-marker {
+              width: 12px;
+              height: 12px;
+              border-radius: 50%;
+              display: inline-block;
+              border: 2px solid #ffffff;
+              box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+          }
+
+          .driver-marker {
+              background: #e53935;
+          }
+
+          .customer-marker {
+              background: #2196f3;
+          }
+          .delivery-map {
+              width: 100%;
+              height: 420px;
+              margin-top: 15px;
+              border-radius: 12px;
+              overflow: hidden;
+              background: #eeeeee;
+          }
+
+        .refresh-note {
+            text-align: center;
+            color: #777;
+            font-size: 13px;
+            margin-top: 25px;
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 25px;
+            padding: 14px 18px;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            background: #161616;
+            color: #fff;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 12px;
+            }
+
+            .tracking-card {
+                margin: 15px auto;
+                padding: 24px 18px;
+                border-radius: 12px;
+            }
+
+            h1 {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="tracking-card">
+
+    <div class="brand">
+        <img
+            src="/static/orders/images/Airxpress-logo.png"
+            alt="AirXpress Eats"
+        >
+    </div>
+
+    <h1>
+        Track Your Order
+    </h1>
+
+    <p class="subtitle">
+        {{ order.shop.name }}
+    </p>
+
+    <div class="order-number">
+        Order #{{ order.id }}
+    </div>
+
+
+    <div class="current-status">
+
+        <div class="current-status-label">
+            Current Status
+        </div>
+
+        <div class="current-status-value">
+            {{ order.get_status_display }}
+        </div>
+
+      <div id="order-update" class="order-update">
+          <strong>Order Update</strong>
+          <div class="order-update-message">
+              Checking the latest order status...
+          </div>
+      </div>
+
+    </div>
+
+
+    <div class="section-title">
+        Order Progress
+    </div>
+
+    <div class="timeline">
+
+        {% for history in order.status_history.all %}
+
+            <div class="timeline-item {% if forloop.last %}current{% else %}completed{% endif %}">
+
+                <div class="timeline-line"></div>
+
+                <div class="timeline-dot"></div>
+
+                <div class="timeline-content">
+
+                    <div class="timeline-title">
+                        {{ history.get_status_display }}
+                    </div>
+
+                    {% if history.created_at %}
+                        <div class="timeline-time">
+                            {{ history.created_at|date:"d M Y, H:i" }}
+                        </div>
+                    {% endif %}
+
+                    {% if history.notes %}
+                        <div class="timeline-time">
+                            {{ history.notes }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        {% empty %}
+
+            <div class="timeline-item current">
+
+                <div class="timeline-dot"></div>
+
+                <div class="timeline-content">
+
+                    <div class="timeline-title">
+                        {{ order.get_status_display }}
+                    </div>
+
+                    <div class="timeline-time">
+                        Your order is being processed.
+                    </div>
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+
+    <div class="info-box">
+
+        <div class="section-title">
+            Delivery Information
+        </div>
+
+        {% if order.delivery_address %}
+
+            <p>
+                <strong>Delivery Address</strong><br>
+                {{ order.delivery_address }}
+            </p>
+
+        {% endif %}
+
+
+        {% if order.delivery_distance_km %}
+
+            <p>
+                <strong>Distance:</strong>
+                {{ order.delivery_distance_km }} km
+            </p>
+
+        {% endif %}
+
+
+        {% if order.driver %}
+
+            <div class="driver-box">
+
+                <strong>Driver Assigned</strong>
+
+                <p>
+                    {{ order.driver.name }}
+                </p>
+
+            </div>
+
+        {% else %}
+
+            <p>
+                Your driver will appear here once one has been assigned.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+
+      <div class="map-section">
+          <div class="section-title">
+              Live Delivery Map
+          </div>
+
+            <div class="map-legend">
+                <div class="legend-item driver-legend">
+                      <span class="legend-marker driver-marker"></span>
+                    <span>Driver</span>
+                </div>
+
+                <div class="legend-item">
+                    <span class="legend-marker customer-marker"></span>
+                    <span>Delivery Address</span>
+                </div>
+            </div>
+
+            <div
+              id="delivery-map"
+              class="delivery-map"
+          ></div>
+      </div>
+
+      <div id="tracking-note" class="refresh-note">
+        This page can be kept open while your order is being prepared and delivered.
+    </div>
+
+
+    <a
+        href="{% url 'customer_order' shop_slug=order.shop.slug %}"
+        class="back-link"
+    >
+        Place Another Order
+    </a>
+      <a
+          href="{% url 'customer_order' shop_slug=order.shop.slug %}"
+          class="done-button"
+      >
+          Done
+      </a>
+
+</div>
+
+
+<script>
+    const trackingUrl = "{% url 'track_order_status' tracking_token=order.tracking_token %}";
+
+
+      mapboxgl.accessToken = "{{ mapbox_token }}";
+
+      let deliveryMap = null;
+      let customerMarker = null;
+      let driverMarker = null;
+
+      function initializeDeliveryMap(data) {
+          const mapElement = document.getElementById("delivery-map");
+
+          if (!mapElement || !data.customer_location) {
+              return;
+          }
+
+          const customerLat = data.customer_location.latitude;
+          const customerLon = data.customer_location.longitude;
+
+          if (customerLat === null || customerLon === null) {
+              return;
+          }
+
+          if (!deliveryMap) {
+              deliveryMap = new mapboxgl.Map({
+                  container: "delivery-map",
+                  style: "mapbox://styles/mapbox/streets-v12",
+                  center: [customerLon, customerLat],
+                  zoom: 12
+              });
+
+              deliveryMap.addControl(
+                  new mapboxgl.NavigationControl(),
+                  "top-right"
+              );
+
+              customerMarker = new mapboxgl.Marker()
+                  .setLngLat([customerLon, customerLat])
+                  .setPopup(
+                      new mapboxgl.Popup().setText(
+                          "Delivery Address"
+                      )
+                  )
+                  .addTo(deliveryMap);
+
+              deliveryMap.on("load", function () {
+                  updateDeliveryMap(data);
+              });
+          } else {
+              updateDeliveryMap(data);
+          }
+      }
+
+      function updateDeliveryMap(data) {
+          if (!deliveryMap || !data.customer_location) {
+              return;
+          }
+
+          const customerLat = data.customer_location.latitude;
+          const customerLon = data.customer_location.longitude;
+
+          if (
+              customerLat === null ||
+              customerLon === null
+          ) {
+              return;
+          }
+
+          const customerPoint = [
+              customerLon,
+              customerLat
+          ];
+
+          if (!customerMarker) {
+              customerMarker = new mapboxgl.Marker()
+                  .setLngLat(customerPoint)
+                  .setPopup(
+                      new mapboxgl.Popup().setText(
+                          "Delivery Address"
+                      )
+                  )
+                  .addTo(deliveryMap);
+          } else {
+              customerMarker.setLngLat(customerPoint);
+          }
+
+          const driverLocation = data.driver_location;
+
+          if (
+              driverLocation &&
+              driverLocation.latitude !== null &&
+              driverLocation.longitude !== null
+          ) {
+              const driverPoint = [
+                  driverLocation.longitude,
+                  driverLocation.latitude
+              ];
+
+              if (!driverMarker) {
+                  driverMarker = new mapboxgl.Marker({
+                      color: "#e53935"
+                  })
+                      .setLngLat(driverPoint)
+                      .setPopup(
+                          new mapboxgl.Popup().setText(
+                              data.driver
+                                  ? "Driver: " + data.driver
+                                  : "Driver"
+                          )
+                      )
+                      .addTo(deliveryMap);
+              } else {
+                  driverMarker.setLngLat(driverPoint);
+
+                  if (data.driver) {
+                      driverMarker.setPopup(
+                          new mapboxgl.Popup().setText(
+                              "Driver: " + data.driver
+                          )
+                      );
+                  }
+              }
+
+              if (!deliveryMap._airxpressHasFitted) {
+                  const bounds = new mapboxgl.LngLatBounds();
+
+                  bounds.extend(customerPoint);
+                  bounds.extend(driverPoint);
+
+                  deliveryMap.fitBounds(
+                      bounds,
+                      {
+                          padding: 70,
+                          maxZoom: 15,
+                          duration: 800
+                      }
+                  );
+
+                  deliveryMap._airxpressHasFitted = true;
+              }
+          }
+
+          const routeSourceId = "live-delivery-route";
+          const routeLayerId = "live-delivery-route-line";
+          const route = data.live_route;
+
+          let routeInfo = document.getElementById(
+              "live-route-info"
+          );
+
+          if (!routeInfo) {
+              routeInfo = document.createElement("div");
+              routeInfo.id = "live-route-info";
+
+              routeInfo.style.marginTop = "12px";
+              routeInfo.style.padding = "12px 14px";
+              routeInfo.style.borderRadius = "10px";
+              routeInfo.style.background = "#f5f5f5";
+              routeInfo.style.border = "1px solid #dddddd";
+              routeInfo.style.fontSize = "14px";
+              routeInfo.style.lineHeight = "1.6";
+
+              const mapElement =
+                  document.getElementById("delivery-map");
+
+              if (
+                  mapElement &&
+                  mapElement.parentElement
+              ) {
+                  mapElement.parentElement.appendChild(
+                      routeInfo
+                  );
+              }
+          }
+
+          if (
+              route &&
+              route.geometry &&
+              deliveryMap.isStyleLoaded()
+          ) {
+              const routeFeature = {
+                  type: "Feature",
+                  properties: {},
+                  geometry: route.geometry
+              };
+
+              const existingSource =
+                  deliveryMap.getSource(
+                      routeSourceId
+                  );
+
+              if (existingSource) {
+                  existingSource.setData(
+                      routeFeature
+                  );
+              } else {
+                  deliveryMap.addSource(
+                      routeSourceId,
+                      {
+                          type: "geojson",
+                          data: routeFeature
+                      }
+                  );
+
+                  deliveryMap.addLayer({
+                      id: routeLayerId,
+                      type: "line",
+                      source: routeSourceId,
+                      layout: {
+                          "line-cap": "round",
+                          "line-join": "round"
+                      },
+                      paint: {
+                          "line-color": "#e53935",
+                          "line-width": 6,
+                          "line-opacity": 0.8
+                      }
+                  });
+              }
+
+              if (routeInfo) {
+                  routeInfo.innerHTML =
+                      "<strong>Live Delivery</strong><br>" +
+                      "Remaining distance: " +
+                      Number(route.distance_km).toFixed(2) +
+                      " km<br>" +
+                      "Estimated arrival: " +
+                      Number(route.duration_minutes).toFixed(0) +
+                      " minutes" +
+                      (
+                          driverLocation &&
+                          driverLocation.updated_at
+                              ? "<br>Last GPS update: " +
+                                new Date(
+                                    driverLocation.updated_at
+                                ).toLocaleTimeString()
+                              : ""
+                      );
+                  routeInfo.style.display = "block";
+              }
+          } else {
+              if (
+                  deliveryMap.getLayer(
+                      routeLayerId
+                  )
+              ) {
+                  deliveryMap.removeLayer(
+                      routeLayerId
+                  );
+              }
+
+              if (
+                  deliveryMap.getSource(
+                      routeSourceId
+                  )
+              ) {
+                  deliveryMap.removeSource(
+                      routeSourceId
+                  );
+              }
+
+              if (routeInfo) {
+                  routeInfo.style.display = "none";
+              }
+          }
+      }
+
+
+    const statusElement = document.querySelector(".current-status-value");
+    const timelineElement = document.querySelector(".timeline");
+    const driverBox = document.querySelector(".driver-box");
+
+    function escapeHtml(value) {
+        const div = document.createElement("div");
+        div.textContent = value || "";
+        return div.innerHTML;
+    }
+
+      function renderTracking(data) {
+
+          if (statusElement) {
+              statusElement.textContent =
+                  data.status_display;
+            const orderUpdateMessage =
+                document.querySelector(".order-update-message");
+
+            if (orderUpdateMessage) {
+
+                const updateMessages = {
+                new:
+                    "Your order has been received and is being processed.",
+
+                preparing:
+                    "Your order is being prepared.",
+
+                braaiing:
+                    "Your order is being prepared.",
+
+                ready:
+                    "Your order is ready and waiting for delivery.",
+
+                driver_assigned:
+                    "A driver has been assigned and will collect your order.",
+
+                picked_up:
+                    "Your driver has picked up your order and is on the way.",
+
+                delivered:
+                    "Your order has been delivered. Thank you for ordering with AirXpress Eats.",
+
+                collected:
+                    "Your order has been collected."
+            };
+                const statusKey =
+                    String(data.status || "")
+                        .toLowerCase()
+                        .trim();
+
+                orderUpdateMessage.textContent =
+                    updateMessages[statusKey] ||
+                    (
+                        data.status_display
+                            ? "Order status: " + data.status_display
+                            : "Your order status has been updated."
+                    );
+            }
+
+          }
+
+          if (
+              timelineElement &&
+              data.history &&
+              data.history.length
+          ) {
+              timelineElement.innerHTML =
+                  data.history.map(
+                      (item, index) => `
+                          <div class="timeline-item ${index === data.history.length - 1 ? "current" : "completed"}">
+                              <div class="timeline-line"></div>
+
+                              <div class="timeline-dot"></div>
+
+                              <div class="timeline-content">
+                                  <div class="timeline-title">
+                                      ${escapeHtml(item.status_display)}
+                                  </div>
+
+                                  ${
+                                      item.created_at
+                                          ? `<div class="timeline-time">
+                                                 ${new Date(item.created_at).toLocaleString("en-ZA")}
+                                             </div>`
+                                          : ""
+                                  }
+
+                                  ${
+                                      item.notes
+                                          ? `<div class="timeline-time">
+                                                 ${escapeHtml(item.notes)}
+                                             </div>`
+                                          : ""
+                                  }
+                              </div>
+                          </div>
+                      `
+                  ).join("");
+          }
+
+          const existingDriver =
+              document.querySelector(
+                  ".driver-status"
+              );
+
+          if (data.driver) {
+
+              if (existingDriver) {
+                  existingDriver.textContent =
+                      data.driver;
+              }
+              else if (driverBox) {
+
+                  const p =
+                      driverBox.querySelector("p");
+
+                  if (p) {
+                      p.classList.add(
+                          "driver-status"
+                      );
+
+                      p.textContent =
+                          data.driver;
+                  }
+              }
+          }
+
+          /*
+           * Keep the map synchronized with the
+           * latest tracking response.
+           */
+          initializeDeliveryMap(data);
+
+          /*
+           * Once delivered, remove all live-delivery
+           * elements and stop showing stale GPS data.
+           */
+          if (data.status === "delivered") {
+
+              const driverLegend = document.querySelector(".driver-legend");
+
+              if (driverLegend) {
+                  driverLegend.style.display = "none";
+              }
+
+              const trackingNote = document.getElementById("tracking-note");
+
+              if (trackingNote) {
+                  trackingNote.textContent = "This order has been delivered.";
+              }
+
+              const routeInfo =
+                  document.getElementById(
+                      "live-route-info"
+                  );
+
+              if (routeInfo) {
+                  routeInfo.style.display = "none";
+              }
+
+              if (deliveryMap) {
+
+                  const routeLayerId =
+                      "live-delivery-route-line";
+
+                  const routeSourceId =
+                      "live-delivery-route";
+
+                  if (
+                      deliveryMap.getLayer(
+                          routeLayerId
+                      )
+                  ) {
+                      deliveryMap.removeLayer(
+                          routeLayerId
+                      );
+                  }
+
+                  if (
+                      deliveryMap.getSource(
+                          routeSourceId
+                      )
+                  ) {
+                      deliveryMap.removeSource(
+                          routeSourceId
+                      );
+                  }
+              }
+
+              if (driverMarker) {
+                  driverMarker.remove();
+                  driverMarker = null;
+              }
+
+              if (deliveryMap) {
+                  deliveryMap._airxpressHasFitted =
+                      false;
+              }
+          }
+      }
+
+
+    async function refreshTracking() {
+        try {
+            const response = await fetch(
+                trackingUrl,
+                {
+                    method: "GET",
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    cache: "no-store"
+                }
+            );
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+
+            renderTracking(data);
+            initializeDeliveryMap(data);
+
+            if (data.status === "delivered") {
+                clearInterval(trackingInterval);
+            }
+
+        } catch (error) {
+            console.error("Tracking update failed:", error);
+        }
+    }
+
+    refreshTracking();
+
+    const trackingInterval = setInterval(
+        refreshTracking,
+        5000
+    );
+</script>
+</body>
+
+</html>
+
+
+
+
+

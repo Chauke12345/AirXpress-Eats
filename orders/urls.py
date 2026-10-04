@@ -1,4 +1,4 @@
-from django.urls import path
+﻿from django.urls import path
 from django.contrib.auth import views as auth_views
 
 from . import views
@@ -65,9 +65,36 @@ urlpatterns = [
     ),
 
     path(
+        "shop/<slug:shop_slug>/orders/",
+        views.customer_order_history,
+        name="customer_order_history",
+    ),
+    path(
+        "shop/<slug:shop_slug>/order/<int:order_id>/invoice/",
+        views.customer_invoice,
+        name="customer_invoice",
+    ),
+
+
+    path(
         "shop/<slug:shop_slug>/order/<int:order_id>/success/",
         views.order_success,
         name="order_success",
+    ),
+    path(
+        "track/<uuid:tracking_token>/",
+        views.track_order,
+        name="track_order",
+    ),
+    path(
+        "track/<uuid:tracking_token>/status/",
+        views.track_order_status,
+        name="track_order_status",
+    ),
+    path(
+        "driver/orders/<int:order_id>/location/",
+        views.update_driver_location,
+        name="update_driver_location",
     ),
 
 
@@ -241,6 +268,9 @@ path(
         views.mark_driver_payout_paid,
         name="mark_driver_payout_paid",
     ),]
+
+
+
 
 
 

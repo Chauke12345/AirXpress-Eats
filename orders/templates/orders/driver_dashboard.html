@@ -417,6 +417,29 @@
                             </form>
 
                         {% elif order.status == "picked_up" %}
+                            <div
+                                class="driver-gps-panel"
+                                data-order-id="{{ order.id }}"
+                                data-location-url="{% url 'update_driver_location' order.id %}"
+                                style="
+                                    width: 100%;
+                                    padding: 12px 14px;
+                                    margin-bottom: 10px;
+                                    border-radius: 9px;
+                                    background: #1f1f1f;
+                                    border: 1px solid #3a3a3a;
+                                    color: #ffffff;
+                                    font-size: 13px;
+                                "
+                            >
+                                <strong>Live Location Sharing</strong>
+
+                                <div class="driver-gps-status">
+                                    Preparing GPS location...
+                                </div>
+
+                            </div>
+
 
                             <form
                                 method="post"
@@ -634,6 +657,190 @@
 
     </main>
 
+<script>
+    function startDriverGps() {
+        const panels = document.querySelectorAll(".driver-gps-panel");
+        const activeDeliveryId = "{{ active_delivery_id|default:"" }}";
+
+        if (!panels.length) {
+            return;
+        }
+
+        const csrfInput = document.querySelector(
+            'input[name="csrfmiddlewaretoken"]'
+        );
+
+        if (!csrfInput) {
+            panels.forEach(panel => {
+                const status = panel.querySelector(
+                    ".driver-gps-status"
+                );
+
+                if (status) {
+                    status.textContent =
+                        "GPS unavailable: security token not found.";
+                }
+            });
+
+            return;
+        }
+
+        const csrfToken = csrfInput.value;
+
+        function updatePanelStatus(message) {
+            panels.forEach(panel => {
+                const status = panel.querySelector(
+                    ".driver-gps-status"
+                );
+
+                if (status) {
+                    status.textContent = message;
+                }
+            });
+        }
+
+        async function sendLocation(
+            panel,
+            latitude,
+            longitude
+        ) {
+            const formData = new URLSearchParams();
+
+            formData.append(
+                "latitude",
+                latitude
+            );
+
+            formData.append(
+                "longitude",
+                longitude
+            );
+
+            try {
+                const response = await fetch(
+                    panel.dataset.locationUrl,
+                    {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": csrfToken,
+                            "X-Requested-With": "XMLHttpRequest",
+                            "Content-Type":
+                                "application/x-www-form-urlencoded; charset=UTF-8"
+                        },
+                        body: formData.toString(),
+                        credentials: "same-origin",
+                        cache: "no-store"
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    console.error(
+                        "GPS update rejected:",
+                        data
+                    );
+                }
+            }
+            catch (error) {
+                console.error(
+                    "GPS update failed:",
+                    error
+                );
+            }
+        }
+
+        function handlePosition(position) {
+            const latitude =
+                position.coords.latitude;
+
+            const longitude =
+                position.coords.longitude;
+
+            const accuracy =
+                Math.round(
+                    position.coords.accuracy
+                );
+
+            updatePanelStatus(
+                "Live location active • GPS accuracy: " +
+                accuracy +
+                " m"
+            );
+
+            const activePanel = Array.from(panels).find(
+
+                panel => panel.dataset.orderId === String(activeDeliveryId)
+
+            );
+
+
+            if (!activePanel) {
+
+                return;
+
+            }
+
+
+            sendLocation(
+
+                activePanel,
+
+                latitude,
+
+                longitude
+
+            );
+        }
+
+        function handleError(error) {
+            let message =
+                "Unable to access GPS.";
+
+            if (error.code === 1) {
+                message =
+                    "Location permission was denied.";
+            }
+            else if (error.code === 2) {
+                message =
+                    "Your location is currently unavailable.";
+            }
+            else if (error.code === 3) {
+                message =
+                    "GPS request timed out. Retrying...";
+            }
+
+            updatePanelStatus(message);
+        }
+
+        if (!navigator.geolocation) {
+            updatePanelStatus(
+                "This device does not support GPS location."
+            );
+
+            return;
+        }
+
+        updatePanelStatus(
+            "Requesting GPS permission..."
+        );
+
+        navigator.geolocation.watchPosition(
+            handlePosition,
+            handleError,
+            {
+                enableHighAccuracy: true,
+                maximumAge: 5000,
+                timeout: 15000
+            }
+        );
+    }
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        startDriverGps
+    );
+</script>
 </body>
 </html>
 

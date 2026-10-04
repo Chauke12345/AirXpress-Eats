@@ -538,11 +538,101 @@ def calculate_driving_distance(
 
     distance_km = route["distance"] / 1000
     duration_minutes = route["duration"] / 60
-
     return {
         "distance_km": round(distance_km, 2),
         "duration_minutes": round(duration_minutes, 1),
+        "customer_longitude": float(customer_lon),
+        "customer_latitude": float(customer_lat),
     }
 
 
 
+
+def calculate_driver_route(
+    driver_latitude,
+    driver_longitude,
+    customer_latitude,
+    customer_longitude,
+):
+    """
+    Calculate the live driving route from the driver's current GPS
+    position to the customer's saved destination.
+
+    Returns:
+        {
+            "distance_km": float,
+            "duration_minutes": float,
+            "geometry": GeoJSON geometry,
+        }
+    """
+
+    if (
+        driver_latitude is None
+        or driver_longitude is None
+        or customer_latitude is None
+        or customer_longitude is None
+    ):
+        return None
+
+    token = settings.MAPBOX_TOKEN
+
+    if not token:
+        raise MapboxError(
+            "Mapbox token is not configured."
+        )
+
+    driver_lon = float(driver_longitude)
+    driver_lat = float(driver_latitude)
+    customer_lon = float(customer_longitude)
+    customer_lat = float(customer_latitude)
+
+    url = (
+        "https://api.mapbox.com/directions/v5/mapbox/driving/"
+        f"{driver_lon},{driver_lat};"
+        f"{customer_lon},{customer_lat}"
+        "?overview=full"
+        "&geometries=geojson"
+        f"&access_token={token}"
+    )
+
+    try:
+        with urllib.request.urlopen(
+            url,
+            timeout=10,
+        ) as response:
+            data = json.loads(
+                response.read().decode("utf-8")
+            )
+    except Exception as exc:
+        raise MapboxError(
+            f"Mapbox live routing failed: {exc}"
+        ) from exc
+
+    if data.get("code") != "Ok":
+        raise MapboxError(
+            data.get(
+                "message",
+                "Mapbox could not calculate the live route.",
+            )
+        )
+
+    routes = data.get("routes", [])
+
+    if not routes:
+        raise MapboxError(
+            "Mapbox returned no live driving route."
+        )
+
+    route = routes[0]
+
+    return {
+        "distance_km": round(
+            route["distance"] / 1000,
+            2,
+        ),
+        "duration_minutes": round(
+            route["duration"] / 60,
+            1,
+        ),
+        "geometry": route.get("geometry"),
+    }

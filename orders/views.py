@@ -1,4 +1,4 @@
-from decimal import Decimal, InvalidOperation
+﻿from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
 from django.contrib import messages
@@ -44,7 +44,7 @@ from .models import (
     ShopSubscriptionPayment
 )
 
-from .mapbox import MapboxError, calculate_driving_distance
+from .mapbox import MapboxError, calculate_driving_distance, calculate_driver_route
 # =========================================================
 # CUSTOMER ORDER PAGE
 # =========================================================
@@ -655,6 +655,8 @@ def checkout(request, shop_slug):
     platform_fee = None
     total = subtotal
     delivery_distance_km = None
+    customer_latitude = None
+    customer_longitude = None
     price_calculated = False
     delivery_unavailable = False
 
@@ -783,6 +785,14 @@ def checkout(request, shop_slug):
                         str(route["distance_km"])
                     )
 
+                    customer_latitude = Decimal(
+                        str(route["customer_latitude"])
+                    )
+
+                    customer_longitude = Decimal(
+                        str(route["customer_longitude"])
+                    )
+
                 except MapboxError:
                     messages.error(
                         request,
@@ -891,6 +901,8 @@ def checkout(request, shop_slug):
                                     estimated_total=subtotal,
                                     delivery_fee=delivery_fee,
                                     delivery_distance_km=parsed_distance,
+                                    customer_latitude=customer_latitude,
+                                    customer_longitude=customer_longitude,
                                     final_total=total,
                                     platform_fee=platform_fee,
                                     driver_payout=driver_payout,
@@ -1223,36 +1235,276 @@ def customer_order(request, shop_slug):
 # ORDER SUCCESS PAGE
 # =========================================================
 
-def order_success(
-    request,
-    shop_slug,
-    order_id,
-):
+def order_success(request, shop_slug, order_id):
+    shop = get_object_or_404(
+        Shop,
+        slug=shop_slug,
+        is_active=True,
+    )
 
     order = get_object_or_404(
         Order.objects
-        .select_related(
-            "shop",
-            "braai_master",
-        )
-        .prefetch_related(
-            "items__menu_item",
-        ),
+        .select_related("shop", "driver")
+        .prefetch_related("items__menu_item"),
         id=order_id,
-        shop__slug=shop_slug,
-        shop__is_active=True,
+        shop=shop,
     )
 
     return render(
         request,
         "orders/order_success.html",
         {
-            "order": order
+            "shop": shop,
+            "order": order,
+        },
+    )
+
+def track_order(request, tracking_token):
+    order = get_object_or_404(
+        Order.objects
+        .select_related("shop", "driver")
+        .prefetch_related("items__menu_item"),
+        tracking_token=tracking_token,
+    )
+
+    return render(
+        request,
+        "orders/track_order.html",
+        {
+            "order": order,
+            "shop": order.shop,
         },
     )
 
 
-# =========================================================
+def track_order_status(request, tracking_token):
+    order = get_object_or_404(
+        Order.objects
+        .select_related("shop", "driver"),
+        tracking_token=tracking_token,
+    )
+
+    return JsonResponse(
+        {
+            "status": order.status,
+            "status_display": order.get_status_display(),
+            "driver_name": (
+                order.driver.name
+                if order.driver
+                else ""
+            ),
+            "driver_phone": (
+                order.driver.phone_number
+                if order.driver
+                else ""
+            ),
+            "driver_latitude": (
+                float(order.driver.current_latitude)
+                if order.driver
+                and order.driver.current_latitude is not None
+                else None
+            ),
+            "driver_longitude": (
+                float(order.driver.current_longitude)
+                if order.driver
+                and order.driver.current_longitude is not None
+                else None
+            ),
+        }
+    )
+
+def update_driver_location(request, order_id):
+    if request.method != "POST":
+        return JsonResponse(
+            {"success": False, "error": "POST request required."},
+            status=405,
+        )
+
+    order = get_object_or_404(
+        Order.objects.select_related("driver"),
+        id=order_id,
+    )
+
+    if not order.driver:
+        return JsonResponse(
+            {"success": False, "error": "No driver assigned."},
+            status=400,
+        )
+
+    try:
+        latitude = float(request.POST.get("latitude"))
+        longitude = float(request.POST.get("longitude"))
+    except (TypeError, ValueError):
+        return JsonResponse(
+            {"success": False, "error": "Invalid location."},
+            status=400,
+        )
+
+    order.driver.current_latitude = latitude
+    order.driver.current_longitude = longitude
+    order.driver.save(
+        update_fields=[
+            "current_latitude",
+            "current_longitude",
+        ]
+    )
+
+    return JsonResponse(
+        {
+            "success": True,
+            "latitude": latitude,
+            "longitude": longitude,
+        }
+    )
+
+def customer_invoice(request, shop_slug, order_id):
+    shop = get_object_or_404(
+        Shop,
+        slug=shop_slug,
+        is_active=True,
+    )
+
+    order = get_object_or_404(
+        Order.objects
+        .select_related("shop", "driver")
+        .prefetch_related("items__menu_item"),
+        id=order_id,
+        shop=shop,
+    )
+
+    food_subtotal = sum(
+        (
+            item.final_amount
+            if item.final_amount is not None
+            else item.requested_amount
+            if item.requested_amount is not None
+            else item.unit_price or 0
+        )
+        for item in order.items.all()
+    )
+
+    return render(
+        request,
+        "orders/customer_invoice.html",
+        {
+            "shop": shop,
+            "order": order,
+            "food_subtotal": food_subtotal,
+        },
+    )
+
+def customer_order_history(request, shop_slug):
+    """
+    Display a customer's order history for a specific shop.
+
+    Customers are identified using their name and WhatsApp/contact
+    number stored in the session.
+    """
+
+    shop = get_object_or_404(
+        Shop,
+        slug=shop_slug,
+        is_active=True,
+    )
+
+    customer_name = request.session.get(
+        "airxpress_customer_name",
+        "",
+    ).strip()
+
+    whatsapp_number = request.session.get(
+        "airxpress_customer_whatsapp",
+        "",
+    ).strip()
+
+    orders = Order.objects.none()
+
+    if request.method == "POST":
+
+        customer_name = request.POST.get(
+            "customer_name",
+            "",
+        ).strip()
+
+        whatsapp_number = request.POST.get(
+            "whatsapp_number",
+            "",
+        ).strip()
+
+        if not customer_name:
+
+            messages.error(
+                request,
+                "Please enter your name.",
+            )
+
+        elif not whatsapp_number:
+
+            messages.error(
+                request,
+                "Please enter your WhatsApp or contact number.",
+            )
+
+        else:
+
+            request.session["airxpress_customer_name"] = (
+                customer_name
+            )
+
+            request.session["airxpress_customer_whatsapp"] = (
+                whatsapp_number
+            )
+
+            request.session.modified = True
+
+            orders = (
+                Order.objects
+                .filter(
+                    shop=shop,
+                    customer_name__iexact=customer_name,
+                    whatsapp_number=whatsapp_number,
+                )
+                .select_related(
+                    "driver",
+                )
+                .prefetch_related(
+                    "items__menu_item",
+                )
+                .order_by(
+                    "-created_at",
+                )
+            )
+
+    elif customer_name and whatsapp_number:
+
+        orders = (
+            Order.objects
+            .filter(
+                shop=shop,
+                customer_name__iexact=customer_name,
+                whatsapp_number=whatsapp_number,
+            )
+            .select_related(
+                "driver",
+            )
+            .prefetch_related(
+                "items__menu_item",
+            )
+            .order_by(
+                "-created_at",
+            )
+        )
+
+    return render(
+        request,
+        "orders/customer_order_history.html",
+        {
+            "shop": shop,
+            "orders": orders,
+            "customer_name": customer_name,
+            "whatsapp_number": whatsapp_number,
+        },
+    )# =========================================================
 # ACCESS CHECKS
 # =========================================================
 
@@ -1696,8 +1948,12 @@ def driver_dashboard(request):
         .count()
     )
 
+    # Only the most recently updated picked-up order is actively tracked.
+    active_delivery = assigned_orders.filter(status="picked_up").first()
+
     context = {
         "driver": driver,
+          "active_delivery_id": active_delivery.id if active_delivery else None,
         "pending_requests": pending_requests,
         "assigned_orders": assigned_orders,
         "driver_payouts": driver_payouts,
@@ -1998,9 +2254,17 @@ def driver_deliver_order(request, order_id):
 
         order.status = "delivered"
 
+        # Stop live GPS tracking when delivery is completed.
+        order.driver_latitude = None
+        order.driver_longitude = None
+        order.driver_location_updated_at = None
+
         order.save(
             update_fields=[
                 "status",
+                "driver_latitude",
+                "driver_longitude",
+                "driver_location_updated_at",
                 "updated_at",
             ]
         )
@@ -3423,6 +3687,13 @@ def payfast_payment(request, order_id):
             "order": order,
         },
     )
+
+
+
+
+
+
+
 
 
 

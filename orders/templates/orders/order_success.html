@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -561,22 +561,20 @@
     <div class="action-buttons">
 
         <a
-            href="{% url 'customer_order' shop_slug=order.shop.slug %}"
+            href="{% url 'track_order' tracking_token=order.tracking_token %}"
             class="done-btn"
         >
-            âœ“ Done
+            Track Your Order
         </a>
-
 
         <a
             href="{% url 'customer_order' shop_slug=order.shop.slug %}"
             class="back-link"
         >
-            Place Another Order â†’
+            Place Another Order
         </a>
 
     </div>
-
 
     <!-- FOOTER -->
 

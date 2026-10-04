@@ -1,4 +1,5 @@
-﻿from decimal import Decimal
+from decimal import Decimal
+import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -405,8 +406,36 @@ class Order(models.Model):
         related_name="orders"
     )
 
+    
+    driver_latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+    )
+
+    driver_longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+    )
+
+    driver_location_updated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
     customer_name = models.CharField(
         max_length=150
+    )
+
+    
+    tracking_token = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        db_index=True,
     )
 
     whatsapp_number = models.CharField(
@@ -416,6 +445,20 @@ class Order(models.Model):
 
     delivery_address = models.TextField(
         blank=True
+    )
+    
+    customer_latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+    )
+
+    customer_longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
     )
     # Where the customer is ordering from.
     order_type = models.CharField(

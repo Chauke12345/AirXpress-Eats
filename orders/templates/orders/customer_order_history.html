@@ -1,0 +1,594 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Orders | AirXpress Eats</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f6f7f9;
+            color: #222;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .page {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px 18px 50px;
+        }
+
+        .header {
+            background: #111;
+            color: #fff;
+            border-radius: 16px;
+            padding: 28px 24px;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            margin: 0 0 8px;
+            font-size: 30px;
+        }
+
+        .header p {
+            margin: 0;
+            color: #ddd;
+            font-size: 15px;
+        }
+
+        .shop-name {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .lookup {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+        }
+
+        .lookup h2 {
+            margin: 0 0 8px;
+            font-size: 20px;
+        }
+
+        .lookup p {
+            margin: 0 0 18px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 13px;
+            border: 1px solid #ddd;
+            border-radius: 9px;
+            font-size: 15px;
+        }
+
+        .lookup-button {
+            background: #111;
+            color: #fff;
+            border: none;
+            padding: 13px 20px;
+            border-radius: 9px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .messages {
+            margin-bottom: 20px;
+        }
+
+        .message {
+            background: #fff3cd;
+            color: #664d03;
+            border: 1px solid #ffecb5;
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .orders {
+            display: grid;
+            gap: 20px;
+        }
+
+        .order-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+        }
+
+        .order-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .order-number {
+            margin: 0 0 6px;
+            font-size: 21px;
+        }
+
+        .order-date {
+            margin: 0;
+            color: #777;
+            font-size: 14px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 13px;
+            border-radius: 20px;
+            background: #e8f5e9;
+            color: #198754;
+            font-size: 13px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .details {
+            display: grid;
+            gap: 0;
+            margin-top: 15px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 11px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .detail-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .detail-value {
+            text-align: right;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .total-row {
+            margin-top: 5px;
+            padding-top: 15px;
+            border-top: 2px solid #222;
+            border-bottom: none;
+        }
+
+        .total-row .detail-label,
+        .total-row .detail-value {
+            color: #111;
+            font-size: 17px;
+            font-weight: bold;
+        }
+
+        .items {
+            margin-top: 18px;
+            padding: 16px;
+            background: #f8f8f8;
+            border-radius: 12px;
+        }
+
+        .items-title {
+            margin: 0 0 12px;
+            font-size: 15px;
+        }
+
+        .item {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 7px 0;
+            font-size: 14px;
+        }
+
+        .item-name {
+            color: #444;
+        }
+
+        .item-price {
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 12px 18px;
+            border-radius: 9px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .invoice-button {
+            background: #111;
+            color: #fff;
+        }
+
+        .track-button {
+            background: #e9ecef;
+            color: #111;
+        }
+
+        .order-button {
+            background: #111;
+            color: #fff;
+        }
+
+        .empty {
+            background: #fff;
+            border-radius: 16px;
+            padding: 50px 25px;
+            text-align: center;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+        }
+
+        .empty h2 {
+            margin: 0 0 10px;
+        }
+
+        .empty p {
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 700px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .lookup-button {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .page {
+                padding: 18px 12px 40px;
+            }
+
+            .header {
+                padding: 22px 18px;
+            }
+
+            .header h1 {
+                font-size: 25px;
+            }
+
+            .order-card {
+                padding: 18px;
+            }
+
+            .order-top {
+                flex-direction: column;
+            }
+
+            .detail-row {
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .detail-value {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <div class="header">
+        <h1>My Orders</h1>
+        <p>View your AirXpress Eats order history and previous purchases.</p>
+        <div class="shop-name">
+            {{ shop.name }}
+        </div>
+    </div>
+
+    <div class="lookup">
+
+        <h2>Find Your Orders</h2>
+
+        <p>
+            Enter the name and WhatsApp number used when placing your order.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="customer_name">Your Name</label>
+
+                    <input
+                        type="text"
+                        id="customer_name"
+                        name="customer_name"
+                        value="{{ customer_name }}"
+                        placeholder="Enter your name"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="whatsapp_number">WhatsApp / Contact Number</label>
+
+                    <input
+                        type="text"
+                        id="whatsapp_number"
+                        name="whatsapp_number"
+                        value="{{ whatsapp_number }}"
+                        placeholder="e.g. 0733141222"
+                        required
+                    >
+                </div>
+
+                <button
+                    type="submit"
+                    class="lookup-button"
+                >
+                    Find My Orders
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if orders %}
+
+        <div class="orders">
+
+            {% for order in orders %}
+
+                <div class="order-card">
+
+                    <div class="order-top">
+
+                        <div>
+                            <h2 class="order-number">
+                                Order #{{ order.id }}
+                            </h2>
+
+                            <p class="order-date">
+                                {{ order.created_at|date:"d M Y, H:i" }}
+                            </p>
+                        </div>
+
+                        <div class="status">
+                            {{ order.get_status_display }}
+                        </div>
+
+                    </div>
+
+                    <div class="details">
+
+                        <div class="detail-row">
+                            <div class="detail-label">
+                                Customer
+                            </div>
+
+                            <div class="detail-value">
+                                {{ order.customer_name }}
+                            </div>
+                        </div>
+
+                        <div class="detail-row">
+                            <div class="detail-label">
+                                Delivery Address
+                            </div>
+
+                            <div class="detail-value">
+                                {{ order.delivery_address|default:"Collection / Not provided" }}
+                            </div>
+                        </div>
+
+                        <div class="detail-row">
+                            <div class="detail-label">
+                                Delivery Distance
+                            </div>
+
+                            <div class="detail-value">
+                                {% if order.delivery_distance_km %}
+                                    {{ order.delivery_distance_km }} km
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="detail-row">
+                            <div class="detail-label">
+                                Delivery Fee
+                            </div>
+
+                            <div class="detail-value">
+                                R{{ order.delivery_fee|floatformat:2 }}
+                            </div>
+                        </div>
+
+                        <div class="detail-row">
+                            <div class="detail-label">
+                                Payment Status
+                            </div>
+
+                            <div class="detail-value">
+                                {{ order.payment_status|default:"Pending" }}
+                            </div>
+                        </div>
+
+                        {% if order.driver %}
+                            <div class="detail-row">
+                                <div class="detail-label">
+                                    Delivery Driver
+                                </div>
+
+                                <div class="detail-value">
+                                    {{ order.driver.name }}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="detail-row total-row">
+                            <div class="detail-label">
+                                Total
+                            </div>
+
+                            <div class="detail-value">
+                                R{{ order.final_total|floatformat:2 }}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="items">
+
+                        <h3 class="items-title">
+                            Items Ordered
+                        </h3>
+
+                        {% for item in order.items.all %}
+
+                            <div class="item">
+
+                                <div class="item-name">
+                                    {{ item.quantity }} ×
+                                    {{ item.menu_item.name }}
+                                </div>
+
+                                <div class="item-price">
+                                    R{{ item.final_amount|default:item.unit_price|floatformat:2 }}
+                                </div>
+
+                            </div>
+
+                        {% empty %}
+
+                            <div class="item-name">
+                                No item details available.
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                    <div class="actions">
+
+                        <a
+                            href="{% url 'customer_invoice' shop.slug order.id %}"
+                            class="button invoice-button"
+                        >
+                            View Invoice
+                        </a>
+
+                        <a
+                            href="{% url 'track_order' order.tracking_token %}"
+                            class="button track-button"
+                        >
+                            Track Order
+                        </a>
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="empty">
+
+            <h2>
+                {% if customer_name and whatsapp_number %}
+                    No Orders Found
+                {% else %}
+                    Find Your Previous Orders
+                {% endif %}
+            </h2>
+
+            <p>
+                {% if customer_name and whatsapp_number %}
+                    We could not find any orders matching those details.
+                    Please check your name and WhatsApp number.
+                {% else %}
+                    Enter your name and WhatsApp number above to view your previous AirXpress Eats orders.
+                {% endif %}
+            </p>
+
+            <a
+                href="{% url 'customer_order' shop.slug %}"
+                class="button order-button"
+            >
+                Start an Order
+            </a>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+</body>
+</html>
+

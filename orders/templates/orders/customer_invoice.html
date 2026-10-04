@@ -1,0 +1,451 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Invoice #{{ order.id }} | AirXpress Eats</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 15px;
+            background: #f1f3f5;
+            color: #222;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .invoice {
+            max-width: 850px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 45px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+            padding-bottom: 25px;
+            border-bottom: 2px solid #111;
+        }
+
+        .brand h1 {
+            margin: 0 0 5px;
+            font-size: 30px;
+            letter-spacing: 1px;
+        }
+
+        .brand p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .invoice-title {
+            text-align: right;
+        }
+
+        .invoice-title h2 {
+            margin: 0 0 8px;
+            font-size: 28px;
+        }
+
+        .invoice-title p {
+            margin: 3px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .section {
+            margin-top: 28px;
+        }
+
+        .section-title {
+            margin: 0 0 12px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: #666;
+        }
+
+        .customer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .info-box {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .info-box span {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 8px;
+            border-bottom: 2px solid #222;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 13px 8px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        th:last-child,
+        td:last-child {
+            text-align: right;
+        }
+
+        .summary {
+            width: 320px;
+            margin-left: auto;
+            margin-top: 25px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 0;
+            font-size: 14px;
+        }
+
+        .summary-total {
+            margin-top: 8px;
+            padding-top: 14px;
+            border-top: 2px solid #111;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .payment {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 7px 12px;
+            border-radius: 20px;
+            background: #fff3cd;
+            color: #664d03;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 45px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #777;
+            font-size: 13px;
+        }
+
+        .actions {
+            max-width: 850px;
+            margin: 20px auto 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .print-button {
+            background: #111;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        .back-button {
+            background: #ddd;
+            color: #111;
+        }
+
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+
+            .invoice {
+                box-shadow: none;
+                max-width: none;
+                padding: 25px;
+            }
+
+            .actions {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .invoice {
+                padding: 22px;
+            }
+
+            .top {
+                flex-direction: column;
+            }
+
+            .invoice-title {
+                text-align: left;
+            }
+
+            .customer-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .summary {
+                width: 100%;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th,
+            td {
+                padding: 9px 4px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="invoice">
+
+    <div class="top">
+
+        <div class="brand">
+            <h1>AirXpress Eats</h1>
+            <p>{{ shop.name }}</p>
+            <p>Customer Invoice</p>
+        </div>
+
+        <div class="invoice-title">
+            <h2>INVOICE</h2>
+            <p><strong>Invoice #:</strong> AX-{{ order.id }}</p>
+            <p><strong>Order #:</strong> {{ order.id }}</p>
+            <p>
+                <strong>Date:</strong>
+                {{ order.created_at|date:"d M Y, H:i" }}
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="section">
+
+        <h3 class="section-title">
+            Customer & Delivery Details
+        </h3>
+
+        <div class="customer-grid">
+
+            <div class="info-box">
+                <strong>Customer</strong>
+                <span>{{ order.customer_name }}</span>
+            </div>
+
+            <div class="info-box">
+                <strong>WhatsApp / Contact</strong>
+                <span>{{ order.whatsapp_number }}</span>
+            </div>
+
+            <div class="info-box">
+                <strong>Delivery Address</strong>
+                <span>
+                    {{ order.delivery_address|default:"Collection / Not provided" }}
+                </span>
+            </div>
+
+            <div class="info-box">
+                <strong>Delivery Distance</strong>
+                <span>
+                    {% if order.delivery_distance_km %}
+                        {{ order.delivery_distance_km }} km
+                    {% else %}
+                        Collection
+                    {% endif %}
+                </span>
+            </div>
+
+            {% if order.driver %}
+
+                <div class="info-box">
+                    <strong>Delivery Driver</strong>
+                    <span>{{ order.driver.name }}</span>
+                </div>
+
+            {% endif %}
+
+            <div class="info-box">
+                <strong>Payment Status</strong>
+
+                <span class="payment">
+                    {{ order.payment_status|default:"Pending" }}
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="section">
+
+        <h3 class="section-title">
+            Order Items
+        </h3>
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for item in order.items.all %}
+
+                    <tr>
+
+                        <td>
+                            {{ item.menu_item.name }}
+                        </td>
+
+                        <td>
+                            {{ item.quantity }}
+                        </td>
+
+                        <td>
+                            R{{ item.final_amount|default:item.requested_amount|floatformat:2 }}
+                        </td>
+
+                    </tr>
+
+                {% empty %}
+
+                    <tr>
+                        <td colspan="3">
+                            No item details available.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <div class="summary">
+
+        <div class="summary-row">
+            <span>Food Subtotal</span>
+
+            <span>
+                R{{ food_subtotal|floatformat:2 }}
+            </span>
+        </div>
+
+        <div class="summary-row">
+            <span>Delivery Fee</span>
+
+            <span>
+                R{{ order.delivery_fee|floatformat:2 }}
+            </span>
+        </div>
+
+        <div class="summary-row summary-total">
+            <span>Total</span>
+
+            <span>
+                R{{ order.final_total|floatformat:2 }}
+            </span>
+        </div>
+
+    </div>
+
+
+    <div class="footer">
+
+        <p>
+            Thank you for ordering with AirXpress Eats.
+        </p>
+
+        <p>
+            This invoice reflects the total charged for your order.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="actions">
+
+    <button
+        type="button"
+        class="button print-button"
+        onclick="window.print()"
+    >
+        Print / Save as PDF
+    </button>
+
+    <a
+        href="{% url 'customer_order_history' shop.slug %}"
+        class="button back-button"
+    >
+        Back to My Orders
+    </a>
+
+</div>
+
+</body>
+</html>
+
+
