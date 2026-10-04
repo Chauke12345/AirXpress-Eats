@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -260,6 +260,22 @@
             margin-top: 25px;
         }
 
+        .support-button {
+            display: block;
+            margin-top: 15px;
+            padding: 14px 18px;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            background: #25D366;
+            color: #fff;
+        }
+
+        .support-button:hover {
+            opacity: 0.9;
+        }
+
         .back-link {
             display: block;
             margin-top: 25px;
@@ -469,7 +485,15 @@
 
       <div id="tracking-note" class="refresh-note">
         This page can be kept open while your order is being prepared and delivered.
-    </div>
+    </div>      <a
+          href="https://wa.me/27815702241?text=Hello%20AirXpress%20Support%2C%20I%20need%20assistance%20with%20my%20order%20%23{{ order.id }}."
+          class="support-button"
+          target="_blank"
+          rel="noopener noreferrer"
+      >
+          Contact AirXpress Support
+      </a>
+
 
 
     <a
@@ -1000,6 +1024,9 @@
 </body>
 
 </html>
+
+
+
 
 
 
