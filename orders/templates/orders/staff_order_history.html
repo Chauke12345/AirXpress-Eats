@@ -539,7 +539,301 @@
             }
         }
 
-    </style>
+    
+        /* =========================================================
+           AIRXPRESS HIGH-VISIBILITY ORDER HISTORY
+           ========================================================= */
+
+        body {
+            background: #f4f5f7 !important;
+            color: #111111 !important;
+        }
+
+        .history-header {
+            background: #050505 !important;
+            border-bottom: 4px solid #bdbdbd !important;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18) !important;
+        }
+
+        .header-text h1 {
+            color: #ffffff !important;
+            font-size: 30px !important;
+        }
+
+        .header-text p {
+            color: #d0d0d0 !important;
+            font-weight: 600 !important;
+        }
+
+        .dashboard-link {
+            background: #050505 !important;
+            color: #ffffff !important;
+            border: 2px solid #050505 !important;
+            min-height: 46px !important;
+            font-size: 15px !important;
+            padding: 12px 18px !important;
+        }
+
+        .dashboard-link:hover {
+            background: #333333 !important;
+            border-color: #333333 !important;
+        }
+
+        /* HISTORY CARDS */
+
+        .order-card {
+            background: #ffffff !important;
+            border: 2px solid #d0d0d0 !important;
+            border-radius: 14px !important;
+            padding: 26px !important;
+            box-shadow: 0 5px 18px rgba(0, 0, 0, 0.10) !important;
+        }
+
+        .order-card:hover {
+            border-color: #777777 !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14) !important;
+        }
+
+        .order-heading h2 {
+            color: #050505 !important;
+            font-size: 26px !important;
+        }
+
+        .order-number {
+            color: #555555 !important;
+            font-weight: 700 !important;
+        }
+
+        /* BADGES */
+
+        .source-badge {
+            background: #eeeeee !important;
+            color: #111111 !important;
+            border: 2px solid #999999 !important;
+        }
+
+        .payment-badge.paid {
+            background: #e8f5e9 !important;
+            color: #1b5e20 !important;
+            border: 2px solid #66bb6a !important;
+        }
+
+        .payment-badge.pending {
+            background: #fff3e0 !important;
+            color: #e65100 !important;
+            border: 2px solid #ffb74d !important;
+        }
+
+        /* CUSTOMER INFORMATION */
+
+        .meta-box {
+            background: #fafafa !important;
+            border: 2px solid #dddddd !important;
+            border-radius: 10px !important;
+            padding: 16px !important;
+        }
+
+        .meta-label {
+            color: #555555 !important;
+            font-size: 12px !important;
+            font-weight: 800 !important;
+        }
+
+        .meta-value {
+            color: #111111 !important;
+            font-size: 16px !important;
+            font-weight: 800 !important;
+        }
+
+        /* COMPLETED */
+
+        .history-status-collected {
+            background: #edf8ee !important;
+            border: 2px solid #66bb6a !important;
+        }
+
+        .history-status-collected .meta-label {
+            color: #2e7d32 !important;
+        }
+
+        .history-status-collected .meta-value {
+            color: #1b5e20 !important;
+            font-size: 18px !important;
+            font-weight: 900 !important;
+        }
+
+        /* CANCELLED */
+
+        .history-status-cancelled {
+            background: #ffebee !important;
+            border: 2px solid #ef5350 !important;
+        }
+
+        .history-status-cancelled .meta-label {
+            color: #c62828 !important;
+        }
+
+        .history-status-cancelled .meta-value {
+            color: #b71c1c !important;
+            font-size: 18px !important;
+            font-weight: 900 !important;
+        }
+
+        /* GENERAL TEXT */
+
+        .order-card strong {
+            color: #111111 !important;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 700px) {
+
+            .history-header {
+                padding: 22px 16px !important;
+            }
+
+            .history-header-inner {
+                align-items: flex-start;
+            }
+
+            .brand-logo {
+                width: 65px !important;
+                height: 65px !important;
+            }
+
+            .header-text h1 {
+                font-size: 24px !important;
+            }
+
+            .history-container {
+                margin: 22px auto !important;
+                padding: 0 12px 35px !important;
+            }
+
+            .order-card {
+                padding: 18px !important;
+            }
+
+            .order-heading {
+                align-items: flex-start !important;
+                flex-direction: column !important;
+            }
+
+            .order-heading h2 {
+                font-size: 22px !important;
+            }
+
+            .order-meta {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+
+        /* =========================================================
+           AIRXPRESS BRIGHT HISTORY DETAILS
+           ========================================================= */
+
+        .section-title {
+            color: #555555 !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+        }
+
+        .order-items {
+            background: #ffffff !important;
+            border-top: 2px solid #dddddd !important;
+            border-bottom: 2px solid #dddddd !important;
+            padding: 7px 0 !important;
+        }
+
+        .order-item {
+            padding: 15px 6px !important;
+        }
+
+        .order-item + .order-item {
+            border-top: 1px solid #dddddd !important;
+        }
+
+        .item-name {
+            color: #111111 !important;
+            font-size: 16px !important;
+            font-weight: 700 !important;
+        }
+
+        .item-price {
+            color: #111111 !important;
+            font-size: 16px !important;
+            font-weight: 900 !important;
+        }
+
+        /* TOTALS */
+
+        .totals {
+            background: #f8f8f8 !important;
+            border: 2px solid #d0d0d0 !important;
+            border-radius: 12px !important;
+            padding: 18px 20px !important;
+        }
+
+        .total-row {
+            color: #444444 !important;
+            font-size: 15px !important;
+            font-weight: 600 !important;
+        }
+
+        .total-row strong {
+            color: #111111 !important;
+            font-weight: 900 !important;
+        }
+
+        .final-total {
+            border-top: 2px solid #cccccc !important;
+            color: #111111 !important;
+            font-size: 20px !important;
+            font-weight: 900 !important;
+        }
+
+        .final-total span:last-child {
+            color: #111111 !important;
+            font-size: 21px !important;
+        }
+
+        /* ORDER FOOTER */
+
+        .order-footer {
+            color: #555555 !important;
+            font-size: 14px !important;
+        }
+
+        .footer-item strong {
+            color: #111111 !important;
+        }
+
+        /* EMPTY HISTORY */
+
+        .empty-history {
+            background: #ffffff !important;
+            border: 2px solid #d0d0d0 !important;
+            border-radius: 14px !important;
+            box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .empty-icon {
+            background: #f0f0f0 !important;
+            border: 2px solid #999999 !important;
+            color: #111111 !important;
+        }
+
+        .empty-history h2 {
+            color: #111111 !important;
+        }
+
+        .empty-history p {
+            color: #555555 !important;
+        }
+
+</style>
 
 </head>
 
@@ -561,7 +855,7 @@
 
             <h1>AirXpress Eats</h1>
 
-            <p>EdVance Demo • Order History</p><p class="history-description">Completed and cancelled customer orders</p>
+            <p>{{ shop.name }} &bull; Order History</p><p class="history-description">View completed and cancelled orders</p>
 
             <div class="silver-line"></div>
 
@@ -581,7 +875,7 @@
             href="{% url 'staff_dashboard' %}"
             class="dashboard-link"
         >
-            ← Back to Staff Dashboard
+            â† Back to Staff Dashboard
         </a>
 
     </div>
@@ -599,7 +893,7 @@
                 </h2>
 
                 <span class="order-number">
-                    AirXpress Order
+                    Customer Order
                 </span>
 
             </div>
@@ -611,7 +905,7 @@
 
             <div class="history-badges">
                 <span class="source-badge">
-                    ONLINE ORDER
+                    Online Order
                 </span>
 
                 {% if order.payment_status == "paid" %}
@@ -623,7 +917,7 @@
                 {% else %}
 
                     <span class="payment-badge pending">
-                        PAYMENT PENDING
+                        Payment Pending
                     </span>
 
                 {% endif %}
@@ -640,7 +934,7 @@
                 <div class="meta-box">
 
                     <span class="meta-label">
-                        Customer
+                        Customer Details
                     </span>
 
                     <span class="meta-value">
@@ -653,7 +947,7 @@
                 <div class="meta-box">
 
                     <span class="meta-label">
-                        Contact
+                        Customer Contact
                     </span>
 
                     <span class="meta-value">
@@ -683,7 +977,7 @@
             ========================== -->
 
             <div class="section-title">
-                Order Items
+                Items Ordered
             </div>
 
             <div class="order-items">
@@ -698,7 +992,7 @@
 
                             {% if item.menu_item.pricing_type == "fixed" %}
 
-                                ×{{ item.quantity }}
+                                x{{ item.quantity }}
 
                             {% endif %}
 
@@ -745,7 +1039,7 @@
                 <div class="total-row">
 
                     <span>
-                        Estimated Price
+                        Estimated Order Total
                     </span>
 
                     <strong>
@@ -760,7 +1054,7 @@
                     <div class="total-row final-total">
 
                         <span>
-                            Final Total
+                            Final Amount
                         </span>
 
                         <span>
@@ -779,22 +1073,9 @@
             ========================== -->
 
             <div class="order-footer">
+<div class="footer-item">
 
-                {% if order.braai_master %}
-
-                    <div class="footer-item">
-
-                        <strong>Braai Master:</strong>
-                        {{ order.braai_master.name }}
-
-                    </div>
-
-                {% endif %}
-
-
-                <div class="footer-item">
-
-                    <strong>Order Date:</strong>
+                    <strong>Date & Time:</strong>
                     {{ order.created_at|date:"d M Y, H:i" }}
 
                 </div>
@@ -811,7 +1092,7 @@
         <div class="empty-history">
 
             <div class="empty-icon">
-                —
+                â€”
             </div>
 
             <h2>
@@ -834,6 +1115,10 @@
 </body>
 
 </html>
+
+
+
+
 
 
 

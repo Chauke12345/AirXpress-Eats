@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -304,6 +304,342 @@
             }
         }
     </style>
+<style id="airxpress-dark-tracking-theme">
+
+    :root {
+        --ax-black: #080808;
+        --ax-panel: #111111;
+        --ax-panel-2: #171717;
+        --ax-border: #292929;
+        --ax-gold: #f4b942;
+        --ax-gold-soft: #ffd66b;
+        --ax-text: #f7f7f7;
+        --ax-muted: #a7a7a7;
+        --ax-green: #20c66b;
+        --ax-red: #ef5350;
+        --ax-blue: #3b9cff;
+    }
+
+    html,
+    body {
+        background: var(--ax-black) !important;
+        color: var(--ax-text) !important;
+    }
+
+    body {
+        min-height: 100vh;
+        font-family:
+            Inter,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif !important;
+    }
+
+    body > div {
+        background: var(--ax-black);
+    }
+
+    main,
+    .container,
+    .tracking-container,
+    .tracking-page,
+    .page-container,
+    .content-container {
+        background: transparent !important;
+        color: var(--ax-text) !important;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    strong,
+    .section-title,
+    .current-status-value,
+    .timeline-title {
+        color: var(--ax-text) !important;
+    }
+
+    p,
+    .timeline-time,
+    .refresh-note,
+    .legend-item {
+        color: var(--ax-muted) !important;
+    }
+
+    a {
+        color: var(--ax-gold) !important;
+    }
+
+    /* Main white cards */
+    .status-card,
+    .order-status,
+    .tracking-card,
+    .progress-card,
+    .order-progress,
+    .delivery-card,
+    .delivery-information,
+    .info-card,
+    .driver-box,
+    .map-section,
+    .tracking-section,
+    .card {
+        background:
+            linear-gradient(
+                145deg,
+                #151515 0%,
+                #0e0e0e 100%
+            ) !important;
+        color: var(--ax-text) !important;
+        border: 1px solid var(--ax-border) !important;
+        border-radius: 20px !important;
+        box-shadow:
+            0 18px 50px rgba(0, 0, 0, 0.35) !important;
+    }
+
+    .driver-box {
+        border-left: 3px solid var(--ax-gold) !important;
+    }
+
+    /* Status value */
+    .current-status-value {
+        color: var(--ax-gold) !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.5px;
+    }
+
+    .order-update-message {
+        color: var(--ax-muted) !important;
+    }
+
+    /* Timeline */
+    .timeline-content {
+        background: var(--ax-panel-2) !important;
+        border: 1px solid var(--ax-border) !important;
+        border-radius: 14px !important;
+        color: var(--ax-text) !important;
+    }
+
+    .timeline-item.current .timeline-content {
+        border-color: rgba(244, 185, 66, 0.55) !important;
+        box-shadow:
+            0 0 0 1px rgba(244, 185, 66, 0.08),
+            0 12px 30px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    .timeline-dot {
+        background: var(--ax-gold) !important;
+        border-color: var(--ax-black) !important;
+        box-shadow:
+            0 0 0 4px rgba(244, 185, 66, 0.14) !important;
+    }
+
+    .timeline-line {
+        background: var(--ax-border) !important;
+    }
+
+    /* Driver */
+    .driver-status {
+        color: var(--ax-gold-soft) !important;
+        font-weight: 700 !important;
+    }
+
+    /* Map area */
+    .map-section {
+        padding: 22px !important;
+        overflow: hidden;
+    }
+
+    .map-section .section-title {
+        font-size: 24px !important;
+        font-weight: 800 !important;
+        margin-bottom: 8px !important;
+    }
+
+    .map-legend {
+        color: var(--ax-muted) !important;
+        background: #0c0c0c !important;
+        border: 1px solid var(--ax-border) !important;
+        border-radius: 12px !important;
+        padding: 10px 13px !important;
+    }
+
+    .legend-marker {
+        border-color: #111111 !important;
+    }
+
+    .driver-marker {
+        background: var(--ax-red) !important;
+    }
+
+    .customer-marker {
+        background: var(--ax-blue) !important;
+    }
+
+    .delivery-map {
+        height: 460px !important;
+        margin-top: 14px !important;
+        border: 1px solid #303030 !important;
+        border-radius: 16px !important;
+        box-shadow:
+            inset 0 0 0 1px rgba(255,255,255,0.03),
+            0 15px 35px rgba(0,0,0,0.35) !important;
+    }
+
+    /* Mapbox controls */
+    .mapboxgl-ctrl-group {
+        background: #111111 !important;
+        border: 1px solid #303030 !important;
+    }
+
+    .mapboxgl-ctrl-group button {
+        filter: invert(1) !important;
+    }
+
+    /* Live route information */
+    #live-route-info {
+        background: #121212 !important;
+        color: var(--ax-text) !important;
+        border: 1px solid var(--ax-border) !important;
+        border-radius: 14px !important;
+        padding: 14px 16px !important;
+        margin-top: 12px !important;
+    }
+
+    /* Tracking note */
+    .refresh-note {
+        background: #101010 !important;
+        border: 1px solid var(--ax-border) !important;
+        border-radius: 14px !important;
+        padding: 14px 16px !important;
+    }
+
+    /* Support button */
+    .support-button {
+        background:
+            linear-gradient(
+                135deg,
+                #f4b942,
+                #d99a20
+            ) !important;
+        color: #090909 !important;
+        border: none !important;
+        border-radius: 14px !important;
+        font-weight: 800 !important;
+        box-shadow:
+            0 10px 30px rgba(244, 185, 66, 0.18) !important;
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease !important;
+    }
+
+    .support-button:hover {
+        color: #090909 !important;
+        transform: translateY(-2px);
+        box-shadow:
+            0 14px 35px rgba(244, 185, 66, 0.28) !important;
+    }
+
+    /* Gold section accents */
+    .section-title::after {
+        content: "";
+        display: block;
+        width: 42px;
+        height: 3px;
+        margin-top: 8px;
+        border-radius: 10px;
+        background: var(--ax-gold);
+    }
+
+    /* Mobile */
+    @media (max-width: 700px) {
+
+        .map-section {
+            padding: 15px !important;
+            border-radius: 16px !important;
+        }
+
+        .map-section .section-title {
+            font-size: 21px !important;
+        }
+
+        .delivery-map {
+            height: 330px !important;
+            border-radius: 13px !important;
+        }
+
+        .status-card,
+        .order-status,
+        .tracking-card,
+        .progress-card,
+        .order-progress,
+        .delivery-card,
+        .delivery-information,
+        .info-card,
+        .driver-box,
+        .map-section,
+        .tracking-section,
+        .card {
+            border-radius: 16px !important;
+        }
+
+        .support-button {
+            width: 100% !important;
+        }
+    }
+
+</style>
+<style id="airxpress-delivery-info-fix">
+.delivery-info,
+.delivery-information,
+.delivery-info-card {
+    background: #111111 !important;
+    color: #f7f7f7 !important;
+    border: 1px solid #2a2a2a !important;
+}
+
+.delivery-info *,
+.delivery-information *,
+.delivery-info-card * {
+    color: #f7f7f7 !important;
+}
+
+.delivery-info p,
+.delivery-information p,
+.delivery-info-card p {
+    color: #b8b8b8 !important;
+}
+
+.delivery-info strong,
+.delivery-information strong,
+.delivery-info-card strong,
+.delivery-info h3,
+.delivery-information h3,
+.delivery-info-card h3 {
+    color: #f4b942 !important;
+}
+</style>
+<style id="airxpress-delivery-info-dark-fix">
+.info-box {
+    background: #111111 !important;
+    color: #f7f7f7 !important;
+    border: 1px solid #2a2a2a !important;
+}
+
+.info-box .section-title {
+    color: #f7f7f7 !important;
+}
+
+.info-box p {
+    color: #b8b8b8 !important;
+}
+
+.info-box strong {
+    color: #f7f7f7 !important;
+}
+</style>
 </head>
 
 <body>
@@ -598,7 +934,6 @@
           } else {
               customerMarker.setLngLat(customerPoint);
           }
-
           const driverLocation = data.driver_location;
 
           if (
@@ -607,9 +942,11 @@
               driverLocation.longitude !== null
           ) {
               const driverPoint = [
-                  driverLocation.longitude,
-                  driverLocation.latitude
+                  Number(driverLocation.longitude),
+                  Number(driverLocation.latitude)
               ];
+
+              console.log("AirXpress ENFORCED driver position:", driverPoint);
 
               if (!driverMarker) {
                   driverMarker = new mapboxgl.Marker({
@@ -624,8 +961,18 @@
                           )
                       )
                       .addTo(deliveryMap);
+
+                  console.log(
+                      "AirXpress DRIVER MARKER CREATED:",
+                      driverPoint
+                  );
               } else {
                   driverMarker.setLngLat(driverPoint);
+
+                  console.log(
+                      "AirXpress DRIVER MARKER FORCED TO:",
+                      driverMarker.getLngLat()
+                  );
 
                   if (data.driver) {
                       driverMarker.setPopup(
@@ -654,6 +1001,7 @@
                   deliveryMap._airxpressHasFitted = true;
               }
           }
+
 
           const routeSourceId = "live-delivery-route";
           const routeLayerId = "live-delivery-route-line";
@@ -914,6 +1262,44 @@
            */
           initializeDeliveryMap(data);
 
+            /*
+             * ENFORCE LIVE GPS FRESHNESS
+             * Picked-up orders require a recent driver GPS update.
+             */
+            if (String(data.status || "").toLowerCase().trim() === "picked_up") {
+
+                const trackingNote =
+                    document.getElementById("tracking-note");
+
+                const driverLocation =
+                    data.driver_location || null;
+
+                const updatedAt =
+                    driverLocation && driverLocation.updated_at
+                        ? new Date(driverLocation.updated_at)
+                        : null;
+
+                const now = new Date();
+
+                const ageMinutes =
+                    updatedAt && !isNaN(updatedAt.getTime())
+                        ? (now - updatedAt) / 60000
+                        : Infinity;
+
+                if (!updatedAt || ageMinutes > 3) {
+
+                    if (trackingNote) {
+                        trackingNote.textContent =
+                            "⚠️ Live tracking is temporarily unavailable. Your order is still on the way. If you need assistance, contact AirXpress Support.";
+                    }
+
+                    console.warn(
+                        "AirXpress GPS stale or unavailable:",
+                        data.driver_location
+                    );
+                }
+            }
+
           /*
            * Once delivered, remove all live-delivery
            * elements and stop showing stale GPS data.
@@ -970,11 +1356,10 @@
                   }
               }
 
-              if (driverMarker) {
+              if (!driverLocation && driverMarker) {
                   driverMarker.remove();
                   driverMarker = null;
               }
-
               if (deliveryMap) {
                   deliveryMap._airxpressHasFitted =
                       false;
@@ -1002,8 +1387,8 @@
 
             const data = await response.json();
 
+            console.log('AirXpress tracking update:', data.driver_location);
             renderTracking(data);
-            initializeDeliveryMap(data);
 
             if (data.status === "delivered") {
                 clearInterval(trackingInterval);
@@ -1024,6 +1409,12 @@
 </body>
 
 </html>
+
+
+
+
+
+
 
 
 

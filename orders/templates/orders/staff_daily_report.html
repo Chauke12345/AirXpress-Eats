@@ -465,7 +465,316 @@
             }
         }
 
-    </style>
+    
+        /* =========================================================
+           AIRXPRESS HIGH-VISIBILITY DAILY REPORT
+           ========================================================= */
+
+        body {
+            background: #f4f5f7 !important;
+            color: #111111 !important;
+        }
+
+        /* HEADER */
+
+        .report-header {
+            background: #050505 !important;
+            color: #ffffff !important;
+            border-bottom: 4px solid #bdbdbd !important;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18) !important;
+        }
+
+        .report-header p {
+            color: #d0d0d0 !important;
+            font-weight: 700 !important;
+        }
+
+        .back-btn {
+            background: #ffffff !important;
+            color: #111111 !important;
+            border: 2px solid #ffffff !important;
+        }
+
+        .print-btn {
+            background: #ffffff !important;
+            color: #111111 !important;
+            border: 2px solid #ffffff !important;
+        }
+
+        .back-btn:hover,
+        .print-btn:hover {
+            background: #dddddd !important;
+            color: #000000 !important;
+        }
+
+        /* DATE FILTER */
+
+        .date-card {
+            background: #ffffff !important;
+            border: 2px solid #d0d0d0 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .date-group label {
+            color: #111111 !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+        }
+
+        .date-group input {
+            background: #ffffff !important;
+            color: #111111 !important;
+            border: 2px solid #999999 !important;
+            min-height: 48px !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+        }
+
+        .date-group input:focus {
+            outline: 3px solid rgba(25, 118, 210, 0.18) !important;
+            border-color: #1976d2 !important;
+        }
+
+        .generate-btn {
+            background: #050505 !important;
+            color: #ffffff !important;
+            border: 2px solid #050505 !important;
+            min-height: 48px !important;
+            font-size: 16px !important;
+            font-weight: 900 !important;
+        }
+
+        .generate-btn:hover {
+            background: #333333 !important;
+        }
+
+        /* REPORT TITLE */
+
+        .report-title h2 {
+            color: #111111 !important;
+            font-size: 28px !important;
+            font-weight: 900 !important;
+        }
+
+        .report-title p {
+            color: #555555 !important;
+            font-size: 15px !important;
+        }
+
+        /* SUMMARY CARDS */
+
+        .summary-card {
+            background: #ffffff !important;
+            border: 2px solid #d0d0d0 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .summary-label {
+            color: #555555 !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+        }
+
+        .summary-value {
+            color: #111111 !important;
+            font-size: 30px !important;
+            font-weight: 900 !important;
+        }
+
+        .summary-card.sales {
+            border-top: 6px solid #2e7d32 !important;
+        }
+
+        .summary-card.orders {
+            border-top: 6px solid #1976d2 !important;
+        }
+
+        .summary-card.progress {
+            border-top: 6px solid #f57c00 !important;
+        }
+
+        .summary-card.cancelled {
+            border-top: 6px solid #c62828 !important;
+        }
+
+        /* REPORT SECTIONS */
+
+        .report-section {
+            background: #ffffff !important;
+            border: 2px solid #d0d0d0 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .report-section h3 {
+            color: #111111 !important;
+            border-bottom: 3px solid #050505 !important;
+            font-size: 22px !important;
+            font-weight: 900 !important;
+        }
+
+        /* STAT BOXES */
+
+        .stat-box {
+            background: #f8f8f8 !important;
+            border: 2px solid #dddddd !important;
+            border-radius: 9px !important;
+        }
+
+        .stat-label {
+            color: #555555 !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+        }
+
+        .stat-value {
+            color: #111111 !important;
+            font-size: 21px !important;
+            font-weight: 900 !important;
+        }
+
+        /* TABLES */
+
+        table {
+            color: #111111 !important;
+        }
+
+        th {
+            background: #050505 !important;
+            color: #ffffff !important;
+            padding: 14px !important;
+            font-size: 14px !important;
+        }
+
+        td {
+            background: #ffffff !important;
+            color: #111111 !important;
+            border-bottom: 1px solid #dddddd !important;
+            padding: 14px !important;
+            font-size: 15px !important;
+        }
+
+        tr:hover td {
+            background: #f2f2f2 !important;
+        }
+
+        .money {
+            color: #111111 !important;
+            font-weight: 900 !important;
+        }
+
+        /* STATUS BADGES */
+
+        .status {
+            padding: 7px 12px !important;
+            font-size: 13px !important;
+            font-weight: 900 !important;
+            border: 2px solid transparent !important;
+        }
+
+        .status-new {
+            background: #eaf3ff !important;
+            color: #1565c0 !important;
+            border-color: #64b5f6 !important;
+        }
+
+        .status-preparing {
+            background: #fff3e0 !important;
+            color: #e65100 !important;
+            border-color: #ffb74d !important;
+        }
+
+        .status-braaiing {
+            background: #ffebee !important;
+            color: #b71c1c !important;
+            border-color: #ef5350 !important;
+        }
+
+        .status-ready {
+            background: #edf8ee !important;
+            color: #1b5e20 !important;
+            border-color: #66bb6a !important;
+        }
+
+        .status-collected {
+            background: #e3f2fd !important;
+            color: #0d47a1 !important;
+            border-color: #64b5f6 !important;
+        }
+
+        .status-cancelled {
+            background: #ffebee !important;
+            color: #b71c1c !important;
+            border-color: #ef5350 !important;
+        }
+
+        .paid {
+            color: #1b5e20 !important;
+            font-weight: 900 !important;
+        }
+
+        .pending {
+            color: #e65100 !important;
+            font-weight: 900 !important;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 700px) {
+
+            .report-header {
+                padding: 20px 16px !important;
+            }
+
+            .report-header-inner {
+                align-items: flex-start !important;
+                flex-direction: column !important;
+            }
+
+            .header-actions {
+                width: 100% !important;
+            }
+
+            .header-btn {
+                flex: 1 !important;
+            }
+
+            .report-container {
+                margin: 22px auto !important;
+                padding: 0 12px 35px !important;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr 1fr !important;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr !important;
+            }
+        }
+
+        @media (max-width: 500px) {
+
+            .summary-grid,
+            .stats-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+    /* AIRXPRESS BRIGHT EMPTY STATES */
+    .empty-message {
+        background: #ffffff;
+        color: #111111;
+        border: 1px solid #d0d0d0;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        font-size: 16px;
+        font-weight: 600;
+    }
+</style>
 
 </head>
 
@@ -500,7 +809,7 @@
                 href="{% url 'staff_dashboard' %}"
                 class="header-btn back-btn"
             >
-                â† Staff Dashboard
+                &larr; Staff Dashboard
             </a>
 
             <button
@@ -711,11 +1020,6 @@
             <div class="stat-box">
                 <span class="stat-label">Preparing</span>
                 <span class="stat-value">{{ preparing_orders }}</span>
-            </div>
-
-            <div class="stat-box">
-                <span class="stat-label">Braaiing</span>
-                <span class="stat-value">{{ braaiing_orders }}</span>
             </div>
 
             <div class="stat-box">
@@ -1032,5 +1336,8 @@
 
 </body>
 </html>
+
+
+
 
 

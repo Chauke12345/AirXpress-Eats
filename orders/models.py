@@ -1,4 +1,4 @@
-from decimal import Decimal
+﻿from decimal import Decimal
 import uuid
 
 from django.contrib.auth.models import User
@@ -125,34 +125,7 @@ class StaffProfile(models.Model):
         )
 
 
-# =========================================================
-# BRAAI MASTER
-# =========================================================
-
-class BraaiMaster(models.Model):
-
-    shop = models.ForeignKey(
-        Shop,
-        on_delete=models.CASCADE,
-        related_name="braai_masters"
-    )
-
-    name = models.CharField(
-        max_length=100
-    )
-
-    is_available = models.BooleanField(
-        default=True
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True
-    )
-
-    def __str__(self):
-        return f"{self.name} - {self.shop.name}"
-
-
+# =========================================================`r`n# DRIVER`r`n# =========================================================
 # =========================================================
 # DRIVER
 # =========================================================
@@ -336,10 +309,6 @@ class Order(models.Model):
             "Preparing Order",
         ),
         (
-            "braaiing",
-            "Braaiing",
-        ),
-        (
             "ready",
             "Ready for Delivery",
         ),
@@ -389,15 +358,6 @@ class Order(models.Model):
         on_delete=models.CASCADE,
         related_name="orders"
     )
-
-    braai_master = models.ForeignKey(
-        BraaiMaster,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="orders"
-    )
-
     driver = models.ForeignKey(
         Driver,
         on_delete=models.SET_NULL,
@@ -910,4 +870,7 @@ class DeliveryRequest(models.Model):
             f"{self.driver.name} - "
             f"{self.status}"
         )
+
+
+
 

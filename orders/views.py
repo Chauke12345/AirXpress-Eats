@@ -22,7 +22,7 @@ from django.shortcuts import (
 
 from django.utils import timezone
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Sum, Count
 from django.urls import reverse
 
 from .forms import (
@@ -30,7 +30,6 @@ from .forms import (
 )
 
 from .models import (
-    BraaiMaster,
     Driver,
     DriverPayout,
     DeliveryRequest,
@@ -1273,43 +1272,67 @@ def track_order(request, tracking_token):
         {
             "order": order,
             "shop": order.shop,
+            "mapbox_token": settings.MAPBOX_TOKEN,
         },
     )
 
 
 def track_order_status(request, tracking_token):
     order = get_object_or_404(
-        Order.objects
-        .select_related("shop", "driver"),
+        Order.objects.select_related("shop", "driver"),
         tracking_token=tracking_token,
+    )
+
+    driver_latitude = (
+        float(order.driver_latitude)
+        if order.driver_latitude is not None
+        else None
+    )
+
+    driver_longitude = (
+        float(order.driver_longitude)
+        if order.driver_longitude is not None
+        else None
     )
 
     return JsonResponse(
         {
             "status": order.status,
             "status_display": order.get_status_display(),
+
+            "driver": (
+                order.driver.name
+                if order.driver
+                else ""
+            ),
+
             "driver_name": (
                 order.driver.name
                 if order.driver
                 else ""
             ),
-            "driver_phone": (
-                order.driver.phone_number
-                if order.driver
-                else ""
-            ),
-            "driver_latitude": (
-                float(order.driver.current_latitude)
-                if order.driver
-                and order.driver.current_latitude is not None
-                else None
-            ),
-            "driver_longitude": (
-                float(order.driver.current_longitude)
-                if order.driver
-                and order.driver.current_longitude is not None
-                else None
-            ),
+
+            "driver_phone": "",
+
+            "customer_location": {
+                "latitude": (
+                    float(order.customer_latitude)
+                    if order.customer_latitude is not None
+                    else None
+                ),
+                "longitude": (
+                    float(order.customer_longitude)
+                    if order.customer_longitude is not None
+                    else None
+                ),
+            },
+
+            "driver_location": {
+                "latitude": driver_latitude,
+                "longitude": driver_longitude,
+            },
+
+            "live_route": None,
         }
     )
 
@@ -1340,12 +1363,16 @@ def update_driver_location(request, order_id):
             status=400,
         )
 
-    order.driver.current_latitude = latitude
-    order.driver.current_longitude = longitude
-    order.driver.save(
+    order.driver_latitude = latitude
+    order.driver_longitude = longitude
+    order.driver_location_updated_at = timezone.now()
+
+    order.save(
         update_fields=[
-            "current_latitude",
-            "current_longitude",
+            "driver_latitude",
+            "driver_longitude",
+            "driver_location_updated_at",
+            "updated_at",
         ]
     )
 
@@ -2383,7 +2410,6 @@ def staff_dashboard(request):
 
     shop = get_user_shop(request.user)
 
-
     if not shop:
         return render(
             request,
@@ -2397,12 +2423,10 @@ def staff_dashboard(request):
         )
         .exclude(
             status__in=[
+                "delivered",
                 "collected",
                 "cancelled",
             ]
-        )
-        .select_related(
-            "braai_master",
         )
         .prefetch_related(
             "items__menu_item",
@@ -2423,23 +2447,48 @@ def staff_dashboard(request):
         )
     )
 
-    braai_masters = (
-        BraaiMaster.objects
-        .filter(
-            shop=shop,
-            is_available=True,
-        )
-        .order_by(
-            "name"
-        )
-    )
+    # =========================================================
+    # SHOP DASHBOARD STATUS COUNTS
+    # =========================================================
+
+    new_orders = orders.filter(
+        status="new"
+    ).count()
+
+    preparing_orders = orders.filter(
+        status="preparing"
+    ).count()
+    ready_orders = orders.filter(
+        status="ready"
+    ).count()
+
+    driver_assigned_orders = orders.filter(
+        status="driver_assigned"
+    ).count()
+
+    picked_up_orders = orders.filter(
+        status="picked_up"
+    ).count()
+
+    on_the_way_orders = orders.filter(
+        status="on_the_way"
+    ).count()
 
     # =========================================================
+    # DASHBOARD CONTEXT
+    # =========================================================
+
     context = {
         "shop": shop,
         "orders": orders,
-        "braai_masters": braai_masters,
         "drivers": drivers,
+
+        "new_orders": new_orders,
+        "preparing_orders": preparing_orders,
+        "ready_orders": ready_orders,
+        "driver_assigned_orders": driver_assigned_orders,
+        "picked_up_orders": picked_up_orders,
+        "on_the_way_orders": on_the_way_orders,
     }
 
     return render(
@@ -2447,6 +2496,7 @@ def staff_dashboard(request):
         "orders/staff_dashboard.html",
         context,
     )
+
 
 
 # =========================================================
@@ -2566,29 +2616,7 @@ def staff_update_order(
                 whatsapp_number = previous_order.whatsapp_number
                 delivery_address = previous_order.delivery_address
 
-    if request.method == "POST":
-
-        # =============================================
-        # BRAAI MASTER
-        # =============================================
-
-        braai_master_id = request.POST.get(
-            "braai_master"
-        )
-
-        if braai_master_id:
-
-            order.braai_master = get_object_or_404(
-                BraaiMaster,
-                id=braai_master_id,
-                shop=order.shop,
-            )
-
-        else:
-
-            order.braai_master = None
-
-        # =============================================
+    if request.method == "POST":# =============================================
         # STATUS
         # =============================================
 
@@ -2674,7 +2702,32 @@ def staff_update_order(
             order.driver = None
 
 
+        # =============================================        # =============================================
+        # DRIVER ASSIGNMENT STATUS
         # =============================================
+
+        if order.driver_id:
+
+            if order.status in [
+                "new",
+                "preparing",
+                "ready",
+            ]:
+                order.status = "driver_assigned"
+
+        elif order.status in [
+            "driver_assigned",
+            "picked_up",
+            "on_the_way",
+        ]:
+
+            messages.error(
+                request,
+                "A delivery driver must be assigned before this order can continue."
+            )
+
+            return redirect("staff_dashboard")
+
         # SAVE ORDER
         # =============================================
 
@@ -2771,9 +2824,6 @@ def staff_order_history(request):
                 "cancelled",
             ]
         )
-        .select_related(
-            "braai_master",
-        )
         .prefetch_related(
             "items__menu_item",
         )
@@ -2848,9 +2898,6 @@ def staff_daily_report(request):
             shop=shop,
             created_at__date=selected_date,
         )
-        .select_related(
-            "braai_master",
-        )
         .prefetch_related(
             "items__menu_item",
         )
@@ -2880,11 +2927,6 @@ def staff_daily_report(request):
     preparing_orders = orders.filter(
         status="preparing"
     ).count()
-
-    braaiing_orders = orders.filter(
-        status="braaiing"
-    ).count()
-
     ready_orders = orders.filter(
         status="ready"
     ).count()
@@ -3103,7 +3145,6 @@ def staff_daily_report(request):
         # Individual statuses
         "new_orders": new_orders,
         "preparing_orders": preparing_orders,
-        "braaiing_orders": braaiing_orders,
         "ready_orders": ready_orders,
 
         # Sales
@@ -3687,6 +3728,18 @@ def payfast_payment(request, order_id):
             "order": order,
         },
     )
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

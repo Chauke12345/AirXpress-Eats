@@ -1,0 +1,94 @@
+[
+  {
+    "menu_name": "Beef Steak",
+    "filename": "beef_steak.jpg"
+  },
+  {
+    "menu_name": "Boerewors",
+    "filename": "boerewors.jpg"
+  },
+  {
+    "menu_name": "Chicken Pieces",
+    "filename": "chicken_pieces.jpg"
+  },
+  {
+    "menu_name": "Pork Chops",
+    "filename": "pork_chops.jpg"
+  },
+  {
+    "menu_name": "Beef Short Ribs",
+    "filename": "beef_short_ribs.jpg"
+  },
+  {
+    "menu_name": "Wors, Pap and Chakalaka",
+    "filename": "wors__pap_and_chakalaka.jpg"
+  },
+  {
+    "menu_name": "Chicken, Pap and Chakalaka",
+    "filename": "chicken__pap_and_chakalaka.jpg"
+  },
+  {
+    "menu_name": "Steak, Pap and Chakalaka",
+    "filename": "steak__pap_and_chakalaka.jpg"
+  },
+  {
+    "menu_name": "Pork Chop, Pap and Chakalaka",
+    "filename": "pork_chop__pap_and_chakalaka.jpg"
+  },
+  {
+    "menu_name": "Pap",
+    "filename": "pap.jpg"
+  },
+  {
+    "menu_name": "Chakalaka",
+    "filename": "chakalaka.jpg"
+  },
+  {
+    "menu_name": "Coleslaw",
+    "filename": "coleslaw.jpg"
+  },
+  {
+    "menu_name": "Potato Salad",
+    "filename": "potato_salad.jpg"
+  },
+  {
+    "menu_name": "Soft Drink 330ml",
+    "filename": "soft_drink_330ml.jpg"
+  },
+  {
+    "menu_name": "Soft Drink 500ml",
+    "filename": "soft_drink_500ml.jpg"
+  },
+  {
+    "menu_name": "Soft Drink 2L",
+    "filename": "soft_drink_2l.jpg"
+  },
+  {
+    "menu_name": "Still Water",
+    "filename": "still_water.jpg"
+  },
+  {
+    "menu_name": "Demo Beef Steak",
+    "filename": "demo_beef_steak.jpg"
+  },
+  {
+    "menu_name": "Demo Boerewors",
+    "filename": "demo_boerewors.jpg"
+  },
+  {
+    "menu_name": "Demo Chakalaka",
+    "filename": "demo_chakalaka.jpg"
+  },
+  {
+    "menu_name": "Demo Pap",
+    "filename": "demo_pap.jpg"
+  },
+  {
+    "menu_name": "Demo Soft Drink",
+    "filename": "demo_soft_drink.jpg"
+  },
+  {
+    "menu_name": "Demo Water",
+    "filename": "demo_water.jpg"
+  }
+]

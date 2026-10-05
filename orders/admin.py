@@ -3,7 +3,6 @@
 from .models import (
     Shop,
     StaffProfile,
-    BraaiMaster,
     Driver,
     Category,
     MenuItem,
@@ -90,34 +89,6 @@ class StaffProfileAdmin(admin.ModelAdmin):
         "user__username",
     )
 
-
-# =========================================================
-# BRAAI MASTER ADMIN
-# =========================================================
-
-@admin.register(BraaiMaster)
-class BraaiMasterAdmin(admin.ModelAdmin):
-
-    list_display = (
-        "name",
-        "shop",
-        "is_available",
-        "created_at",
-    )
-
-    list_filter = (
-        "shop",
-        "is_available",
-    )
-
-    search_fields = (
-        "name",
-        "shop__name",
-    )
-
-    readonly_fields = (
-        "created_at",
-    )
 
 
 # =========================================================
@@ -232,7 +203,6 @@ class OrderAdmin(admin.ModelAdmin):
         "id",
         "customer_name",
         "shop",
-        "braai_master",
         "order_type",
         "order_source",
         "status",
@@ -354,4 +324,6 @@ class DriverAdmin(admin.ModelAdmin):
 
 
 # =========================================================
+
+
 
