@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>    {% load static %}
     <meta charset="UTF-8">
@@ -1071,6 +1071,224 @@
             color: #111111 !important;
         }
 
+        /* =========================================================
+           CUSTOMER REVIEWS
+           ========================================================= */
+
+        .customer-reviews-section {
+            margin: 30px 0;
+            padding: 26px;
+            background: #ffffff;
+            border: 2px solid #dddddd;
+            border-radius: 16px;
+            box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
+        }
+
+        .reviews-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 22px;
+        }
+
+        .reviews-header h2 {
+            margin: 0 0 6px;
+            color: #111111;
+            font-size: 26px;
+            font-weight: 900;
+        }
+
+        .reviews-header p {
+            margin: 0;
+            color: #666666;
+            font-size: 14px;
+        }
+
+        .reviews-total {
+            min-width: 120px;
+            padding: 12px 18px;
+            background: #050505;
+            color: #ffffff;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .reviews-total span {
+            display: block;
+            font-size: 26px;
+            font-weight: 900;
+        }
+
+        .reviews-total small {
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .review-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .review-summary-card {
+            padding: 20px;
+            background: #f7f7f7;
+            border: 2px solid #dddddd;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .review-summary-icon {
+            display: block;
+            font-size: 27px;
+            margin-bottom: 8px;
+        }
+
+        .review-summary-label {
+            display: block;
+            color: #666666;
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 7px;
+        }
+
+        .review-summary-card strong {
+            display: block;
+            color: #111111;
+            font-size: 25px;
+            font-weight: 900;
+        }
+
+        .reviews-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .review-card {
+            padding: 20px;
+            background: #fafafa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+        }
+
+        .review-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .review-card h3 {
+            margin: 0 0 5px;
+            color: #111111;
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .review-date {
+            color: #777777;
+            font-size: 13px;
+        }
+
+        .review-overall {
+            padding: 8px 12px;
+            background: #050505;
+            color: #ffffff;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .review-breakdown {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .review-breakdown span {
+            padding: 8px 11px;
+            background: #ffffff;
+            border: 1px solid #d5d5d5;
+            border-radius: 7px;
+            color: #444444;
+            font-size: 13px;
+        }
+
+        .review-breakdown strong {
+            color: #111111;
+        }
+
+        .review-comment {
+            padding: 15px;
+            background: #ffffff;
+            border-left: 4px solid #111111;
+            border-radius: 6px;
+            color: #333333;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .review-comment.no-comment {
+            color: #888888;
+            font-style: italic;
+        }
+
+        .reviews-empty {
+            padding: 35px 20px;
+            background: #f8f8f8;
+            border: 2px dashed #cccccc;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .reviews-empty-icon {
+            font-size: 38px;
+            margin-bottom: 8px;
+        }
+
+        .reviews-empty h3 {
+            margin: 0 0 6px;
+            color: #111111;
+            font-size: 20px;
+        }
+
+        .reviews-empty p {
+            margin: 0;
+            color: #777777;
+        }
+
+        @media (max-width: 700px) {
+
+            .customer-reviews-section {
+                padding: 18px;
+            }
+
+            .reviews-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .reviews-total {
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .review-summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .review-card-top {
+                flex-direction: column;
+            }
+
+            .review-overall {
+                align-self: flex-start;
+            }
+        }
 </style>
 </head>
 
@@ -1101,34 +1319,27 @@
         </div>
 
         <div class="dashboard-header-actions">
-<a
-                href="{% url 'staff_order_history' %}"
-                class="history-link"
-            >
-                Order History
-            </a>
 
-            <a
-                href="{% url 'staff_daily_report' %}"
-                class="history-link"
-            >
-                Daily Report
-            </a>
+    <a href="{% url 'staff_dashboard' %}" class="history-link">
+        Dashboard
+    </a>
 
-            <form
-                method="POST"
-                action="{% url 'staff_logout' %}"
-                class="logout-form"
-            >
-                {% csrf_token %}
+    <a href="{% url 'staff_order_history' %}" class="history-link">
+        Order History
+    </a>
 
-                <button
-                    type="submit"
-                    class="logout-btn"
-                >
-                    Logout
-                </button>
-            </form>
+    <a href="{% url 'staff_daily_report' %}" class="history-link">
+        Daily Report
+    </a>
+
+    <form method="POST" action="{% url 'staff_logout' %}" class="logout-form">
+        {% csrf_token %}
+        <button type="submit" class="logout-btn">
+            Logout
+        </button>
+    </form>
+
+</div>
 
         </div>
 
@@ -1178,6 +1389,143 @@
 
     </section>
 
+    <!-- =========================================================
+         CUSTOMER REVIEWS
+         ========================================================= -->
+
+    <section class="customer-reviews-section">
+
+        <div class="reviews-header">
+
+            <div>
+                <h2>Customer Reviews</h2>
+                <p>See what customers are saying about your restaurant.</p>
+            </div>
+
+            <div class="reviews-total">
+                <span>{{ total_reviews }}</span>
+                <small>Total Reviews</small>
+            </div>
+
+        </div>
+
+        <div class="review-summary-grid">
+
+            <div class="review-summary-card">
+                <span class="review-summary-icon">⭐</span>
+                <span class="review-summary-label">Overall Rating</span>
+                <strong>
+                    {% if average_overall_rating %}
+                        {{ average_overall_rating|floatformat:1 }}/5
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+            </div>
+
+            <div class="review-summary-card">
+                <span class="review-summary-icon">🍽️</span>
+                <span class="review-summary-label">Food Quality</span>
+                <strong>
+                    {% if average_food_rating %}
+                        {{ average_food_rating|floatformat:1 }}/5
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+            </div>
+
+            <div class="review-summary-card">
+                <span class="review-summary-icon">🚗</span>
+                <span class="review-summary-label">Delivery</span>
+                <strong>
+                    {% if average_delivery_rating %}
+                        {{ average_delivery_rating|floatformat:1 }}/5
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+            </div>
+
+        </div>
+
+        {% if reviews %}
+
+            <div class="reviews-list">
+
+                {% for review in reviews %}
+
+                    <article class="review-card">
+
+                        <div class="review-card-top">
+
+                            <div>
+                                <h3>
+                                    {{ review.customer.first_name|default:review.customer.username }}
+                                </h3>
+
+                                <span class="review-date">
+                                    Order #{{ review.order.id }}
+                                    •
+                                    {{ review.created_at|date:"d M Y, H:i" }}
+                                </span>
+                            </div>
+
+                            <div class="review-overall">
+                                ⭐ {{ review.overall_rating }}/5
+                            </div>
+
+                        </div>
+
+                        <div class="review-breakdown">
+
+                            <span>
+                                🍽️ Food: <strong>{{ review.food_rating }}/5</strong>
+                            </span>
+
+                            <span>
+                                🚗 Delivery:
+                                <strong>{{ review.delivery_rating }}/5</strong>
+                            </span>
+
+                            {% if review.driver %}
+                                <span>
+                                    Driver:
+                                    <strong>{{ review.driver.name }}</strong>
+                                </span>
+                            {% endif %}
+
+                        </div>
+
+                        {% if review.comment %}
+                            <div class="review-comment">
+                                “{{ review.comment }}”
+                            </div>
+                        {% else %}
+                            <div class="review-comment no-comment">
+                                Customer left a rating without a comment.
+                            </div>
+                        {% endif %}
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="reviews-empty">
+                <div class="reviews-empty-icon">⭐</div>
+                <h3>No Customer Reviews Yet</h3>
+                <p>
+                    Reviews from completed orders will appear here.
+                </p>
+            </div>
+
+        {% endif %}
+
+    </section>
     {% for order in orders %}
 
     

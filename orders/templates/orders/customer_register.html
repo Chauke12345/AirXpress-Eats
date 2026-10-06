@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Customer Account - AirXpress Eats</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 30px;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-top: 16px;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 24px;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background: #25D366;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .login-link a {
+            color: #198754;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .error {
+            background: #ffe5e5;
+            color: #a00000;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Create Your AirXpress Account</h1>
+
+    <p class="subtitle">
+        Create an account to order faster and manage your orders.
+    </p>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="error">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if form.non_field_errors %}
+        <div class="error">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <label for="id_full_name">Full Name</label>
+        {{ form.full_name }}
+        {{ form.full_name.errors }}
+
+        <label for="id_username">Username</label>
+        {{ form.username }}
+        {{ form.username.errors }}
+
+        <label for="id_email">Email Address</label>
+        {{ form.email }}
+        {{ form.email.errors }}
+
+        <label for="id_whatsapp_number">WhatsApp / Contact Number</label>
+        {{ form.whatsapp_number }}
+        {{ form.whatsapp_number.errors }}
+
+        <label for="id_password1">Password</label>
+        {{ form.password1 }}
+        {{ form.password1.errors }}
+
+        <label for="id_password2">Confirm Password</label>
+        {{ form.password2 }}
+        {{ form.password2.errors }}
+
+        <button type="submit">
+            CREATE ACCOUNT
+        </button>
+    </form>
+
+    <div class="login-link">
+        Already have an account?
+        <a href="{% url 'customer_login' %}">Login</a>
+    </div>
+
+</div>
+
+</body>
+</html>

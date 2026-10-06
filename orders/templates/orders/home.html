@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -1032,7 +1032,7 @@
                 </div>
 
                 <div class="brand-subtitle">
-                    Food • Delivery • Convenience
+                    Food â€¢ Delivery â€¢ Convenience
                 </div>
 
             </div>
@@ -1052,6 +1052,30 @@
             <a href="#business">
                 Partner With Us
             </a>
+
+            <a href="{% url 'customer_login' %}"
+               class="nav-button">
+                Login
+            </a>
+
+            <a href="{% url 'customer_register' %}"
+               class="nav-button">
+                Create Account
+            </a>
+              {% if user.is_authenticated and user.customer_profile %}
+                <a href="{% url 'customer_my_orders' %}"
+                   class="nav-button">
+                    Track My Order
+                </a>
+
+              <form method="post" action="{% url 'customer_logout' %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="nav-button" style="border:none;cursor:pointer;">
+                      Logout
+                  </button>
+              </form>
+              {% endif %}
+            
 
             <a href="#restaurants"
                class="nav-button">
@@ -1082,6 +1106,12 @@
                 Food ordering made simple
 
             </div>
+
+            {% if user.is_authenticated and user.customer_profile %}
+            <div style="font-size:20px;font-weight:700;margin-bottom:15px;color:#fff;">
+                Welcome back, {{ user.first_name }} 👋
+            </div>
+            {% endif %}
 
             <h1>
 
@@ -1151,7 +1181,7 @@
         <div class="search-box">
 
             <span class="search-icon">
-                ⌕
+                
             </span>
 
             <input
@@ -1213,7 +1243,7 @@
                 >
 
                     <div class="restaurant-icon">
-                        🍽️
+                        
                     </div>
 
                     <h3>
@@ -1224,7 +1254,7 @@
 
                         <div class="restaurant-location">
 
-                            📍 {{ shop.location }}
+                            {{ shop.location }}
 
                         </div>
 
@@ -1232,23 +1262,20 @@
 
                         <div class="restaurant-location">
 
-                            📍 Location available on order
+                            Location available
 
                         </div>
 
                     {% endif %}
 
                     <div class="order-link">
-
-                        <span>
-                            View menu & order
-                        </span>
-
-                        <span>
-                            →
-                        </span>
-
-                    </div>
+    <span>
+        View Menu & Order ?
+    </span>
+    <span>
+        ?
+    </span>
+</div>
 
                 </a>
 
@@ -1262,7 +1289,7 @@
              style="display:none; margin-top:20px;">
 
             <div class="empty-icon">
-                🔎
+                
             </div>
 
             <h3>
@@ -1283,7 +1310,7 @@
         <div class="empty-state">
 
             <div class="empty-icon">
-                🍽️
+                
             </div>
 
             <h3>
@@ -1336,7 +1363,7 @@
                 </div>
 
                 <div class="step-icon">
-                    📍
+                    
                 </div>
 
                 <h3>
@@ -1360,7 +1387,7 @@
                 </div>
 
                 <div class="step-icon">
-                    🍔
+                    
                 </div>
 
                 <h3>
@@ -1369,8 +1396,8 @@
 
                 <p>
 
-                    Explore available menu items
-                    and select what you want.
+                    Browse the menu, choose your favourite items
+                    and add them to your order.
 
                 </p>
 
@@ -1384,7 +1411,7 @@
                 </div>
 
                 <div class="step-icon">
-                    🛒
+                    
                 </div>
 
                 <h3>
@@ -1393,8 +1420,8 @@
 
                 <p>
 
-                    Submit your order and provide
-                    the information needed for fulfilment.
+                    Place your order securely and provide
+                    your delivery details.
 
                 </p>
 
@@ -1408,7 +1435,7 @@
                 </div>
 
                 <div class="step-icon">
-                    🛵
+                    
                 </div>
 
                 <h3>
@@ -1417,10 +1444,8 @@
 
                 <p>
 
-                    Where delivery is available,
-                    your order can be handled through
-                    the AirXpress delivery workflow.
-
+                    Track your order as it moves through
+                    the AirXpress Eats delivery process.
                 </p>
 
             </div>
@@ -1595,12 +1620,7 @@
         <div class="footer-bottom">
 
             <span>
-                © {% now "Y" %} AirXpress Eats
-            </span>
-
-            <span>
-                Powered by EDVANCE TECH
-            </span>
+                Â© {% now "Y" %} AirXpress Eats Â· Powered by EDVANCE TECH</span>
 
         </div>
 
@@ -1687,3 +1707,10 @@
 
 </body>
 </html>
+
+
+
+
+
+
+

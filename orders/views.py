@@ -7,10 +7,10 @@ from django.contrib.auth import (
     authenticate,
     login,
     logout,
-    logout,
 )
 
 from django.contrib.auth.decorators import (
+    login_required,
     user_passes_test,
 )
 
@@ -23,7 +23,7 @@ from django.shortcuts import (
 
 from django.utils import timezone
 from django.db import transaction
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Avg
 from django.urls import reverse
 
 from .forms import (
@@ -39,6 +39,7 @@ from .models import (
     Order,
     OrderItem,
     OrderStatusHistory,
+    OrderReview,
     Shop,
     StaffProfile,
     ShopSubscriptionPayment
@@ -973,6 +974,73 @@ def checkout(request, shop_slug):
         "orders/checkout.html",
         context,
     )
+def customer_login(request):
+    if request.method == "POST":
+        username = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(
+                request,
+                user,
+                backend="django.contrib.auth.backends.ModelBackend",
+            )
+
+            if hasattr(user, "customer_profile"):
+                request.session["airxpress_customer_name"] = user.first_name
+                request.session["airxpress_customer_whatsapp"] = user.customer_profile.whatsapp_number
+                request.session.modified = True
+
+            return redirect("home")
+
+        messages.error(request, "Invalid username or password.")
+
+    return render(request, "orders/customer_login.html")
+
+def customer_register(request):
+    from .forms import CustomerRegistrationForm
+
+    if request.method == "POST":
+        form = CustomerRegistrationForm(request.POST)
+
+        if form.is_valid():
+            user = form.save()
+
+            login(
+                request,
+                user,
+                backend="django.contrib.auth.backends.ModelBackend",
+            )
+
+            request.session["airxpress_customer_name"] = (
+                user.first_name
+            )
+
+            request.session["airxpress_customer_whatsapp"] = (
+                user.customer_profile.whatsapp_number
+            )
+
+            request.session.modified = True
+
+            messages.success(
+                request,
+                "Your AirXpress account has been created successfully.",
+            )
+
+            return redirect("home")
+    else:
+        form = CustomerRegistrationForm()
+
+    return render(
+        request,
+        "orders/customer_register.html",
+        {
+            "form": form,
+        },
+    )
+
 def customer_order(request, shop_slug):
 
     shop = get_object_or_404(
@@ -1257,6 +1325,159 @@ def order_success(request, shop_slug, order_id):
             "shop": shop,
             "order": order,
         },
+    )
+
+@login_required
+def customer_my_orders(request):
+    """
+    Display the logged-in customer's orders across all shops.
+    Customers are matched using their account name and WhatsApp number.
+    """
+
+    if not hasattr(request.user, "customer_profile"):
+        messages.error(
+            request,
+            "Your customer profile could not be found.",
+        )
+        return redirect("customer_login")
+
+    customer_name = request.user.first_name.strip()
+    whatsapp_number = request.user.customer_profile.whatsapp_number.strip()
+
+    orders = (
+        Order.objects
+        .filter(
+            customer_name__iexact=customer_name,
+            whatsapp_number=whatsapp_number,
+        )
+        .select_related(
+            "shop",
+            "driver",
+        )
+        .prefetch_related(
+            "items__menu_item",
+        )
+        .order_by(
+            "-created_at",
+        )
+    )
+
+    return render(
+        request,
+        "orders/customer_my_orders.html",
+        {
+            "orders": orders,
+            "customer_name": customer_name,
+            "whatsapp_number": whatsapp_number,
+        },
+    )
+
+@login_required
+def order_review(request, order_id):
+    """
+    Allow the logged-in customer to review a completed order.
+    """
+
+    if not hasattr(request.user, "customer_profile"):
+        messages.error(
+            request,
+            "Your customer profile could not be found.",
+        )
+        return redirect("customer_login")
+
+    customer_name = request.user.first_name.strip()
+    whatsapp_number = (
+        request.user.customer_profile.whatsapp_number.strip()
+    )
+
+    order = get_object_or_404(
+        Order.objects
+        .select_related("shop", "driver"),
+        id=order_id,
+        customer_name__iexact=customer_name,
+        whatsapp_number=whatsapp_number,
+    )
+
+    if order.status not in ["delivered", "collected"]:
+        messages.error(
+            request,
+            "This order is not completed yet and cannot be reviewed.",
+        )
+        return redirect(
+            "track_order",
+            tracking_token=order.tracking_token,
+        )
+
+    if hasattr(order, "review"):
+        messages.info(
+            request,
+            "You have already reviewed this order.",
+        )
+        return redirect(
+            "track_order",
+            tracking_token=order.tracking_token,
+        )
+
+    if request.method == "POST":
+        overall_rating = request.POST.get("overall_rating")
+        food_rating = request.POST.get("food_rating")
+        delivery_rating = request.POST.get("delivery_rating")
+        comment = request.POST.get("comment", "").strip()
+
+        try:
+            overall_rating = int(overall_rating)
+            food_rating = int(food_rating)
+            delivery_rating = int(delivery_rating)
+        except (TypeError, ValueError):
+            messages.error(
+                request,
+                "Please select a valid rating.",
+            )
+            return render(
+                request,
+                "orders/order_review.html",
+                {"order": order},
+            )
+
+        if not all(
+            rating in [1, 2, 3, 4, 5]
+            for rating in [
+                overall_rating,
+                food_rating,
+                delivery_rating,
+            ]
+        ):
+            messages.error(
+                request,
+                "Please select a rating from 1 to 5 stars.",
+            )
+            return render(
+                request,
+                "orders/order_review.html",
+                {"order": order},
+            )
+
+        OrderReview.objects.create(
+            order=order,
+            customer=request.user,
+            shop=order.shop,
+            driver=order.driver,
+            overall_rating=overall_rating,
+            food_rating=food_rating,
+            delivery_rating=delivery_rating,
+            comment=comment,
+        )
+
+        return render(
+            request,
+            "orders/order_review_thank_you.html",
+            {"order": order},
+        )
+
+    return render(
+        request,
+        "orders/order_review.html",
+        {"order": order},
     )
 
 def track_order(request, tracking_token):
@@ -2028,6 +2249,30 @@ def driver_dashboard(request):
         .count()
     )
 
+    # =========================================================
+    # DRIVER CUSTOMER RATINGS
+    # =========================================================
+
+    reviews = (
+        OrderReview.objects
+        .filter(
+            driver=driver
+        )
+        .select_related(
+            "order",
+            "customer",
+        )
+        .order_by(
+            "-created_at"
+        )
+    )
+
+    driver_review_summary = reviews.aggregate(
+        total_reviews=Count("id"),
+        average_overall=Avg("overall_rating"),
+        average_delivery=Avg("delivery_rating"),
+    )
+
     # Only the most recently updated picked-up order is actively tracked.
     active_delivery = assigned_orders.filter(status="picked_up").first()
 
@@ -2052,6 +2297,10 @@ def driver_dashboard(request):
         "pending_payout": pending_payout,
         "paid_to_date": paid_to_date,
         "completed_deliveries": completed_deliveries,
+        "reviews": reviews,
+        "total_driver_reviews": driver_review_summary["total_reviews"] or 0,
+        "average_driver_rating": driver_review_summary["average_overall"],
+        "average_delivery_rating": driver_review_summary["average_delivery"],
     }
 
     return render(
@@ -2539,6 +2788,31 @@ def staff_dashboard(request):
     ).count()
 
     # =========================================================
+    # =========================================================
+    # CUSTOMER REVIEWS
+    # =========================================================
+
+    reviews = (
+        OrderReview.objects
+        .filter(
+            shop=shop
+        )
+        .select_related(
+            "order",
+            "customer",
+            "driver",
+        )
+        .order_by(
+            "-created_at"
+        )
+    )
+
+    review_summary = reviews.aggregate(
+        total_reviews=Count("id"),
+        average_overall=Avg("overall_rating"),
+        average_food=Avg("food_rating"),
+        average_delivery=Avg("delivery_rating"),
+    )
     # DASHBOARD CONTEXT
     # =========================================================
 
@@ -2553,6 +2827,12 @@ def staff_dashboard(request):
         "driver_assigned_orders": driver_assigned_orders,
         "picked_up_orders": picked_up_orders,
         "on_the_way_orders": on_the_way_orders,
+
+        "reviews": reviews,
+        "total_reviews": review_summary["total_reviews"] or 0,
+        "average_overall_rating": review_summary["average_overall"],
+        "average_food_rating": review_summary["average_food"],
+        "average_delivery_rating": review_summary["average_delivery"],
     }
 
     return render(
@@ -3889,6 +4169,16 @@ def payfast_payment(request, order_id):
             "order": order,
         },
     )
+
+
+
+
+
+
+
+
+
+
 
 
 

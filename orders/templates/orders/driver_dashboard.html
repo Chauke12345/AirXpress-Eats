@@ -205,7 +205,37 @@
                 grid-template-columns: 1fr;
             }
         }
-    </style>
+    
+<style>
+.driver-rating-section .section-title {
+    color: #f5c542;
+}
+
+.driver-rating-section .earning-card {
+    border-color: #5a4a1f;
+}
+
+.driver-rating-section .earning-card:nth-child(1) .earning-value {
+    color: #f5c542;
+}
+
+.driver-rating-section .earning-card:nth-child(2) .earning-value {
+    color: #6cb6ff;
+}
+
+.driver-rating-section .earning-card:nth-child(3) .earning-value {
+    color: #65d68a;
+}
+
+.driver-rating-section .card {
+    border-color: #5a4a1f;
+}
+
+.driver-rating-section .history-row {
+    border-color: #3f3620;
+}
+</style>
+</style>
 </head>
 
 <body>
@@ -518,23 +548,27 @@
                               <div class="detail">
     <span class="label">Customer Contact</span><br>
 
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
-        <a
-            href="tel:{{ order.whatsapp_number }}"
-            style="display:inline-block;padding:10px 16px;border-radius:8px;background:#198754;color:white;text-decoration:none;font-weight:600;"
-        >
-            ?? Call Customer
-        </a>
+    {% with whatsapp_local=order.whatsapp_number|slice:"1:" %}
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
 
-        <a
-            href="https://wa.me/{{ order.whatsapp_number }}"
-            target="_blank"
-            rel="noopener noreferrer"
-            style="display:inline-block;padding:10px 16px;border-radius:8px;background:#25D366;color:white;text-decoration:none;font-weight:600;"
-        >
-            ?? WhatsApp Customer
-        </a>
-    </div>
+            <a
+                href="tel:{{ order.whatsapp_number }}"
+                style="display:inline-block;padding:10px 16px;border-radius:8px;background:#198754;color:white;text-decoration:none;font-weight:600;"
+            >
+                CALL CUSTOMER
+            </a>
+
+            <a
+                href="https://wa.me/27{{ whatsapp_local }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                style="display:inline-block;padding:10px 16px;border-radius:8px;background:#25D366;color:white;text-decoration:none;font-weight:600;"
+            >
+                WHATSAPP CUSTOMER
+            </a>
+
+        </div>
+    {% endwith %}
 
     <div style="margin-top:8px;font-size:13px;color:#666;">
         {{ order.whatsapp_number }}
@@ -646,8 +680,12 @@
 
                                   {% csrf_token %}
 
-                                    Mark as Delivered
-                                </button>
+                                  <button
+                                      type="submit"
+                                      style="background:#2e7d32;color:#ffffff;border:none;padding:12px 18px;border-radius:8px;font-weight:700;cursor:pointer;"
+                                  >
+                                      Mark as Delivered
+                                  </button>
 
                             </form>
 
@@ -768,6 +806,142 @@
 
 
         <!-- =====================================================
+        <!-- =====================================================
+             DRIVER CUSTOMER RATINGS
+        ====================================================== -->
+
+        <section class="section driver-rating-section">
+
+            <div class="section-title">
+                My Customer Ratings
+            </div>
+
+            <div class="earnings-grid">
+
+                <div class="earning-card">
+                    <div class="earning-label">
+                        Overall Rating
+                    </div>
+
+                    <div class="earning-value">
+                        {{ average_driver_rating|default:0|floatformat:1 }}/5
+                    </div>
+
+                    <div class="earning-subtitle">
+                        Average customer rating
+                    </div>
+                </div>
+
+                <div class="earning-card">
+                    <div class="earning-label">
+                        Total Reviews
+                    </div>
+
+                    <div class="earning-value">
+                        {{ total_driver_reviews }}
+                    </div>
+
+                    <div class="earning-subtitle">
+                        Customer reviews received
+                    </div>
+                </div>
+
+                <div class="earning-card">
+                    <div class="earning-label">
+                        Delivery Rating
+                    </div>
+
+                    <div class="earning-value">
+                        {{ average_delivery_rating|default:0|floatformat:1 }}/5
+                    </div>
+
+                    <div class="earning-subtitle">
+                        Customer delivery experience
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+
+                {% if reviews %}
+
+                    {% for review in reviews %}
+
+                        <div class="history-row">
+
+                            <div>
+                                <div class="label">
+                                    Customer
+                                </div>
+
+                                <strong>
+                                    {{ review.customer.get_full_name|default:review.customer.username }}
+                                </strong>
+
+                                <div class="label" style="margin-top: 8px;">
+                                    Order #{{ review.order.id }}
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="label">
+                                    Rating
+                                </div>
+
+                                <strong>
+                                    {{ review.overall_rating }}/5
+                                </strong>
+
+                                <div class="label" style="margin-top: 8px;">
+                                    Delivery: {{ review.delivery_rating }}/5
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="label">
+                                    Date
+                                </div>
+
+                                <strong>
+                                    {{ review.created_at|date:"d M Y, H:i" }}
+                                </strong>
+                            </div>
+
+                            {% if review.comment %}
+                                <div style="margin-top: 12px; width: 100%;">
+                                    <div class="label">
+                                        Customer Comment
+                                    </div>
+
+                                    <div style="margin-top: 5px;">
+                                        {{ review.comment }}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                        </div>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <div style="padding: 20px; text-align: center;">
+                        <div class="label">
+                            No customer ratings yet.
+                        </div>
+
+                        <div style="margin-top: 8px;">
+                            Customers will be able to rate your delivery service after completed orders.
+                        </div>
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
              DRIVER DELIVERY HISTORY
         ====================================================== -->
 
@@ -948,7 +1122,7 @@
                 );
 
             updatePanelStatus(
-                "Live location active • GPS accuracy: " +
+                "Live location active â€¢ GPS accuracy: " +
                 accuracy +
                 " m"
             );
@@ -1168,6 +1342,8 @@
 </script>
 </body>
 </html>
+
+
 
 
 

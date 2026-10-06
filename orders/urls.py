@@ -1,4 +1,4 @@
-from django.urls import path
+﻿from django.urls import path
 from django.contrib.auth import views as auth_views
 
 from . import views
@@ -30,11 +30,66 @@ urlpatterns = [
     # =========================================================
     # CUSTOMER
     # =========================================================
-
     path(
         "shop/<slug:shop_slug>/cart/add/<int:menu_item_id>/",
         views.add_to_cart,
         name="add_to_cart",
+    ),
+
+    path(
+        "customer/register/",
+        views.customer_register,
+        name="customer_register",
+    ),
+
+    path(
+        "customer/login/",
+        views.customer_login,
+        name="customer_login",
+    ),
+
+    path(
+        "customer/logout/",
+        auth_views.LogoutView.as_view(
+            next_page="home",
+        ),
+        name="customer_logout",
+    ),
+
+    path(
+        "customer/password-reset/",
+        auth_views.PasswordResetView.as_view(
+            template_name="orders/customer_password_reset.html",
+            email_template_name="orders/customer_password_reset_email.txt",
+            subject_template_name="orders/customer_password_reset_subject.txt",
+            success_url="/customer/password-reset/done/",
+        ),
+        name="customer_password_reset",
+    ),
+
+    path(
+        "customer/password-reset/done/",
+        auth_views.PasswordResetDoneView.as_view(
+            template_name="orders/customer_password_reset_done.html",
+        ),
+        name="customer_password_reset_done",
+    ),
+
+    path(
+        "customer/reset/<uidb64>/<token>/",
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name="orders/customer_password_reset_confirm.html",
+            success_url="/customer/reset/done/",
+        ),
+        name="customer_password_reset_confirm",
+    ),
+
+    path(
+        "customer/reset/done/",
+        auth_views.PasswordResetCompleteView.as_view(
+            template_name="orders/customer_password_reset_complete.html",
+        ),
+        name="customer_password_reset_complete",
     ),
 
     path(
@@ -80,6 +135,16 @@ urlpatterns = [
         "shop/<slug:shop_slug>/order/<int:order_id>/success/",
         views.order_success,
         name="order_success",
+    ),
+    path(
+        "customer/my-orders/",
+        views.customer_my_orders,
+        name="customer_my_orders",
+    ),
+    path(
+        "customer/orders/<int:order_id>/review/",
+        views.order_review,
+        name="order_review",
     ),
     path(
         "track/<uuid:tracking_token>/",
@@ -132,6 +197,11 @@ urlpatterns = [
         next_page="driver_login",
     ),
     name="driver_logout",
+),
+    path(
+    "customer/login/",
+    views.customer_login,
+    name="customer_login",
 ),
 
     # =========================================================
@@ -280,6 +350,12 @@ path(
         views.mark_driver_payout_paid,
         name="mark_driver_payout_paid",
     ),]
+
+
+
+
+
+
 
 
 

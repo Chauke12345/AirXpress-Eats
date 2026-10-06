@@ -184,6 +184,30 @@ class Driver(models.Model):
 
 
 # =========================================================
+# CUSTOMER PROFILE
+# =========================================================
+
+class CustomerProfile(models.Model):
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="customer_profile",
+    )
+
+    whatsapp_number = models.CharField(
+        max_length=20,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    def __str__(self):
+        return self.user.username
+
+# =========================================================
 # MENU CATEGORY
 # =========================================================
 
@@ -896,3 +920,74 @@ class DeliveryRequest(models.Model):
 
 
 
+
+
+# =========================================================
+# CUSTOMER REVIEW
+# =========================================================
+
+class OrderReview(models.Model):
+
+    RATING_CHOICES = [
+        (1, "1 Star"),
+        (2, "2 Stars"),
+        (3, "3 Stars"),
+        (4, "4 Stars"),
+        (5, "5 Stars"),
+    ]
+
+    order = models.OneToOneField(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="review",
+    )
+
+    customer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="order_reviews",
+    )
+
+    shop = models.ForeignKey(
+        Shop,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+    )
+
+    driver = models.ForeignKey(
+        Driver,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviews",
+    )
+
+    overall_rating = models.PositiveSmallIntegerField(
+        choices=RATING_CHOICES,
+    )
+
+    food_rating = models.PositiveSmallIntegerField(
+        choices=RATING_CHOICES,
+    )
+
+    delivery_rating = models.PositiveSmallIntegerField(
+        choices=RATING_CHOICES,
+    )
+
+    comment = models.TextField(
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    def __str__(self):
+        return (
+            f"Review - Order #{self.order.id} - "
+            f"{self.overall_rating}/5"
+        )

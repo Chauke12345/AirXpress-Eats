@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leave a Review - AirXpress Eats</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: #fff;
+            color: #222;
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.25);
+        }
+
+        h1 {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .order-number {
+            text-align: center;
+            color: #777;
+            margin-bottom: 30px;
+        }
+
+        .rating-section {
+            margin: 25px 0;
+        }
+
+        .rating-section label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stars {
+            display: flex;
+            gap: 8px;
+        }
+
+        .stars input {
+            display: none;
+        }
+
+        .stars label {
+            font-size: 38px;
+            color: #ccc;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .stars label:hover,
+        .stars label:hover ~ label {
+            color: #f5c542;
+        }
+
+        .stars input:checked + label {
+            color: #f5c542;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 130px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            resize: vertical;
+            font-family: Arial, sans-serif;
+            font-size: 15px;
+        }
+
+        .submit-button {
+            width: 100%;
+            border: none;
+            padding: 16px;
+            margin-top: 25px;
+            border-radius: 30px;
+            background: #f5c542;
+            color: #111;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .submit-button:hover {
+            opacity: 0.9;
+        }
+
+        .back-button {
+            display: block;
+            text-align: center;
+            margin-top: 18px;
+            color: #555;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+
+        <h1>⭐ Leave a Review</h1>
+
+        <div class="order-number">
+            Order #{{ order.id }}
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="rating-section">
+                <label>Overall Experience</label>
+
+                <div class="stars">
+                    {% for value in "12345" %}
+                        <input
+                            type="radio"
+                            id="overall{{ value }}"
+                            name="overall_rating"
+                            value="{{ value }}"
+                            required
+                        >
+                        <label for="overall{{ value }}">★</label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="rating-section">
+                <label>Food Quality</label>
+
+                <div class="stars">
+                    {% for value in "12345" %}
+                        <input
+                            type="radio"
+                            id="food{{ value }}"
+                            name="food_rating"
+                            value="{{ value }}"
+                            required
+                        >
+                        <label for="food{{ value }}">★</label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="rating-section">
+                <label>Delivery</label>
+
+                <div class="stars">
+                    {% for value in "12345" %}
+                        <input
+                            type="radio"
+                            id="delivery{{ value }}"
+                            name="delivery_rating"
+                            value="{{ value }}"
+                            required
+                        >
+                        <label for="delivery{{ value }}">★</label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="rating-section">
+                <label for="comment">Tell us about your experience</label>
+
+                <textarea
+                    id="comment"
+                    name="comment"
+                    placeholder="How was your AirXpress Eats experience?"
+                ></textarea>
+            </div>
+
+            <button type="submit" class="submit-button">
+                Submit Review ⭐
+            </button>
+
+            <a href="{% url 'customer_my_orders' %}" class="back-button">
+                ← Back to My Orders
+            </a>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>
