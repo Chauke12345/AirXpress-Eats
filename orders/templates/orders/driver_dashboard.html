@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <link
+        href="https://api.mapbox.com/mapbox-gl-js/v3.32.0/mapbox-gl.css"
+        rel="stylesheet"
+    >
+
+    <script
+        src="https://api.mapbox.com/mapbox-gl-js/v3.32.0/mapbox-gl.js"
+    ></script>
     <title>AirXpress Driver Dashboard</title>
 
     <style>
@@ -209,12 +217,23 @@
             <p>Driver Portal</p>
         </div>
 
-        <a
-            href="{% url 'driver_logout' %}"
-            class="logout"
-        >
-            Logout
-        </a>
+        <form method="POST" action="{% url 'driver_logout' %}" style="display: inline;">
+
+    {% csrf_token %}
+
+    <button
+        type="submit"
+        class="logout"
+        style="
+            background: none;
+            font: inherit;
+            cursor: pointer;
+        "
+    >
+        Logout
+    </button>
+
+</form>
 
     </header>
 
@@ -224,6 +243,106 @@
             <h2>Welcome, {{ driver.name }}</h2>
             <p>{{ driver.shop.name }}</p>
         </div>
+          <section class="section">
+              <div class="section-title">
+                  Driver Profile & Vehicle
+              </div>
+
+              <div class="card">
+                  <form
+                      method="post"
+                      action="{% url 'driver_update_profile' %}"
+                      enctype="multipart/form-data"
+                  >
+                      {% csrf_token %}
+
+                      <div style="margin-bottom: 15px;">
+                          {% if driver.photo %}
+                              <img
+                                  src="{{ driver.photo.url }}"
+                                  alt="{{ driver.name }}"
+                                  style="
+                                      width: 100px;
+                                      height: 100px;
+                                      object-fit: cover;
+                                      border-radius: 50%;
+                                      border: 3px solid #ffffff;
+                                  "
+                              >
+                          {% else %}
+                              <div
+                                  style="
+                                      width: 100px;
+                                      height: 100px;
+                                      border-radius: 50%;
+                                      background: #333;
+                                      display: flex;
+                                      align-items: center;
+                                      justify-content: center;
+                                      font-size: 40px;
+                                  "
+                              >??</div>
+                          {% endif %}
+                      </div>
+
+                      <label>Driver Photo</label>
+                      <input
+                          type="file"
+                          name="photo"
+                          accept="image/*"
+                          style="margin-bottom: 15px;"
+                      >
+
+                      <label>Driver Name</label>
+                      <input
+                          type="text"
+                          name="name"
+                          value="{{ driver.name }}"
+                          required
+                          style="width: 100%; margin-bottom: 12px;"
+                      >
+
+                      <label>Vehicle Make / Model</label>
+                      <input
+                          type="text"
+                          name="vehicle_make_model"
+                          value="{{ driver.vehicle_make_model }}"
+                          placeholder="e.g. Toyota Starlet"
+                          style="width: 100%; margin-bottom: 12px;"
+                      >
+
+                      <label>Vehicle Colour</label>
+                      <input
+                          type="text"
+                          name="vehicle_colour"
+                          value="{{ driver.vehicle_colour }}"
+                          placeholder="e.g. White"
+                          style="width: 100%; margin-bottom: 12px;"
+                      >
+
+                      <label>Vehicle Registration</label>
+                      <input
+                          type="text"
+                          name="vehicle_registration"
+                          value="{{ driver.vehicle_registration }}"
+                          placeholder="e.g. ABC 123 GP"
+                          style="width: 100%; margin-bottom: 15px;"
+                      >
+
+                      <button
+                          type="submit"
+                          style="
+                              padding: 12px 20px;
+                              border: 0;
+                              border-radius: 8px;
+                              cursor: pointer;
+                          "
+                      >
+                          Save Driver Profile
+                      </button>
+                  </form>
+              </div>
+          </section>
 
         <section class="section">
 
@@ -232,6 +351,40 @@
             </div>
 
             {% for request in pending_requests %}
+                  <div
+                      id="new-request-alert-{{ request.id }}"
+                      class="new-request-alert"
+                      data-request-id="{{ request.id }}"
+                      data-order-id="{{ request.order.id }}"
+                  >
+
+                      ?? NEW DELIVERY REQUEST
+
+                      <div>
+                          Order #{{ request.order.id }}
+                      </div>
+
+                      <div>
+                          Pickup: {{ request.order.shop.name }}
+                      </div>
+
+                      <div>
+                          Distance: {{ request.order.delivery_distance_km|default:"0" }} km
+                      </div>
+
+                      <div>
+                          Your Payout: R{{ request.order.driver_payout|default:"0.00" }}
+                      </div>
+
+                      <button
+                          type="button"
+                          onclick="dismissRequestAlert('{{ request.id }}')"
+                      >
+                          View Request
+                      </button>
+
+                  </div>
+
 
                 <div class="card">
 
@@ -359,7 +512,36 @@
                     <div class="detail">
                         <span class="label">Customer</span><br>
                         {{ order.customer_name }}
-                    </div>
+                    </div>                      
+                      {% if order.status == "driver_assigned" or order.status == "picked_up" %}
+                          {% if order.whatsapp_number %}
+                              <div class="detail">
+    <span class="label">Customer Contact</span><br>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+        <a
+            href="tel:{{ order.whatsapp_number }}"
+            style="display:inline-block;padding:10px 16px;border-radius:8px;background:#198754;color:white;text-decoration:none;font-weight:600;"
+        >
+            ?? Call Customer
+        </a>
+
+        <a
+            href="https://wa.me/{{ order.whatsapp_number }}"
+            target="_blank"
+            rel="noopener noreferrer"
+            style="display:inline-block;padding:10px 16px;border-radius:8px;background:#25D366;color:white;text-decoration:none;font-weight:600;"
+        >
+            ?? WhatsApp Customer
+        </a>
+    </div>
+
+    <div style="margin-top:8px;font-size:13px;color:#666;">
+        {{ order.whatsapp_number }}
+    </div>
+</div>
+                          {% endif %}
+                      {% endif %}
 
                     <div class="detail">
                         <span class="label">Delivery Address</span><br>
@@ -417,50 +599,53 @@
                             </form>
 
                         {% elif order.status == "picked_up" %}
-                            <div
-                                class="driver-gps-panel"
-                                data-order-id="{{ order.id }}"
-                                data-location-url="{% url 'update_driver_location' order.id %}"
-                                style="
-                                    width: 100%;
-                                    padding: 12px 14px;
-                                    margin-bottom: 10px;
-                                    border-radius: 9px;
-                                    background: #1f1f1f;
-                                    border: 1px solid #3a3a3a;
-                                    color: #ffffff;
-                                    font-size: 13px;
-                                "
-                            >
-                                <strong>Live Location Sharing</strong>
 
-                                <div class="driver-gps-status">
-                                    Preparing GPS location...
-                                </div>
+                              <div
+                                  class="driver-gps-panel"
+                                  data-order-id="{{ order.id }}"
+                                  data-location-url="{% url 'update_driver_location' order.id %}"
+                                  style="
+                                      width: 100%;
+                                      padding: 12px 14px;
+                                      margin-bottom: 10px;
+                                      border-radius: 9px;
+                                      background: #1f1f1f;
+                                      border: 1px solid #3a3a3a;
+                                      color: #ffffff;
+                                      font-size: 13px;
+                                  "
+                              >
+                                  <strong>Live Location Sharing</strong>
 
-                            </div>
+                                  <div class="driver-gps-status">
+                                      Preparing GPS location...
+                                  </div>
+                              </div>
 
+                              <div
+                                  id="driver-map-{{ order.id }}"
+                                  class="driver-map"
+                                  data-lat="{{ active_delivery_latitude|default:'' }}"
+                                  data-lng="{{ active_delivery_longitude|default:'' }}"
+                                  style="
+                                      width: 100%;
+                                      height: 320px;
+                                      margin-bottom: 12px;
+                                      border-radius: 12px;
+                                      overflow: hidden;
+                                      border: 1px solid #3a3a3a;
+                                      background: #1a1a1a;
+                                  "
+                              ></div>
 
-                            <form
-                                method="post"
-                                action="{% url 'driver_deliver_order' order.id %}"
-                                style="margin: 0;"
-                            >
+                              <form
+                                  method="post"
+                                  action="{% url 'driver_deliver_order' order.id %}"
+                                  style="margin: 0;"
+                              >
 
-                                {% csrf_token %}
+                                  {% csrf_token %}
 
-                                <button
-                                    type="submit"
-                                    style="
-                                        background: #ffffff;
-                                        color: #111111;
-                                        border: none;
-                                        padding: 11px 18px;
-                                        border-radius: 9px;
-                                        font-weight: 800;
-                                        cursor: pointer;
-                                    "
-                                >
                                     Mark as Delivered
                                 </button>
 
@@ -840,9 +1025,161 @@
         "DOMContentLoaded",
         startDriverGps
     );
+      function initializeDriverMaps() {
+          if (typeof mapboxgl === "undefined") {
+              console.error("Mapbox GL JS is not available.");
+              return;
+          }
+
+          mapboxgl.accessToken = "{{ mapbox_token }}";
+
+          document.querySelectorAll(".driver-map").forEach(function(mapElement) {
+              const customerLat = parseFloat(mapElement.dataset.lat);
+              const customerLng = parseFloat(mapElement.dataset.lng);
+
+              if (Number.isNaN(customerLat) || Number.isNaN(customerLng)) {
+                  mapElement.innerHTML =
+                      '<div style="padding:20px;color:#ffffff;">Delivery location unavailable.</div>';
+                  return;
+              }
+
+              const map = new mapboxgl.Map({
+                  container: mapElement,
+                  style: "mapbox://styles/mapbox/streets-v12",
+                  center: [customerLng, customerLat],
+                  zoom: 13
+              });
+
+              map.addControl(
+                  new mapboxgl.NavigationControl(),
+                  "top-right"
+              );
+
+              new mapboxgl.Marker()
+                  .setLngLat([customerLng, customerLat])
+                  .setPopup(
+                      new mapboxgl.Popup().setText(
+                          "Customer Delivery Location"
+                      )
+                  )
+                  .addTo(map);
+
+              const driverMarker = new mapboxgl.Marker({
+                  color: "#e53935"
+              })
+                  .setLngLat([customerLng, customerLat])
+                  .setPopup(
+                      new mapboxgl.Popup().setText("Your Location")
+                  )
+                  .addTo(map);
+
+                              map.on("load", function() {
+                    map.addSource("driver-route", {
+                        type: "geojson",
+                        data: {
+                            type: "Feature",
+                            geometry: {
+                                type: "LineString",
+                                coordinates: [
+                                    [customerLng, customerLat],
+                                    [customerLng, customerLat]
+                                ]
+                            }
+                        }
+                    });
+
+                    map.addLayer({
+                        id: "driver-route-line",
+                        type: "line",
+                        source: "driver-route",
+                        layout: {
+                            "line-join": "round",
+                            "line-cap": "round"
+                        },
+                        paint: {
+                            "line-width": 5,
+                            "line-opacity": 0.85
+                        }
+                    });
+                });
+
+              function updateDriverMarker() {
+                  if (!navigator.geolocation) {
+                      return;
+                  }
+
+                  navigator.geolocation.getCurrentPosition(
+                      function(position) {
+                          driverMarker.setLngLat([
+                                position.coords.longitude,
+                                position.coords.latitude
+                            ]);
+
+                            const routeSource = map.getSource("driver-route");
+
+                            if (routeSource) {
+                                routeSource.setData({
+                                    type: "Feature",
+                                    geometry: {
+                                        type: "LineString",
+                                        coordinates: [
+                                            [
+                                                position.coords.longitude,
+                                                position.coords.latitude
+                                            ],
+                                            [
+                                                customerLng,
+                                                customerLat
+                                            ]
+                                        ]
+                                    }
+                                });
+                            }
+                      },
+                      function(error) {
+                          console.error(
+                              "Driver map GPS error:",
+                              error
+                          );
+                      },
+                      {
+                          enableHighAccuracy: true,
+                          maximumAge: 5000,
+                          timeout: 15000
+                      }
+                  );
+              }
+
+              map.on("load", function() {
+                  updateDriverMarker();
+
+                  setInterval(
+                      updateDriverMarker,
+                      5000
+                  );
+              });
+          });
+      }
+
+      document.addEventListener(
+          "DOMContentLoaded",
+          initializeDriverMaps
+      );
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

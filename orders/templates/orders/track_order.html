@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -776,14 +776,40 @@
         {% if order.driver %}
 
             <div class="driver-box">
+    <strong>Driver Assigned</strong>
 
-                <strong>Driver Assigned</strong>
+    {% if order.driver.photo %}
+        <div style="margin: 12px 0;">
+            <img
+                src="{{ order.driver.photo.url }}"
+                alt="{{ order.driver.name }}"
+                style="
+                    width: 90px;
+                    height: 90px;
+                    object-fit: cover;
+                    border-radius: 50%;
+                    border: 3px solid #f4b942;
+                "
+            >
+        </div>
+    {% endif %}
 
-                <p>
-                    {{ order.driver.name }}
-                </p>
+    <p class="driver-status">
+        {{ order.driver.name }}
+    </p>
 
-            </div>
+    {% if order.driver.vehicle_make_model %}
+        <p>Vehicle: {{ order.driver.vehicle_make_model }}</p>
+    {% endif %}
+
+    {% if order.driver.vehicle_colour %}
+        <p>Colour: {{ order.driver.vehicle_colour }}</p>
+    {% endif %}
+
+    {% if order.driver.vehicle_registration %}
+        <p>Registration: {{ order.driver.vehicle_registration }}</p>
+    {% endif %}
+</div>
 
         {% else %}
 
@@ -1290,7 +1316,7 @@
 
                     if (trackingNote) {
                         trackingNote.textContent =
-                            "⚠️ Live tracking is temporarily unavailable. Your order is still on the way. If you need assistance, contact AirXpress Support.";
+                            "?? Live tracking is temporarily unavailable. Your order is still on the way. If you need assistance, contact AirXpress Support.";
                     }
 
                     console.warn(
@@ -1409,6 +1435,9 @@
 </body>
 
 </html>
+
+
+
 
 
 

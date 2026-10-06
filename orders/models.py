@@ -1,4 +1,4 @@
-﻿from decimal import Decimal
+from decimal import Decimal
 import uuid
 
 from django.contrib.auth.models import User
@@ -149,6 +149,27 @@ class Driver(models.Model):
     name = models.CharField(
         max_length=100
     )
+    photo = models.ImageField(
+        upload_to="drivers/",
+        blank=True,
+        null=True,
+    )
+
+    vehicle_make_model = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+
+    vehicle_colour = models.CharField(
+        max_length=50,
+        blank=True,
+    )
+
+    vehicle_registration = models.CharField(
+        max_length=20,
+        blank=True,
+    )
+
 
     is_available = models.BooleanField(
         default=True
@@ -870,6 +891,7 @@ class DeliveryRequest(models.Model):
             f"{self.driver.name} - "
             f"{self.status}"
         )
+
 
 
 

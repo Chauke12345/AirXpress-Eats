@@ -1,4 +1,4 @@
-﻿from django.urls import path
+from django.urls import path
 from django.contrib.auth import views as auth_views
 
 from . import views
@@ -127,12 +127,12 @@ urlpatterns = [
     ),
 
     path(
-        "driver/logout/",
-        auth_views.LogoutView.as_view(
-            next_page="driver_login"
-        ),
-        name="driver_logout",
+    "driver/logout/",
+    auth_views.LogoutView.as_view(
+        next_page="driver_login",
     ),
+    name="driver_logout",
+),
 
     # =========================================================
     # DRIVER
@@ -143,6 +143,12 @@ urlpatterns = [
         views.driver_dashboard,
         name="driver_dashboard",
     ),
+    path(
+        "driver/profile/update/",
+        views.driver_update_profile,
+        name="driver_update_profile",
+    ),
+
 
     path(
         "driver/request/<int:request_id>/accept/",
@@ -208,6 +214,12 @@ path(
     views.staff_update_order,
     name="staff_update_order",
 ),
+  path(
+      "staff/notify-drivers/<int:order_id>/",
+      views.staff_notify_drivers,
+      name="staff_notify_drivers",
+  ),
+
 
 path(
     "staff/history/",
@@ -268,6 +280,9 @@ path(
         views.mark_driver_payout_paid,
         name="mark_driver_payout_paid",
     ),]
+
+
+
 
 
 

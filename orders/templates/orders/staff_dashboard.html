@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>    {% load static %}
     <meta charset="UTF-8">
@@ -1094,7 +1094,7 @@
                 </h1>
 
                 <p>
-                    {{ shop.name }} â€¢ Staff Dashboard
+                    {{ shop.name }} Ã¢â‚¬Â¢ Staff Dashboard
                 </p>
             </div>
 
@@ -1336,7 +1336,7 @@
                             {{ item.menu_item.name }}
 
                             {% if item.menu_item.pricing_type == "fixed" %}
-                                Ã— {{ item.quantity }}
+                                Ãƒâ€” {{ item.quantity }}
                             {% endif %}
 
                         </span>
@@ -1581,6 +1581,36 @@
 
             {% endif %}
 
+                {% if order.order_type == "delivery" and not order.driver_id %}
+
+                    <form
+                        method="POST"
+                        action="{% url 'staff_notify_drivers' order.id %}"
+                        style="margin-top: 12px;"
+                    >
+
+                        {% csrf_token %}
+
+                        <button
+                            type="submit"
+                            style="
+                                width: 100%;
+                                background: #111111;
+                                color: #ffffff;
+                                border: 2px solid #111111;
+                                padding: 14px 18px;
+                                border-radius: 10px;
+                                font-size: 16px;
+                                font-weight: 800;
+                                cursor: pointer;
+                            "
+                        >
+                            Notify Nearby Drivers
+                        </button>
+
+                    </form>
+
+                {% endif %}
             {% if order.status == "on_the_way" %}
 
                 <a
@@ -1616,6 +1646,7 @@
 
 </body>
 </html>
+
 
 
 

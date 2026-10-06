@@ -1,4 +1,4 @@
-﻿from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
 from django.contrib import messages
@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth import (
     authenticate,
     login,
+    logout,
     logout,
 )
 
@@ -1313,6 +1314,26 @@ def track_order_status(request, tracking_token):
             ),
 
             "driver_phone": "",
+            "driver_photo": (
+                order.driver.photo.url
+                if order.driver and order.driver.photo
+                else ""
+            ),
+            "vehicle_make_model": (
+                order.driver.vehicle_make_model
+                if order.driver
+                else ""
+            ),
+            "vehicle_colour": (
+                order.driver.vehicle_colour
+                if order.driver
+                else ""
+            ),
+            "vehicle_registration": (
+                order.driver.vehicle_registration
+                if order.driver
+                else ""
+            ),
 
             "customer_location": {
                 "latitude": (
@@ -1881,6 +1902,38 @@ def owner_login(request):
     ),
     login_url="/driver/login/",
 )
+def driver_update_profile(request):
+    if request.method != "POST":
+        return redirect("driver_dashboard")
+
+    driver = request.user.driver_profile
+
+    driver.name = request.POST.get("name", "").strip()
+    driver.vehicle_make_model = request.POST.get(
+        "vehicle_make_model",
+        ""
+    ).strip()
+    driver.vehicle_colour = request.POST.get(
+        "vehicle_colour",
+        ""
+    ).strip()
+    driver.vehicle_registration = request.POST.get(
+        "vehicle_registration",
+        ""
+    ).strip()
+
+    if request.FILES.get("photo"):
+        driver.photo = request.FILES["photo"]
+
+    driver.save()
+
+    messages.success(
+        request,
+        "Driver profile updated successfully."
+    )
+
+    return redirect("driver_dashboard")
+
 def driver_dashboard(request):
 
     driver = request.user.driver_profile
@@ -1980,7 +2033,18 @@ def driver_dashboard(request):
 
     context = {
         "driver": driver,
+          "mapbox_token": settings.MAPBOX_TOKEN,
           "active_delivery_id": active_delivery.id if active_delivery else None,
+          "active_delivery_latitude": (
+              float(active_delivery.customer_latitude)
+              if active_delivery and active_delivery.customer_latitude is not None
+              else None
+          ),
+          "active_delivery_longitude": (
+              float(active_delivery.customer_longitude)
+              if active_delivery and active_delivery.customer_longitude is not None
+              else None
+          ),
         "pending_requests": pending_requests,
         "assigned_orders": assigned_orders,
         "driver_payouts": driver_payouts,
@@ -2557,6 +2621,76 @@ def dispatch_order_to_available_drivers(order):
 
 
 # =========================================================
+# STAFF NOTIFY NEARBY DRIVERS
+
+@user_passes_test(
+    is_tenant_staff,
+    login_url="/staff/login/"
+)
+def staff_notify_drivers(request, order_id):
+
+    if request.method != "POST":
+        return redirect("staff_dashboard")
+
+    shop = get_user_shop(request.user)
+
+    if not shop:
+        return redirect("staff_login")
+
+    order = get_object_or_404(
+        Order,
+        id=order_id,
+        shop=shop,
+    )
+
+    if order.order_type != "delivery":
+        messages.error(
+            request,
+            f"Order #{order.id} is not a delivery order."
+        )
+        return redirect("staff_dashboard")
+
+    if order.status != "ready":
+        messages.error(
+            request,
+            f"Order #{order.id} must be Ready before drivers can be notified."
+        )
+        return redirect("staff_dashboard")
+
+    if order.driver_id:
+        messages.info(
+            request,
+            f"Order #{order.id} already has a driver assigned."
+        )
+        return redirect("staff_dashboard")
+
+    requests_created = dispatch_order_to_available_drivers(order)
+
+    if requests_created > 0:
+        messages.success(
+            request,
+            (
+                f"Order #{order.id}: delivery request sent to "
+                f"{requests_created} available driver(s)."
+            )
+        )
+    elif order.payment_status != "paid":
+        messages.warning(
+            request,
+            (
+                f"Order #{order.id} cannot be dispatched because "
+                "payment has not yet been confirmed."
+            )
+        )
+    else:
+        messages.warning(
+            request,
+            f"Order #{order.id}: no available drivers were found."
+        )
+
+    return redirect("staff_dashboard")
+
+
 # STAFF UPDATE ORDER
 # =========================================================
 
@@ -2684,7 +2818,34 @@ def staff_update_order(
                 return redirect("staff_dashboard")
         # DRIVER
         # =============================================
+        # =============================================
+        # PAYMENT STATUS
+        # =============================================
 
+        payment_status = request.POST.get(
+            "payment_status"
+        )
+
+        print("STAFF PAYMENT POST:", repr(payment_status))
+        print("STAFF POST DATA:", request.POST)
+
+        valid_payment_statuses = {
+            "pending",
+            "paid",
+            "failed",
+            "refunded",
+        }
+
+        if payment_status not in valid_payment_statuses:
+            messages.error(
+                request,
+                "Invalid payment status."
+            )
+            return redirect("staff_dashboard")
+
+        order.payment_status = payment_status
+
+  
         driver_id = request.POST.get(
             "driver"
         )
@@ -3728,6 +3889,16 @@ def payfast_payment(request, order_id):
             "order": order,
         },
     )
+
+
+
+
+
+
+
+
+
+
 
 
 
