@@ -855,13 +855,13 @@
 
 
     <a
-        href="{% url 'customer_order' shop_slug=order.shop.slug %}"
+        href="{% url 'order_review' order_id=order.id %}"
         class="back-link"
     >
         Place Another Order
     </a>
       <a
-          href="{% url 'customer_order' shop_slug=order.shop.slug %}"
+          href="{% url 'order_review' order_id=order.id %}"
           class="done-button"
       >
           Done

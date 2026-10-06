@@ -666,6 +666,19 @@ def checkout(request, shop_slug):
     # Match by customer name + WhatsApp number and restore
     # the most recent delivery address.
     # =========================================================
+    # =========================================================
+    # LOGGED-IN CUSTOMER IDENTITY
+    # Use the registered CustomerProfile details as the
+    # authoritative checkout identity.
+    # =========================================================
+    if request.user.is_authenticated and hasattr(
+        request.user,
+        "customer_profile",
+    ):
+        customer_name = request.user.first_name.strip()
+        whatsapp_number = (
+            request.user.customer_profile.whatsapp_number.strip()
+        )
     if request.method == "GET":
         saved_customer_name = request.session.get(
             "airxpress_customer_name",
@@ -699,15 +712,26 @@ def checkout(request, shop_slug):
 
     if request.method == "POST":
 
-        customer_name = request.POST.get(
-            "customer_name",
-            "",
-        ).strip()
+        # Always use the registered account details for checkout.
+        # Do not trust editable POST identity fields for logged-in customers.
+        if request.user.is_authenticated and hasattr(
+            request.user,
+            "customer_profile",
+        ):
+            customer_name = request.user.first_name.strip()
+            whatsapp_number = (
+                request.user.customer_profile.whatsapp_number.strip()
+            )
+        else:
+            customer_name = request.POST.get(
+                "customer_name",
+                "",
+            ).strip()
 
-        whatsapp_number = request.POST.get(
-            "whatsapp_number",
-            "",
-        ).strip()
+            whatsapp_number = request.POST.get(
+                "whatsapp_number",
+                "",
+            ).strip()
 
         delivery_address = request.POST.get(
             "delivery_address",
@@ -1075,6 +1099,19 @@ def customer_order(request, shop_slug):
     # Match by customer name + WhatsApp number and restore
     # the most recent delivery address.
     # =========================================================
+    # =========================================================
+    # LOGGED-IN CUSTOMER IDENTITY
+    # Use the registered CustomerProfile details as the
+    # authoritative checkout identity.
+    # =========================================================
+    if request.user.is_authenticated and hasattr(
+        request.user,
+        "customer_profile",
+    ):
+        customer_name = request.user.first_name.strip()
+        whatsapp_number = (
+            request.user.customer_profile.whatsapp_number.strip()
+        )
     if request.method == "GET":
         saved_customer_name = request.session.get(
             "airxpress_customer_name",
@@ -1111,6 +1148,7 @@ def customer_order(request, shop_slug):
         form = CustomerOrderForm(
             request.POST,
             shop=shop,
+        user=request.user,
         )
 
         if form.is_valid():
@@ -1277,7 +1315,8 @@ def customer_order(request, shop_slug):
     else:
 
         form = CustomerOrderForm(
-            shop=shop
+            shop=shop,
+            user=request.user,
         )
 
     # =====================================================
@@ -1326,6 +1365,62 @@ def order_success(request, shop_slug, order_id):
             "order": order,
         },
     )
+
+@login_required(login_url="/customer/login/")
+def customer_banking_details(request):
+    """
+    Display and update the logged-in customer's banking details.
+    """
+
+    if not hasattr(request.user, "customer_profile"):
+        messages.error(
+            request,
+            "Your customer profile could not be found.",
+        )
+        return redirect("customer_login")
+
+    profile = request.user.customer_profile
+
+    if request.method == "POST":
+        profile.bank_name = request.POST.get("bank_name", "").strip()
+        profile.account_holder_name = request.POST.get(
+            "account_holder_name",
+            "",
+        ).strip()
+        if request.POST.get("change_account_number") == "1":
+            new_account_number = request.POST.get(
+                "account_number",
+                "",
+            ).strip()
+
+            if new_account_number:
+                profile.account_number = new_account_number
+        profile.account_type = request.POST.get(
+            "account_type",
+            "",
+        ).strip()
+        profile.branch_code = request.POST.get(
+            "branch_code",
+            "",
+        ).strip()
+
+        profile.save()
+
+        messages.success(
+            request,
+            "Your banking details have been saved successfully.",
+        )
+
+        return redirect("customer_banking_details")
+
+    return render(
+        request,
+        "orders/customer_banking_details.html",
+        {
+            "profile": profile,
+        },
+    )
+
 
 @login_required
 def customer_my_orders(request):
@@ -1851,6 +1946,19 @@ def driver_login(request):
     # Match by customer name + WhatsApp number and restore
     # the most recent delivery address.
     # =========================================================
+    # =========================================================
+    # LOGGED-IN CUSTOMER IDENTITY
+    # Use the registered CustomerProfile details as the
+    # authoritative checkout identity.
+    # =========================================================
+    if request.user.is_authenticated and hasattr(
+        request.user,
+        "customer_profile",
+    ):
+        customer_name = request.user.first_name.strip()
+        whatsapp_number = (
+            request.user.customer_profile.whatsapp_number.strip()
+        )
     if request.method == "GET":
         saved_customer_name = request.session.get(
             "airxpress_customer_name",
@@ -1945,6 +2053,19 @@ def staff_login(request):
     # Match by customer name + WhatsApp number and restore
     # the most recent delivery address.
     # =========================================================
+    # =========================================================
+    # LOGGED-IN CUSTOMER IDENTITY
+    # Use the registered CustomerProfile details as the
+    # authoritative checkout identity.
+    # =========================================================
+    if request.user.is_authenticated and hasattr(
+        request.user,
+        "customer_profile",
+    ):
+        customer_name = request.user.first_name.strip()
+        whatsapp_number = (
+            request.user.customer_profile.whatsapp_number.strip()
+        )
     if request.method == "GET":
         saved_customer_name = request.session.get(
             "airxpress_customer_name",
@@ -2034,6 +2155,19 @@ def owner_login(request):
     # Match by customer name + WhatsApp number and restore
     # the most recent delivery address.
     # =========================================================
+    # =========================================================
+    # LOGGED-IN CUSTOMER IDENTITY
+    # Use the registered CustomerProfile details as the
+    # authoritative checkout identity.
+    # =========================================================
+    if request.user.is_authenticated and hasattr(
+        request.user,
+        "customer_profile",
+    ):
+        customer_name = request.user.first_name.strip()
+        whatsapp_number = (
+            request.user.customer_profile.whatsapp_number.strip()
+        )
     if request.method == "GET":
         saved_customer_name = request.session.get(
             "airxpress_customer_name",
@@ -2999,6 +3133,19 @@ def staff_update_order(
     # Match by customer name + WhatsApp number and restore
     # the most recent delivery address.
     # =========================================================
+    # =========================================================
+    # LOGGED-IN CUSTOMER IDENTITY
+    # Use the registered CustomerProfile details as the
+    # authoritative checkout identity.
+    # =========================================================
+    if request.user.is_authenticated and hasattr(
+        request.user,
+        "customer_profile",
+    ):
+        customer_name = request.user.first_name.strip()
+        whatsapp_number = (
+            request.user.customer_profile.whatsapp_number.strip()
+        )
     if request.method == "GET":
         saved_customer_name = request.session.get(
             "airxpress_customer_name",

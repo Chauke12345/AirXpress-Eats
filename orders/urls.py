@@ -1,4 +1,4 @@
-﻿from django.urls import path
+from django.urls import path
 from django.contrib.auth import views as auth_views
 
 from . import views
@@ -29,6 +29,8 @@ urlpatterns = [
 
     # =========================================================
     # CUSTOMER
+    path("customer/banking/", views.customer_banking_details, name="customer_banking_details"),
+
     # =========================================================
     path(
         "shop/<slug:shop_slug>/cart/add/<int:menu_item_id>/",

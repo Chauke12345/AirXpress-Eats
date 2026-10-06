@@ -1,4 +1,4 @@
-﻿from django import forms
+from django import forms
 
 from .models import Order
 
@@ -20,7 +20,6 @@ class CustomerOrderForm(forms.ModelForm):
         ]
 
         widgets = {
-
             "customer_name": forms.TextInput(
                 attrs={
                     "class": "form-control",
@@ -34,7 +33,15 @@ class CustomerOrderForm(forms.ModelForm):
                     "placeholder": "WhatsApp or contact number",
                 }
             ),
-"notes": forms.Textarea(
+
+            "delivery_address": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Delivery address",
+                }
+            ),
+
+            "notes": forms.Textarea(
                 attrs={
                     "class": "form-control",
                     "rows": 3,
@@ -45,6 +52,7 @@ class CustomerOrderForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
 
+        user = kwargs.pop("user", None)
         kwargs.pop("shop", None)
 
         super().__init__(
@@ -55,6 +63,49 @@ class CustomerOrderForm(forms.ModelForm):
         self.fields[
             "whatsapp_number"
         ].required = True
+
+        # =====================================================
+        # ENFORCE REGISTERED CUSTOMER IDENTITY
+        # =====================================================
+
+        if (
+            user
+            and user.is_authenticated
+            and hasattr(user, "customer_profile")
+        ):
+
+            registered_name = (
+                user.first_name or ""
+            ).strip()
+
+            registered_whatsapp = (
+                user.customer_profile.whatsapp_number or ""
+            ).strip()
+
+            self.fields[
+                "customer_name"
+            ].initial = registered_name
+
+            self.fields[
+                "whatsapp_number"
+            ].initial = registered_whatsapp
+
+            # Make registered identity read-only in the browser.
+            self.fields[
+                "customer_name"
+            ].widget.attrs["readonly"] = "readonly"
+
+            self.fields[
+                "whatsapp_number"
+            ].widget.attrs["readonly"] = "readonly"
+
+            self.fields[
+                "customer_name"
+            ].widget.attrs["autocomplete"] = "name"
+
+            self.fields[
+                "whatsapp_number"
+            ].widget.attrs["autocomplete"] = "tel"
 
 # =========================================================
 # CUSTOMER REGISTRATION FORM

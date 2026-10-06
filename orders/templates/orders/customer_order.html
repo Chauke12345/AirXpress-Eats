@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -675,7 +675,11 @@ textarea {
                 Name
             </label>
 
-            {{ form.customer_name }}
+            {% if request.user.is_authenticated and request.user.customer_profile %}
+                <input type="text" name="customer_name" value="{{ request.user.first_name|escape }}" class="form-control" readonly>
+            {% else %}
+                {{ form.customer_name }}
+            {% endif %}
 
         </div>
 
@@ -685,7 +689,11 @@ textarea {
                 WhatsApp / Contact Number
             </label>
 
-            {{ form.whatsapp_number }}
+            {% if request.user.is_authenticated and request.user.customer_profile %}
+                <input type="text" name="whatsapp_number" value="{{ request.user.customer_profile.whatsapp_number|escape }}" class="form-control" readonly>
+            {% else %}
+                {{ form.whatsapp_number }}
+            {% endif %}
 
         </div>
 

@@ -200,6 +200,30 @@ class CustomerProfile(models.Model):
         blank=True,
     )
 
+    bank_name = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+
+    account_holder_name = models.CharField(
+        max_length=150,
+        blank=True,
+    )
+
+    account_number = models.CharField(
+        max_length=50,
+        blank=True,
+    )
+
+    account_type = models.CharField(
+        max_length=30,
+        blank=True,
+    )
+
+    branch_code = models.CharField(
+        max_length=20,
+        blank=True,
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
