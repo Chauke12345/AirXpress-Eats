@@ -6,7 +6,7 @@
 
     <meta http-equiv="refresh" content="15">
 
-    <title>{{ shop.name }} | AirXpress Eats Staff Dashboard</title>
+    <title>{{ shop.name }} - Staff Dashboard</title>
 
     <style>
         * {
@@ -1051,25 +1051,7 @@
 
         .whatsapp-btn {
             background: #ffffff !important;
-            color: #111111 !important;
-            border: 2px solid #999999 !important;
-            font-size: 15px !important;
-        }
-
-        .whatsapp-btn:hover {
-            background: #eeeeee !important;
-            color: #000000 !important;
-        }
-
-        /* EMPTY STATE */
-
-        .empty-state {
-            color: #555555 !important;
-        }
-
-        .empty-state h2 {
-            color: #111111 !important;
-        }
+            color
 
         /* =========================================================
            CUSTOMER REVIEWS
@@ -1289,7 +1271,513 @@
                 align-self: flex-start;
             }
         }
+
+/* =========================================================
+   AIRXPRESS CUSTOMER REVIEWS - PREMIUM DESIGN
+   ========================================================= */
+
+.customer-reviews-section {
+    margin: 32px 0 !important;
+    padding: 30px !important;
+    background: linear-gradient(145deg, #ffffff, #f8fafc) !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 22px !important;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08) !important;
+}
+
+.reviews-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 24px !important;
+    margin-bottom: 28px !important;
+    padding-bottom: 22px !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+.reviews-header h2 {
+    margin: 0 0 7px 0 !important;
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.5px !important;
+}
+
+.reviews-header p {
+    margin: 0 !important;
+    color: #64748b !important;
+    font-size: 14px !important;
+}
+
+.reviews-total {
+    min-width: 105px !important;
+    padding: 14px 18px !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 15px !important;
+    text-align: center !important;
+}
+
+.reviews-total span {
+    display: block !important;
+    font-size: 26px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+}
+
+.reviews-total small {
+    display: block !important;
+    margin-top: 5px !important;
+    color: #64748b !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.review-summary-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 18px !important;
+    margin-bottom: 28px !important;
+}
+
+.review-summary-card {
+    position: relative !important;
+    padding: 22px !important;
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 18px !important;
+    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.05) !important;
+    overflow: hidden !important;
+}
+
+.review-summary-card::after {
+    content: "" !important;
+    position: absolute !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 4px !important;
+    background: #f59e0b !important;
+}
+
+.review-summary-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 42px !important;
+    height: 42px !important;
+    margin-bottom: 13px !important;
+    border-radius: 12px !important;
+    background: #fff7ed !important;
+    color: #f59e0b !important;
+    font-size: 0 !important;
+}
+
+.review-summary-icon::before {
+    content: "â˜…" !important;
+    font-size: 22px !important;
+}
+
+.review-summary-label {
+    display: block !important;
+    margin-bottom: 6px !important;
+    color: #64748b !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.review-summary-card strong {
+    display: block !important;
+    font-size: 24px !important;
+    font-weight: 800 !important;
+}
+
+.review-card {
+    padding: 22px !important;
+    margin-bottom: 16px !important;
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 18px !important;
+    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.05) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.review-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.09) !important;
+}
+
+.review-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+    margin-bottom: 15px !important;
+}
+
+.review-customer {
+    font-size: 17px !important;
+    font-weight: 800 !important;
+}
+
+.review-header p {
+    margin: 5px 0 0 !important;
+    color: #64748b !important;
+    font-size: 12px !important;
+}
+
+.review-overall {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 7px 11px !important;
+    background: #fff7ed !important;
+    color: #b45309 !important;
+    border-radius: 10px !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+}
+
+.review-ratings {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    margin: 14px 0 !important;
+}
+
+.review-ratings span {
+    padding: 8px 12px !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    color: #475569 !important;
+    font-size: 12px !important;
+}
+
+.review-ratings strong {
+    color: #0f172a !important;
+    font-weight: 800 !important;
+}
+
+.review-comment {
+    margin-top: 16px !important;
+    padding: 16px 18px !important;
+    background: #f8fafc !important;
+    border-left: 4px solid #f59e0b !important;
+    border-radius: 0 12px 12px 0 !important;
+    color: #334155 !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    font-style: italic !important;
+}
+
+.no-reviews {
+    padding: 45px 25px !important;
+    text-align: center !important;
+    background: #f8fafc !important;
+    border: 1px dashed #cbd5e1 !important;
+    border-radius: 18px !important;
+}
+
+.no-reviews h3 {
+    margin: 0 0 8px !important;
+    font-size: 18px !important;
+}
+
+.no-reviews p {
+    margin: 0 !important;
+    color: #64748b !important;
+}
+
+@media (max-width: 850px) {
+    .review-summary-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .reviews-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    .reviews-total {
+        width: 100% !important;
+    }
+}
+
 </style>
+<style>
+.icon-nav-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.nav-icon {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.dashboard-header-actions .icon-nav-link {
+    text-decoration: none;
+}
+
+.dashboard-header-actions button.icon-nav-link {
+    border: none;
+    cursor: pointer;
+}
+
+.logout-btn.icon-nav-link {
+    display: inline-flex;
+    align-items: center;
+}
+
+/* =========================================================
+   AIRXPRESS CUSTOMER REVIEWS - PREMIUM DESIGN
+   ========================================================= */
+
+.customer-reviews-section {
+    margin: 32px 0 !important;
+    padding: 30px !important;
+    background: linear-gradient(145deg, #ffffff, #f8fafc) !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 22px !important;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08) !important;
+}
+
+.reviews-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 24px !important;
+    margin-bottom: 28px !important;
+    padding-bottom: 22px !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+.reviews-header h2 {
+    margin: 0 0 7px 0 !important;
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.5px !important;
+}
+
+.reviews-header p {
+    margin: 0 !important;
+    color: #64748b !important;
+    font-size: 14px !important;
+}
+
+.reviews-total {
+    min-width: 105px !important;
+    padding: 14px 18px !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 15px !important;
+    text-align: center !important;
+}
+
+.reviews-total span {
+    display: block !important;
+    font-size: 26px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+}
+
+.reviews-total small {
+    display: block !important;
+    margin-top: 5px !important;
+    color: #64748b !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.review-summary-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 18px !important;
+    margin-bottom: 28px !important;
+}
+
+.review-summary-card {
+    position: relative !important;
+    padding: 22px !important;
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 18px !important;
+    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.05) !important;
+    overflow: hidden !important;
+}
+
+.review-summary-card::after {
+    content: "" !important;
+    position: absolute !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 4px !important;
+    background: #f59e0b !important;
+}
+
+.review-summary-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 42px !important;
+    height: 42px !important;
+    margin-bottom: 13px !important;
+    border-radius: 12px !important;
+    background: #fff7ed !important;
+    color: #f59e0b !important;
+    font-size: 0 !important;
+}
+
+.review-summary-icon::before {
+    content: "â˜…" !important;
+    font-size: 22px !important;
+}
+
+.review-summary-label {
+    display: block !important;
+    margin-bottom: 6px !important;
+    color: #64748b !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.review-summary-card strong {
+    display: block !important;
+    font-size: 24px !important;
+    font-weight: 800 !important;
+}
+
+.review-card {
+    padding: 22px !important;
+    margin-bottom: 16px !important;
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 18px !important;
+    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.05) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.review-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.09) !important;
+}
+
+.review-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+    margin-bottom: 15px !important;
+}
+
+.review-customer {
+    font-size: 17px !important;
+    font-weight: 800 !important;
+}
+
+.review-header p {
+    margin: 5px 0 0 !important;
+    color: #64748b !important;
+    font-size: 12px !important;
+}
+
+.review-overall {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 7px 11px !important;
+    background: #fff7ed !important;
+    color: #b45309 !important;
+    border-radius: 10px !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+}
+
+.review-ratings {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    margin: 14px 0 !important;
+}
+
+.review-ratings span {
+    padding: 8px 12px !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    color: #475569 !important;
+    font-size: 12px !important;
+}
+
+.review-ratings strong {
+    color: #0f172a !important;
+    font-weight: 800 !important;
+}
+
+.review-comment {
+    margin-top: 16px !important;
+    padding: 16px 18px !important;
+    background: #f8fafc !important;
+    border-left: 4px solid #f59e0b !important;
+    border-radius: 0 12px 12px 0 !important;
+    color: #334155 !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    font-style: italic !important;
+}
+
+.no-reviews {
+    padding: 45px 25px !important;
+    text-align: center !important;
+    background: #f8fafc !important;
+    border: 1px dashed #cbd5e1 !important;
+    border-radius: 18px !important;
+}
+
+.no-reviews h3 {
+    margin: 0 0 8px !important;
+    font-size: 18px !important;
+}
+
+.no-reviews p {
+    margin: 0 !important;
+    color: #64748b !important;
+}
+
+@media (max-width: 850px) {
+    .review-summary-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .reviews-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    .reviews-total {
+        width: 100% !important;
+    }
+}
+
+</style>
+    <link
+        rel="icon"
+        type="image/png"
+        href="{% static 'orders/images/Airxpress-logo.png' %}"
+    >
 </head>
 
 <body>
@@ -1312,7 +1800,7 @@
                 </h1>
 
                 <p>
-                    {{ shop.name }} Ã¢â‚¬Â¢ Staff Dashboard
+                    {{ shop.name }} - Staff Dashboard
                 </p>
             </div>
 
@@ -1320,15 +1808,43 @@
 
         <div class="dashboard-header-actions">
 
-    <a href="{% url 'staff_dashboard' %}" class="history-link">
+    <button
+    type="button"
+    class="history-link icon-nav-link"
+    id="enable-staff-sound"
+    onclick="enableStaffSound()"
+>
+    <img
+        src="{% static 'orders/icons/business-settings.png' %}"
+        alt="Sound alerts"
+        class="nav-icon"
+    >
+    <span>Enable Sound Alerts</span>
+</button>
+    <a href="{% url 'staff_dashboard' %}" class="history-link icon-nav-link">
+    <img
+        src="{% static 'orders/icons/business-dashboard.png' %}"
+        alt="Dashboard"
+        class="nav-icon"
+    >
         Dashboard
     </a>
 
-    <a href="{% url 'staff_order_history' %}" class="history-link">
+    <a href="{% url 'staff_order_history' %}" class="history-link icon-nav-link">
+    <img
+        src="{% static 'orders/icons/business-new-orders.png' %}"
+        alt="Order History"
+        class="nav-icon"
+    >
         Order History
     </a>
 
-    <a href="{% url 'staff_daily_report' %}" class="history-link">
+    <a href="{% url 'staff_daily_report' %}" class="history-link icon-nav-link">
+    <img
+        src="{% static 'orders/icons/business-reports.png' %}"
+        alt="Daily Report"
+        class="nav-icon"
+    >
         Daily Report
     </a>
 
@@ -1349,7 +1865,8 @@
 
 <main class="dashboard-container">
 
-    <section class="shop-status-summary">
+    <div id="staff-status-summary">
+        <section class="shop-status-summary">
 
         <div class="shop-status-card">
             <span class="shop-status-label">New</span>
@@ -1388,6 +1905,7 @@
         </div>
 
     </section>
+    </div>
 
     <!-- =========================================================
          CUSTOMER REVIEWS
@@ -1412,37 +1930,37 @@
         <div class="review-summary-grid">
 
             <div class="review-summary-card">
-                <span class="review-summary-icon">⭐</span>
+                <span class="review-summary-icon">Rating</span>
                 <span class="review-summary-label">Overall Rating</span>
                 <strong>
                     {% if average_overall_rating %}
                         {{ average_overall_rating|floatformat:1 }}/5
                     {% else %}
-                        —
+                        No rating yet
                     {% endif %}
                 </strong>
             </div>
 
             <div class="review-summary-card">
-                <span class="review-summary-icon">🍽️</span>
+                <span class="review-summary-icon">Rating</span>
                 <span class="review-summary-label">Food Quality</span>
                 <strong>
                     {% if average_food_rating %}
                         {{ average_food_rating|floatformat:1 }}/5
                     {% else %}
-                        —
+                        No rating yet
                     {% endif %}
                 </strong>
             </div>
 
             <div class="review-summary-card">
-                <span class="review-summary-icon">🚗</span>
-                <span class="review-summary-label">Delivery</span>
+                <span class="review-summary-icon">Rating</span>
+                <span class="review-summary-label">Delivery Rating</span>
                 <strong>
                     {% if average_delivery_rating %}
                         {{ average_delivery_rating|floatformat:1 }}/5
                     {% else %}
-                        —
+                        No rating yet
                     {% endif %}
                 </strong>
             </div>
@@ -1464,27 +1982,27 @@
                                     {{ review.customer.first_name|default:review.customer.username }}
                                 </h3>
 
-                                <span class="review-date">
+                                <p>
                                     Order #{{ review.order.id }}
-                                    •
-                                    {{ review.created_at|date:"d M Y, H:i" }}
-                                </span>
+                                    | {{ review.created_at|date:"d M Y, H:i" }}
+                                </p>
                             </div>
 
                             <div class="review-overall">
-                                ⭐ {{ review.overall_rating }}/5
+                                Customer Review
                             </div>
 
                         </div>
 
-                        <div class="review-breakdown">
+                        <div class="review-ratings">
 
                             <span>
-                                🍽️ Food: <strong>{{ review.food_rating }}/5</strong>
+                                Food:
+                                <strong>{{ review.food_rating }}/5</strong>
                             </span>
 
                             <span>
-                                🚗 Delivery:
+                                Delivery:
                                 <strong>{{ review.delivery_rating }}/5</strong>
                             </span>
 
@@ -1498,13 +2016,11 @@
                         </div>
 
                         {% if review.comment %}
+
                             <div class="review-comment">
-                                “{{ review.comment }}”
+                                <p>"{{ review.comment }}"</p>
                             </div>
-                        {% else %}
-                            <div class="review-comment no-comment">
-                                Customer left a rating without a comment.
-                            </div>
+
                         {% endif %}
 
                     </article>
@@ -1515,17 +2031,15 @@
 
         {% else %}
 
-            <div class="reviews-empty">
-                <div class="reviews-empty-icon">⭐</div>
+            <div class="no-reviews">
                 <h3>No Customer Reviews Yet</h3>
-                <p>
-                    Reviews from completed orders will appear here.
-                </p>
+                <p>Customer reviews will appear here once customers submit them.</p>
             </div>
 
         {% endif %}
 
     </section>
+    <div id="staff-orders-container">
     {% for order in orders %}
 
     
@@ -1684,8 +2198,7 @@
                             {{ item.menu_item.name }}
 
                             {% if item.menu_item.pricing_type == "fixed" %}
-                                Ãƒâ€” {{ item.quantity }}
-                            {% endif %}
+                                Fixed Price{% endif %}
 
                         </span>
 
@@ -1726,93 +2239,36 @@
                     {% if order.order_type == "delivery" %}
 
                         <div class="form-group">
-
-                            <label for="driver-{{ order.id }}">
-                                Delivery Driver
-                            </label>
-
-                            <select
-                                name="driver"
-                                id="driver-{{ order.id }}"
-                            >
-
-                                <option value="">
-                                    Not assigned
-                                </option>
-
-                                {% for driver in drivers %}
-
-                                    <option
-                                        value="{{ driver.id }}"
-                                        {% if order.driver_id == driver.id %}
-                                            selected
-                                        {% endif %}
-                                    >
-                                        {{ driver.name }}
-                                    </option>
-
-                                {% empty %}
-
-                                    <option value="" disabled>
-                                        No drivers available
-                                    </option>
-
-                                {% endfor %}
-
-                            </select>
+                        <div class="driver-status-display">
+                            <label>Delivery Driver</label>
+                            <strong>
+                                {% if order.driver %}
+                                    {{ order.driver.name }}
+                                {% else %}
+                                    Awaiting Driver
+                                {% endif %}
+                            </strong>
+                        </div>
 
                         </div>
 
                     {% endif %}
 
                     <div class="form-group">
-
-                        <label for="payment-status-{{ order.id }}">
-                            Payment Status
-                        </label>
-
-                        <select
-                            name="payment_status"
-                            id="payment-status-{{ order.id }}"
-                        >
-
-                            <option
-                                value="pending"
-                                {% if order.payment_status == "pending" %}
-                                    selected
-                                {% endif %}
-                            >
-                                Payment Pending
-                            </option>
-
-                            <option
-                                value="paid"
+                        <div class="payment-status-display">
+                            <label>Payment Status</label>
+                            <strong>
                                 {% if order.payment_status == "paid" %}
-                                    selected
+                                    PAID
+                                {% elif order.payment_status == "failed" %}
+                                    PAYMENT FAILED
+                                {% elif order.payment_status == "refunded" %}
+                                    REFUNDED
+                                {% else %}
+                                    PAYMENT PENDING
                                 {% endif %}
-                            >
-                                Paid
-                            </option>
-
-                            <option
-                                value="failed"
-                                {% if order.payment_status == "failed" %}
-                                    selected
-                                {% endif %}
-                            >
-                                Payment Failed
-                            </option>
-
-                            <option
-                                value="refunded"
-                                {% if order.payment_status == "refunded" %}
-                                    selected
-                                {% endif %}
-                            >
-                                Refunded
-                            </option>
-
-                        </select>
+                            </strong>
+                        </div>
 
                     </div>
 
@@ -1903,6 +2359,22 @@
 
             </form>
 
+            {% if order.order_type == "delivery" and order.status == "ready" and not order.driver %}
+                <form
+                    method="POST"
+                    action="{% url 'staff_notify_drivers' order.id %}"
+                    style="margin-top:12px;"
+                >
+                    {% csrf_token %}
+                    <button
+                        type="submit"
+                        class="update-btn"
+                        style="width:100%;"
+                    >
+                        Notify Nearby Drivers
+                    </button>
+                </form>
+            {% endif %}
             {% if order.status == "preparing" and order.final_total %}
 
                 <a
@@ -1928,37 +2400,6 @@
                 </a>
 
             {% endif %}
-
-                {% if order.order_type == "delivery" and not order.driver_id %}
-
-                    <form
-                        method="POST"
-                        action="{% url 'staff_notify_drivers' order.id %}"
-                        style="margin-top: 12px;"
-                    >
-
-                        {% csrf_token %}
-
-                        <button
-                            type="submit"
-                            style="
-                                width: 100%;
-                                background: #111111;
-                                color: #ffffff;
-                                border: 2px solid #111111;
-                                padding: 14px 18px;
-                                border-radius: 10px;
-                                font-size: 16px;
-                                font-weight: 800;
-                                cursor: pointer;
-                            "
-                        >
-                            Notify Nearby Drivers
-                        </button>
-
-                    </form>
-
-                {% endif %}
             {% if order.status == "on_the_way" %}
 
                 <a
@@ -2007,3 +2448,237 @@
 
 
 
+
+<script id="AIRXPRESS_STAFF_AUTO_REFRESH">
+(function () {
+
+    const REFRESH_INTERVAL = 20000;
+    let refreshTimer = null;
+    let refreshInProgress = false;
+
+    function staffIsEditing() {
+
+        const activeElement = document.activeElement;
+
+        if (!activeElement) {
+            return false;
+        }
+
+        return (
+            activeElement.tagName === "INPUT" ||
+            activeElement.tagName === "SELECT" ||
+            activeElement.tagName === "TEXTAREA"
+        );
+    }
+
+    let knownNewOrderCount = null;
+    let soundEnabled = false;
+
+    function enableStaffSound() {
+
+        soundEnabled = true;
+
+        const audioContext =
+            new (window.AudioContext || window.webkitAudioContext)();
+
+        if (audioContext.state === "suspended") {
+            audioContext.resume();
+        }
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.type = "sine";
+        oscillator.frequency.value = 880;
+
+        gainNode.gain.setValueAtTime(
+            0.001,
+            audioContext.currentTime
+        );
+
+        gainNode.gain.exponentialRampToValueAtTime(
+            0.25,
+            audioContext.currentTime + 0.02
+        );
+
+        gainNode.gain.exponentialRampToValueAtTime(
+            0.001,
+            audioContext.currentTime + 0.35
+        );
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.start();
+        oscillator.stop(
+            audioContext.currentTime + 0.35
+        );
+
+        console.log(
+            "AirXpress staff sound alerts enabled."
+        );
+    }
+
+    function playNewOrderSound() {
+
+        if (!soundEnabled) {
+            return;
+        }
+
+        const audioContext =
+            new (window.AudioContext || window.webkitAudioContext)();
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.type = "sine";
+        oscillator.frequency.value = 880;
+
+        gainNode.gain.setValueAtTime(
+            0.001,
+            audioContext.currentTime
+        );
+
+        gainNode.gain.exponentialRampToValueAtTime(
+            0.30,
+            audioContext.currentTime + 0.02
+        );
+
+        gainNode.gain.exponentialRampToValueAtTime(
+            0.001,
+            audioContext.currentTime + 0.5
+        );
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.start();
+        oscillator.stop(
+            audioContext.currentTime + 0.5
+        );
+    }
+    async function refreshStaffDashboard() {
+
+        if (refreshInProgress) {
+            return;
+        }
+
+        if (staffIsEditing()) {
+            return;
+        }
+
+        refreshInProgress = true;
+
+        try {
+
+            const response = await fetch(
+                "{% url 'staff_dashboard_updates' %}",
+                {
+                    method: "GET",
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                        "Cache-Control": "no-cache"
+                    },
+                    cache: "no-store"
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    "Dashboard refresh failed: " +
+                    response.status
+                );
+            }
+
+            const html = await response.text();
+
+            const parser = new DOMParser();
+
+            const newDocument = parser.parseFromString(
+                html,
+                "text/html"
+            );
+
+            const newOrderCountElement =
+                newDocument.querySelector(
+                    "#staff-status-summary .shop-status-card:nth-child(1) .shop-status-number"
+                );
+
+            const newOrderCount =
+                newOrderCountElement
+                    ? parseInt(
+                        newOrderCountElement.textContent.trim(),
+                        10
+                    )
+                    : 0;
+
+            if (knownNewOrderCount === null) {
+                knownNewOrderCount = newOrderCount;
+            }
+            else if (newOrderCount > knownNewOrderCount) {
+                playNewOrderSound();
+            }
+
+            knownNewOrderCount = newOrderCount;
+            const currentStatusSummary =
+                document.getElementById(
+                    "staff-status-summary"
+                );
+
+            const newStatusSummary =
+                newDocument.getElementById(
+                    "staff-status-summary"
+                );
+
+            const currentOrders =
+                document.getElementById(
+                    "staff-orders-container"
+                );
+
+            const newOrders =
+                newDocument.getElementById(
+                    "staff-orders-container"
+                );
+
+            if (
+                currentStatusSummary &&
+                newStatusSummary
+            ) {
+                currentStatusSummary.replaceWith(
+                    newStatusSummary
+                );
+            }
+
+            if (
+                currentOrders &&
+                newOrders
+            ) {
+                currentOrders.replaceWith(
+                    newOrders
+                );
+            }
+
+        }
+        catch (error) {
+
+            console.error(
+                "AirXpress staff dashboard refresh error:",
+                error
+            );
+
+        }
+        finally {
+
+            refreshInProgress = false;
+
+        }
+
+    }
+
+    refreshTimer = setInterval(
+        refreshStaffDashboard,
+        REFRESH_INTERVAL
+    );
+
+})();
+</script>

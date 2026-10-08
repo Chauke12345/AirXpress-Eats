@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,12 +6,19 @@
 
     <meta charset="UTF-8">
 
+    <link
+        rel="icon"
+        type="image/png"
+        href="{% static 'orders/images/Airxpress-logo.png' %}"
+    >
+
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>EdVance Owner Dashboard</title>
+    <title>AirXpress Eats Owner Dashboard</title>
 
     <style>
 
@@ -45,6 +53,47 @@
             margin: 6px 0 0;
             color: #f1b24a;
         }
+
+        .owner-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        .owner-nav-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 42px;
+            padding: 8px 14px;
+            border-radius: 9px;
+            background: #242424;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .owner-nav-link:hover {
+            background: #333333;
+            transform: translateY(-1px);
+        }
+
+        .owner-nav-icon {
+            width: 22px;
+            height: 22px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .owner-nav-link.active {
+            background: #f1b24a;
+            color: #161616;
+        }
+
 
         .owner-container {
             max-width: 1100px;
@@ -200,12 +249,77 @@
 
         <div>
             <h1>
-                EdVance Owner Dashboard
+                AirXpress Eats Owner Dashboard
             </h1>
 
             <p>
                 Monitor connected businesses, monthly subscriptions
                 and platform activity
+
+        <nav class="owner-nav" aria-label="Owner navigation">
+
+            <a
+                href="{% url 'owner_dashboard' %}"
+                class="owner-nav-link active"
+            >
+                <img
+                    src="{% static 'orders/icons/owner-dashboard.png' %}"
+                    alt="Dashboard"
+                    class="owner-nav-icon"
+                >
+                Dashboard
+            </a>
+
+            <a
+                href="#owner-businesses"
+                class="owner-nav-link"
+            >
+                <img
+                    src="{% static 'orders/icons/owner-businesses.png' %}"
+                    alt="Businesses"
+                    class="owner-nav-icon"
+                >
+                Businesses
+            </a>
+
+            <a
+                href="#owner-drivers"
+                class="owner-nav-link"
+            >
+                <img
+                    src="{% static 'orders/icons/owner-drivers.png' %}"
+                    alt="Drivers"
+                    class="owner-nav-icon"
+                >
+                Drivers
+            </a>
+
+            <a
+                href="#owner-payments"
+                class="owner-nav-link"
+            >
+                <img
+                    src="{% static 'orders/icons/owner-payments.png' %}"
+                    alt="Payments"
+                    class="owner-nav-icon"
+                >
+                Payments
+            </a>
+
+            <a
+                href="{% url 'owner_driver_payouts' %}"
+                class="owner-nav-link"
+            >
+                <img
+                    src="{% static 'orders/icons/owner-reports.png' %}"
+                    alt="Driver Payouts"
+                    class="owner-nav-icon"
+                >
+                Driver Payouts
+            </a>
+
+        </nav>
+
             </p>
         </div>
 
@@ -276,7 +390,7 @@
     ========================================== -->
 
     <h2 class="section-title">
-        EdVance Tech Platform Overview
+        AirXpress Eats Platform Overview
     </h2>
 
     <div style="margin-bottom: 25px;">
@@ -325,33 +439,6 @@
             </div>
         </div>
 
-        <div class="summary-card">
-            <div class="summary-label">
-                Platform Fees Earned
-            </div>
-            <div class="summary-value">
-                R{{ total_platform_fees }}
-            </div>
-        </div>
-
-        <div class="summary-card">
-            <div class="summary-label">
-                Paid to EdVance
-            </div>
-            <div class="summary-value">
-                R{{ paid_platform_fees }}
-            </div>
-        </div>
-
-        <div class="summary-card">
-            <div class="summary-label">
-                Platform Fees Due
-            </div>
-            <div class="summary-value">
-                R{{ outstanding_platform_fees }}
-            </div>
-        </div>
-
     </div>
 
 
@@ -360,6 +447,248 @@
     ========================================== -->
 
     <h2 class="section-title">
+    AirXpress Live Operations
+</h2>
+
+<div class="summary-grid">
+
+    <div class="summary-card">
+        <div class="summary-label">New Orders</div>
+        <div class="summary-value">{{ live_status_counts.new }}</div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Preparing</div>
+        <div class="summary-value">{{ live_status_counts.preparing }}</div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Ready</div>
+        <div class="summary-value">{{ live_status_counts.ready }}</div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Driver Assigned</div>
+        <div class="summary-value">{{ live_status_counts.driver_assigned }}</div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Picked Up</div>
+        <div class="summary-value">{{ live_status_counts.picked_up }}</div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Delivered</div>
+        <div class="summary-value">{{ live_status_counts.delivered }}</div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Completed</div>
+        <div class="summary-value">{{ live_status_counts.collected }}</div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Cancelled</div>
+        <div class="summary-value">{{ live_status_counts.cancelled }}</div>
+    </div>
+
+</div>
+
+<h2 id="owner-drivers" class="section-title">
+    Driver Monitoring
+</h2>
+
+<div class="summary-grid">
+
+    <div class="summary-card">
+        <div class="summary-label">Total Drivers</div>
+        <div class="summary-value">{{ total_drivers }}</div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Verified Drivers</div>
+        <div class="summary-value">{{ verified_drivers }}</div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Awaiting Verification</div>
+        <div class="summary-value">{{ pending_drivers }}</div>
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     AIRXPRESS OWNER DRIVER VERIFICATION
+========================================================= -->
+
+<h2 class="section-title">
+    Driver Verification
+</h2>
+
+<div class="summary-grid">
+
+    {% if driver_verification_list %}
+
+        {% for driver in driver_verification_list %}
+
+        <div class="summary-card" style="text-align:left;">
+
+            <div style="font-size:18px; font-weight:700; margin-bottom:12px;">
+                {{ driver.name }}
+            </div>
+
+            <div style="margin-bottom:6px;">
+                <strong>Shop:</strong>
+                {{ driver.shop.name }}
+            </div>
+
+            <div style="margin-bottom:6px;">
+                <strong>Vehicle:</strong>
+                {{ driver.vehicle_make_model|default:"Not provided" }}
+            </div>
+
+            <div style="margin-bottom:6px;">
+                <strong>Registration:</strong>
+                {{ driver.vehicle_registration|default:"Not provided" }}
+            </div>
+
+            <div style="margin-top:12px;">
+
+                {% if driver.driver_license %}
+
+                    <a
+                        href="{{ driver.driver_license.url }}"
+                        target="_blank"
+                        rel="noopener"
+                        style="
+                            display:block;
+                            text-align:center;
+                            padding:10px;
+                            margin-bottom:10px;
+                            border-radius:8px;
+                            background:#2563eb;
+                            color:#ffffff;
+                            text-decoration:none;
+                            font-weight:600;
+                        "
+                    >
+                        ?? View Driver Licence
+                    </a>
+
+                    <form
+                        method="post"
+                        action="{% url 'owner_verify_driver' driver.id %}"
+                        style="margin-bottom:8px;"
+                    >
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="verify">
+
+                        <button
+                            type="submit"
+                            style="
+                                width:100%;
+                                padding:11px;
+                                border:0;
+                                border-radius:8px;
+                                background:#16a34a;
+                                color:#ffffff;
+                                font-weight:700;
+                                cursor:pointer;
+                            "
+                        >
+                            ? Verify Driver
+                        </button>
+                    </form>
+
+                    <form
+                        method="post"
+                        action="{% url 'owner_verify_driver' driver.id %}"
+                    >
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reject">
+
+                        <button
+                            type="submit"
+                            style="
+                                width:100%;
+                                padding:11px;
+                                border:0;
+                                border-radius:8px;
+                                background:#dc2626;
+                                color:#ffffff;
+                                font-weight:700;
+                                cursor:pointer;
+                            "
+                        >
+                            ? Reject Licence
+                        </button>
+                    </form>
+
+                {% else %}
+
+                    <div style="
+                        padding:10px;
+                        border-radius:8px;
+                        background:#fef2f2;
+                        color:#991b1b;
+                        font-weight:600;
+                    ">
+                        ?? No driver licence uploaded.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="summary-card" style="grid-column:1/-1;">
+            <div class="summary-label">
+                Driver Verification
+            </div>
+
+            <div class="summary-value">
+                No drivers awaiting verification.
+            </div>
+        </div>
+
+    {% endif %}
+
+</div>
+
+<h2 id="owner-payments" class="section-title">
+    Payment Monitoring
+</h2>
+
+<div class="summary-grid">
+
+    <div class="summary-card">
+        <div class="summary-label">Paid</div>
+        <div class="summary-value">{{ payment_counts.paid }}</div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Pending</div>
+        <div class="summary-value">{{ payment_counts.pending }}</div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Failed</div>
+        <div class="summary-value">{{ payment_counts.failed }}</div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Refunded</div>
+        <div class="summary-value">{{ payment_counts.refunded }}</div>
+    </div>
+
+</div>
+<h2 id="owner-businesses" class="section-title">
         Connected Businesses
     </h2>
 
@@ -380,64 +709,6 @@
                 <span>Transaction Value</span>
                 <strong>R{{ summary.transaction_value }}</strong>
             </div>
-
-            <div class="order-row">
-                <span>Platform Fees</span>
-                <strong>R{{ summary.platform_fees }}</strong>
-            </div>
-
-            <div class="order-row">
-                <span>Paid to EdVance</span>
-                <strong class="paid">
-                    R{{ summary.paid_fees }}
-                </strong>
-            </div>
-
-            <div class="order-row">
-                <span>Fees Due</span>
-                <strong class="unpaid">
-                    R{{ summary.outstanding_fees }}
-                </strong>
-            </div>
-
-            {% if summary.outstanding_fees > 0 %}
-
-                <form
-                    method="POST"
-                    action="{% url 'mark_platform_fees_paid' %}"
-                >
-
-                    {% csrf_token %}
-
-                    <input
-                        type="hidden"
-                        name="shop_id"
-                        value="{{ summary.shop.id }}"
-                    >
-
-                    <input
-                        type="hidden"
-                        name="year"
-                        value="{{ selected_year }}"
-                    >
-
-                    <input
-                        type="hidden"
-                        name="month"
-                        value="{{ selected_month }}"
-                    >
-
-                    <button
-                        type="submit"
-                        class="settlement-btn"
-                        onclick="return confirm('Mark {{ summary.shop.name|escapejs }} platform fees as paid?');"
-                    >
-                        Mark {{ summary.shop.name }} Fees Paid
-                    </button>
-
-                </form>
-
-            {% endif %}
 
         </div>
 

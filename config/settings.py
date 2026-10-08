@@ -1,4 +1,4 @@
-"""
+﻿"""
 Django settings for AirXpress Eats.
 """
 
@@ -47,6 +47,27 @@ DEBUG = os.environ.get(
     "DEBUG",
     "True",
 ).lower() == "true"
+
+
+# =========================================================
+# PRODUCTION SECURITY
+# =========================================================
+
+SECURE_SSL_REDIRECT = not DEBUG
+
+SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
+
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+
+SESSION_COOKIE_SECURE = not DEBUG
+
+CSRF_COOKIE_SECURE = not DEBUG
+
+SECURE_PROXY_SSL_HEADER = (
+    "HTTP_X_FORWARDED_PROTO",
+    "https",
+)
+
 
 
 # =========================================================

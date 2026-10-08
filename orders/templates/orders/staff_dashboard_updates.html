@@ -1,0 +1,211 @@
+<div id="staff-status-summary">
+    <section class="shop-status-summary">
+
+        <div class="shop-status-card">
+            <span class="shop-status-label">New</span>
+            <span class="shop-status-number">{{ new_orders }}</span>
+        </div>
+
+        <div class="shop-status-card">
+            <span class="shop-status-label">Preparing</span>
+            <span class="shop-status-number">{{ preparing_orders }}</span>
+        </div>
+
+        <div class="shop-status-card">
+            <span class="shop-status-label">Ready</span>
+            <span class="shop-status-number">{{ ready_orders }}</span>
+        </div>
+
+        <div class="shop-status-card">
+            <span class="shop-status-label">Driver Assigned</span>
+            <span class="shop-status-number">{{ driver_assigned_orders }}</span>
+        </div>
+
+        <div class="shop-status-card">
+            <span class="shop-status-label">Picked Up</span>
+            <span class="shop-status-number">{{ picked_up_orders }}</span>
+        </div>
+
+        <div class="shop-status-card">
+            <span class="shop-status-label">On The Way</span>
+            <span class="shop-status-number">{{ on_the_way_orders }}</span>
+        </div>
+
+    </section>
+</div>
+
+
+<div id="staff-orders-container">
+
+    {% for order in orders %}
+
+    <section class="order-card">
+
+        <div class="order-header">
+            <div>
+                <h2>Order #{{ order.id }}</h2>
+                <p>{{ order.created_at|date:"d M Y H:i" }}</p>
+            </div>
+
+            <div class="order-status">
+                {{ order.get_status_display }}
+            </div>
+        </div>
+
+        <div class="order-customer">
+            <strong>{{ order.customer_name }}</strong>
+
+            {% if order.whatsapp_number %}
+                <a
+                    href="https://wa.me/{{ order.whatsapp_number }}"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    WhatsApp
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="order-delivery">
+            <strong>Delivery Address</strong>
+            <p>{{ order.delivery_address }}</p>
+        </div>
+
+        <div class="order-items">
+
+            {% for item in order.items.all %}
+
+            <div class="order-item">
+                <span>
+                    {{ item.quantity }} x {{ item.menu_item.name }}
+                </span>
+
+                <span>
+                    R{{ item.final_amount|default:item.unit_price }}
+                </span>
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        <div class="order-total">
+            Estimated Total:
+            <strong>R{{ order.final_total }}</strong>
+        </div>
+
+        <form
+            method="POST"
+            action="{% url 'staff_update_order' order.id %}"
+            class="update-form"
+        >
+            {% csrf_token %}
+
+            <label>Driver</label>
+
+            <select
+                name="driver"
+                id="driver-{{ order.id }}"
+            >
+                <option value="">No Driver</option>
+
+                {% for driver in drivers %}
+
+                <option
+                    value="{{ driver.id }}"
+                    {% if order.driver_id == driver.id %}selected{% endif %}
+                >
+                    {{ driver.name }}
+                </option>
+
+                {% endfor %}
+            </select>
+
+
+            <label>Payment Status</label>
+
+            <select
+                name="payment_status"
+                id="payment-status-{{ order.id }}"
+            >
+                <option
+                    value="pending"
+                    {% if order.payment_status == "pending" %}selected{% endif %}
+                >
+                    Pending
+                </option>
+
+                <option
+                    value="paid"
+                    {% if order.payment_status == "paid" %}selected{% endif %}
+                >
+                    Paid
+                </option>
+
+                <option
+                    value="failed"
+                    {% if order.payment_status == "failed" %}selected{% endif %}
+                >
+                    Failed
+                </option>
+            </select>
+
+
+            <label>Status</label>
+
+            <select
+                name="status"
+                id="status-{{ order.id }}"
+            >
+                {% for value,label in order.STATUS_CHOICES %}
+
+                <option
+                    value="{{ value }}"
+                    {% if order.status == value %}selected{% endif %}
+                >
+                    {{ label }}
+                </option>
+
+                {% endfor %}
+            </select>
+
+
+            <button
+                type="submit"
+                class="update-btn"
+            >
+                Update Order
+            </button>
+
+        </form>
+
+
+        <form
+            method="POST"
+            action="{% url 'staff_notify_drivers' order.id %}"
+        >
+            {% csrf_token %}
+
+            <button type="submit">
+                Notify Nearby Drivers
+            </button>
+
+        </form>
+
+    </section>
+
+    {% empty %}
+
+    <section class="order-card empty-state">
+
+        <h2>No Active Orders</h2>
+
+        <p>
+            New AirXpress Eats orders will appear here.
+        </p>
+
+    </section>
+
+    {% endfor %}
+
+</div>

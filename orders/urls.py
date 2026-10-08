@@ -215,10 +215,21 @@ urlpatterns = [
         views.driver_dashboard,
         name="driver_dashboard",
     ),
+
+    path(
+        "driver/banking/update/",
+        views.driver_update_banking,
+        name="driver_update_banking",
+    ),
     path(
         "driver/profile/update/",
         views.driver_update_profile,
         name="driver_update_profile",
+    ),
+    path(
+        "driver/profile/license-upload/",
+        views.driver_upload_license,
+        name="driver_upload_license",
     ),
 
 
@@ -282,7 +293,11 @@ path(
 ),
 
 path(
-    "staff/order/<int:order_id>/update/",
+    "staff/dashboard/updates/",
+    views.staff_dashboard_updates,
+    name="staff_dashboard_updates",
+),
+path("staff/order/<int:order_id>/update/",
     views.staff_update_order,
     name="staff_update_order",
 ),
@@ -332,6 +347,12 @@ path(
         "owner/dashboard/",
         views.owner_dashboard,
         name="owner_dashboard",
+    ),
+
+    path(
+        "owner/driver/<int:driver_id>/verify/",
+        views.owner_verify_driver,
+        name="owner_verify_driver",
     ),
 
     path(

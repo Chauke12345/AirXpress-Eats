@@ -17,7 +17,7 @@ class Shop(models.Model):
 
     # Unique tenant identifier used in URLs.
     # Example:
-    # /shop/example-shisanyama/
+    # Example shop URL pattern
     slug = models.SlugField(
         max_length=160,
         unique=True,
@@ -155,6 +155,25 @@ class Driver(models.Model):
         null=True,
     )
 
+    driver_license = models.FileField(
+        upload_to="driver_licenses/",
+        blank=True,
+        null=True,
+    )
+
+    license_verification_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", "Pending Verification"),
+            ("verified", "Verified"),
+            ("rejected", "Rejected"),
+        ],
+        default="pending",
+    )
+
+    airxpress_verified = models.BooleanField(
+        default=False,
+    )
     vehicle_make_model = models.CharField(
         max_length=100,
         blank=True,
@@ -168,6 +187,45 @@ class Driver(models.Model):
     vehicle_registration = models.CharField(
         max_length=20,
         blank=True,
+    )
+
+    bank_name = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+
+    account_holder_name = models.CharField(
+        max_length=150,
+        blank=True,
+    )
+
+    account_number = models.CharField(
+        max_length=50,
+        blank=True,
+    )
+
+    account_type = models.CharField(
+        max_length=50,
+        blank=True,
+    )
+
+    physical_address = models.TextField(
+        blank=True,
+        default="",
+        help_text="Driver physical address obtained from banking information.",
+    )
+    branch_code = models.CharField(
+        max_length=20,
+        blank=True,
+    )
+
+    banking_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", "Pending Verification"),
+            ("verified", "Verified"),
+        ],
+        default="pending",
     )
 
 
@@ -220,6 +278,11 @@ class CustomerProfile(models.Model):
         blank=True,
     )
 
+    physical_address = models.TextField(
+        blank=True,
+        default="",
+        help_text="Driver physical address obtained from banking information.",
+    )
     branch_code = models.CharField(
         max_length=20,
         blank=True,
@@ -557,7 +620,7 @@ class Order(models.Model):
     )
 
     # Whether the tenant has settled the
-    # AirXpress service charge with EdVance Tech.
+    # AirXpress service charge.
     platform_fee_paid = models.BooleanField(
         default=False
     )

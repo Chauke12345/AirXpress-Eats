@@ -1,3 +1,4 @@
+import math
 from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
@@ -12,7 +13,10 @@ from django.contrib.auth import (
 from django.contrib.auth.decorators import (
     login_required,
     user_passes_test,
+
 )
+
+from django.views.decorators.csrf import csrf_exempt
 
 from django.http import JsonResponse
 from django.shortcuts import (
@@ -1673,30 +1677,128 @@ def track_order_status(request, tracking_token):
         }
     )
 
+def calculate_distance_km(
+    latitude1,
+    longitude1,
+    latitude2,
+    longitude2,
+):
+    """
+    Calculate the straight-line GPS distance between
+    two coordinates and return the result in kilometres.
+    """
+
+    earth_radius_km = 6371.0
+
+    lat1 = math.radians(float(latitude1))
+    lon1 = math.radians(float(longitude1))
+    lat2 = math.radians(float(latitude2))
+    lon2 = math.radians(float(longitude2))
+
+    delta_lat = lat2 - lat1
+    delta_lon = lon2 - lon1
+
+    a = (
+        math.sin(delta_lat / 2) ** 2
+        + math.cos(lat1)
+        * math.cos(lat2)
+        * math.sin(delta_lon / 2) ** 2
+    )
+
+    c = 2 * math.atan2(
+        math.sqrt(a),
+        math.sqrt(1 - a),
+    )
+
+    return earth_radius_km * c
+
+@user_passes_test(
+    lambda user: (
+        user.is_authenticated
+        and hasattr(user, "driver_profile")
+    ),
+    login_url="/driver/login/",
+)
 def update_driver_location(request, order_id):
+
     if request.method != "POST":
         return JsonResponse(
-            {"success": False, "error": "POST request required."},
+            {
+                "success": False,
+                "error": "POST request required.",
+            },
             status=405,
         )
 
+    driver = request.user.driver_profile
+
     order = get_object_or_404(
-        Order.objects.select_related("driver"),
+        Order.objects.select_related(
+            "driver",
+            "shop",
+        ),
         id=order_id,
     )
 
-    if not order.driver:
+    # Only the driver assigned to this order may
+    # send GPS coordinates for this order.
+    if not order.driver or order.driver_id != driver.id:
         return JsonResponse(
-            {"success": False, "error": "No driver assigned."},
+            {
+                "success": False,
+                "error": "You are not assigned to this order.",
+            },
+            status=403,
+        )
+
+    # GPS is active while travelling to pickup
+    # and while completing the delivery.
+    if order.status not in (
+        "driver_assigned",
+        "picked_up",
+    ):
+        return JsonResponse(
+            {
+                "success": False,
+                "error": "GPS tracking is not active for this order.",
+            },
             status=400,
         )
 
     try:
-        latitude = float(request.POST.get("latitude"))
-        longitude = float(request.POST.get("longitude"))
+        latitude = float(
+            request.POST.get("latitude")
+        )
+
+        longitude = float(
+            request.POST.get("longitude")
+        )
+
     except (TypeError, ValueError):
+
         return JsonResponse(
-            {"success": False, "error": "Invalid location."},
+            {
+                "success": False,
+                "error": "Invalid GPS coordinates.",
+            },
+            status=400,
+        )
+
+    if not -90 <= latitude <= 90:
+        return JsonResponse(
+            {
+                "success": False,
+                "error": "Invalid latitude.",
+            },
+            status=400,
+        )
+
+    if not -180 <= longitude <= 180:
+        return JsonResponse(
+            {
+                "success": False,
+                "error": "Invalid longitude.",
+            },
             status=400,
         )
 
@@ -1713,13 +1815,49 @@ def update_driver_location(request, order_id):
         ]
     )
 
-    return JsonResponse(
-        {
-            "success": True,
-            "latitude": latitude,
-            "longitude": longitude,
-        }
-    )
+    response = {
+        "success": True,
+        "latitude": latitude,
+        "longitude": longitude,
+    }
+
+    # While travelling to the shop, calculate the
+    # driver's current distance from the pickup point.
+    if (
+        order.status == "driver_assigned"
+        and order.shop
+        and order.shop.latitude is not None
+        and order.shop.longitude is not None
+    ):
+
+        distance_km = calculate_distance_km(
+            latitude,
+            longitude,
+            order.shop.latitude,
+            order.shop.longitude,
+        )
+
+        distance_metres = round(
+            distance_km * 1000,
+            1,
+        )
+
+        response["pickup_distance_km"] = round(
+            distance_km,
+            3,
+        )
+
+        response["pickup_distance_metres"] = (
+            distance_metres
+        )
+
+        response["pickup_radius_metres"] = 250
+
+        response["at_pickup"] = (
+            distance_metres <= 250
+        )
+
+    return JsonResponse(response)
 
 def customer_invoice(request, shop_slug, order_id):
     shop = get_object_or_404(
@@ -2257,6 +2395,141 @@ def owner_login(request):
     ),
     login_url="/driver/login/",
 )
+
+@login_required(login_url="/driver/login/")
+@user_passes_test(
+    lambda user: (
+        user.is_authenticated
+        and hasattr(user, "driver_profile")
+    ),
+    login_url="/driver/login/",
+)
+def driver_update_banking(request):
+
+    driver = request.user.driver_profile
+
+    if request.method != "POST":
+        return redirect("driver_dashboard")
+
+    driver.bank_name = request.POST.get(
+        "bank_name",
+        "",
+    ).strip()
+
+    driver.account_holder_name = request.POST.get(
+        "account_holder_name",
+        "",
+    ).strip()
+
+    driver.account_type = request.POST.get(
+        "account_type",
+        "",
+    ).strip()
+
+    driver.branch_code = request.POST.get(
+        "branch_code",
+        "",
+    ).strip()
+
+    
+
+    driver.physical_address = request.POST.get(
+        "physical_address",
+        "",
+    ).strip()
+# Existing account numbers are protected.
+    # Only replace the number when the driver explicitly
+    # selects "Change Account Number".
+    change_account_number = (
+        request.POST.get(
+            "change_account_number",
+            "",
+        )
+        == "1"
+    )
+
+    submitted_account_number = request.POST.get(
+        "account_number",
+        "",
+    ).strip()
+
+    if change_account_number:
+
+        if not submitted_account_number:
+            messages.error(
+                request,
+                "Please enter the new account number.",
+            )
+            return redirect("driver_dashboard")
+
+        driver.account_number = submitted_account_number
+
+    elif not driver.account_number:
+
+        if not submitted_account_number:
+            messages.error(
+                request,
+                "Please enter your account number.",
+            )
+            return redirect("driver_dashboard")
+
+        driver.account_number = submitted_account_number
+
+    # Any banking change requires verification again.
+    driver.banking_status = "pending"
+
+    driver.save()
+
+    messages.success(
+        request,
+        "Your banking details have been saved and are pending verification.",
+    )
+
+    return redirect("driver_dashboard")
+
+def driver_upload_license(request):
+    if request.method != "POST":
+        return redirect("driver_dashboard")
+
+    driver = request.user.driver_profile
+
+    print("=================================================")
+    print("AIRXPRESS LICENSE UPLOAD DEBUG")
+    print("REQUEST METHOD:", request.method)
+    print("FILES:", list(request.FILES.keys()))
+    print("LICENSE FILE:", request.FILES.get("driver_license"))
+    print("POST:", dict(request.POST))
+    print("=================================================")
+
+    license_file = request.FILES.get("driver_license")
+
+    if not license_file:
+        messages.error(
+            request,
+            "Please select a driver licence file before uploading.",
+        )
+        return redirect("driver_dashboard")
+
+    driver.driver_license = license_file
+    driver.license_verification_status = "pending"
+    driver.airxpress_verified = False
+
+    driver.save(
+        update_fields=[
+            "driver_license",
+            "license_verification_status",
+            "airxpress_verified",
+        ]
+    )
+
+    messages.success(
+        request,
+        "Driver licence uploaded successfully. Your licence is now pending AirXpress verification.",
+    )
+
+    return redirect("driver_dashboard")
+
+
 def driver_update_profile(request):
     if request.method != "POST":
         return redirect("driver_dashboard")
@@ -2277,6 +2550,10 @@ def driver_update_profile(request):
         ""
     ).strip()
 
+    if request.FILES.get("driver_license"):
+        driver.driver_license = request.FILES["driver_license"]
+        driver.license_verification_status = "pending"
+        driver.airxpress_verified = False
     if request.FILES.get("photo"):
         driver.photo = request.FILES["photo"]
 
@@ -2464,6 +2741,17 @@ def driver_accept_request(
         return redirect("driver_dashboard")
 
     driver = request.user.driver_profile
+
+    if (
+        not driver.airxpress_verified
+        or driver.license_verification_status != "verified"
+    ):
+        messages.warning(
+            request,
+            "Your AirXpress driver profile is not yet verified. Please upload your driver licence and wait for AirXpress verification.",
+        )
+        return redirect("driver_dashboard")
+
 
     with transaction.atomic():
 
@@ -2655,7 +2943,10 @@ def driver_pickup_order(request, order_id):
     with transaction.atomic():
 
         order = get_object_or_404(
-            Order.objects.select_for_update(),
+            Order.objects.select_for_update().select_related(
+                "driver",
+                "shop",
+            ),
             id=order_id,
             driver=driver,
         )
@@ -2663,7 +2954,91 @@ def driver_pickup_order(request, order_id):
         if order.status != "driver_assigned":
             messages.warning(
                 request,
-                f"Order #{order.id} is not ready to be picked up."
+                (
+                    f"Order #{order.id} is not ready "
+                    "to be picked up."
+                )
+            )
+            return redirect("driver_dashboard")
+
+        if (
+            order.shop is None
+            or order.shop.latitude is None
+            or order.shop.longitude is None
+        ):
+            messages.error(
+                request,
+                (
+                    "Pickup cannot be completed because "
+                    "the shop does not have GPS coordinates."
+                )
+            )
+            return redirect("driver_dashboard")
+
+        if (
+            order.driver_latitude is None
+            or order.driver_longitude is None
+        ):
+            messages.error(
+                request,
+                (
+                    "AirXpress GPS location has not been "
+                    "received yet. Please enable GPS and "
+                    "wait for your location to update."
+                )
+            )
+            return redirect("driver_dashboard")
+
+        if order.driver_location_updated_at is None:
+            messages.error(
+                request,
+                (
+                    "AirXpress has not received a current "
+                    "GPS location. Please wait for GPS "
+                    "to update."
+                )
+            )
+            return redirect("driver_dashboard")
+
+        gps_age_seconds = (
+            timezone.now()
+            - order.driver_location_updated_at
+        ).total_seconds()
+
+        if gps_age_seconds > 120:
+            messages.error(
+                request,
+                (
+                    "Your AirXpress GPS location is too old. "
+                    "Please wait for your live location to "
+                    "update before picking up the order."
+                )
+            )
+            return redirect("driver_dashboard")
+
+        pickup_distance_km = calculate_distance_km(
+            order.driver_latitude,
+            order.driver_longitude,
+            order.shop.latitude,
+            order.shop.longitude,
+        )
+
+        pickup_distance_metres = (
+            pickup_distance_km * 1000
+        )
+
+        PICKUP_RADIUS_METRES = 250
+
+        if pickup_distance_metres > PICKUP_RADIUS_METRES:
+            messages.warning(
+                request,
+                (
+                    f"You are still "
+                    f"{pickup_distance_metres:.0f} metres "
+                    "from the pickup shop. You must be "
+                    "within 250 metres of the shop before "
+                    "you can pick up this order."
+                )
             )
             return redirect("driver_dashboard")
 
@@ -2681,29 +3056,24 @@ def driver_pickup_order(request, order_id):
             status="picked_up",
             notes=(
                 f"Driver {driver.name} picked up "
-                f"Order #{order.id}."
+                f"Order #{order.id} at the shop. "
+                f"AirXpress GPS distance was "
+                f"{pickup_distance_metres:.0f} metres."
             ),
         )
 
     messages.success(
         request,
-        f"Order #{order.id} has been marked as picked up."
+        (
+            f"Order #{order.id} has been picked up. "
+            "AirXpress live GPS tracking is now active "
+            "for the delivery."
+        )
     )
 
     return redirect("driver_dashboard")
 
 
-# =========================================================
-# DRIVER DELIVER ORDER
-# =========================================================
-
-@user_passes_test(
-    lambda user: (
-        user.is_authenticated
-        and hasattr(user, "driver_profile")
-    ),
-    login_url="/driver/login/",
-)
 def driver_deliver_order(request, order_id):
 
     if request.method != "POST":
@@ -2890,11 +3260,24 @@ def staff_dashboard(request):
             is_available=True,
         )
         .order_by(
-            "name"
+            "name",
         )
     )
 
     # =========================================================
+    # DRIVER VERIFICATION
+    # All drivers belonging to this shop, regardless of availability.
+    # =========================================================
+
+    driver_verification_list = (
+        Driver.objects
+        .filter(
+            shop=shop,
+        )
+        .order_by(
+            "name",
+        )
+    )
     # SHOP DASHBOARD STATUS COUNTS
     # =========================================================
 
@@ -2954,6 +3337,7 @@ def staff_dashboard(request):
         "shop": shop,
         "orders": orders,
         "drivers": drivers,
+          "driver_verification_list": driver_verification_list,
 
         "new_orders": new_orders,
         "preparing_orders": preparing_orders,
@@ -2996,11 +3380,7 @@ def dispatch_order_to_available_drivers(order):
         return 0
 
     available_drivers = (
-        Driver.objects
-        .filter(
-            shop=order.shop,
-            is_available=True,
-        )
+        Driver.objects.filter(is_available=True)
         .order_by(
             "name"
         )
@@ -3035,6 +3415,12 @@ def dispatch_order_to_available_drivers(order):
 
 
 # =========================================================
+@user_passes_test(
+    is_tenant_staff,
+    login_url="/staff/login/"
+)
+
+
 # STAFF NOTIFY NEARBY DRIVERS
 
 @user_passes_test(
@@ -3249,65 +3635,28 @@ def staff_update_order(
         # PAYMENT STATUS
         # =============================================
 
-        payment_status = request.POST.get(
-            "payment_status"
-        )
-
-        print("STAFF PAYMENT POST:", repr(payment_status))
-        print("STAFF POST DATA:", request.POST)
-
-        valid_payment_statuses = {
-            "pending",
-            "paid",
-            "failed",
-            "refunded",
-        }
-
-        if payment_status not in valid_payment_statuses:
-            messages.error(
-                request,
-                "Invalid payment status."
-            )
-            return redirect("staff_dashboard")
-
-        order.payment_status = payment_status
-
-  
-        driver_id = request.POST.get(
-            "driver"
-        )
-
-        if driver_id:
-
-            order.driver = get_object_or_404(
-                Driver,
-                id=driver_id,
-                shop=order.shop,
-            )
-
-        else:
-
-            order.driver = None
-
-
-        # =============================================        # =============================================
-        # DRIVER ASSIGNMENT STATUS
+        # =============================================
+        # PAYMENT STATUS - SYSTEM CONTROLLED
+        # =============================================
+        # Staff cannot manually change payment status.
+        # PayFast / legitimate payment flows control this.
         # =============================================
 
-        if order.driver_id:
+        payment_status = order.payment_status
 
-            if order.status in [
-                "new",
-                "preparing",
-                "ready",
-            ]:
-                order.status = "driver_assigned"
+        # =============================================
+        # DRIVER ASSIGNMENT - SYSTEM CONTROLLED
+        # =============================================
+        # Staff cannot manually assign a driver.
+        # Driver assignment happens when a driver accepts
+        # an automatically created delivery request.
+        # =============================================
 
-        elif order.status in [
+        if order.status in [
             "driver_assigned",
             "picked_up",
             "on_the_way",
-        ]:
+        ] and not order.driver_id:
 
             messages.error(
                 request,
@@ -3315,7 +3664,6 @@ def staff_update_order(
             )
 
             return redirect("staff_dashboard")
-
         # SAVE ORDER
         # =============================================
 
@@ -3755,7 +4103,7 @@ def staff_daily_report(request):
 
 
 # =========================================================
-# EDVANCE OWNER DASHBOARD
+# AIRXPRESS EATS OWNER DASHBOARD
 # =========================================================
 
 @user_passes_test(
@@ -3871,8 +4219,11 @@ def mark_driver_payout_paid(
 
     return redirect("owner_driver_payouts")
 
+@user_passes_test(
+    is_owner,
+    login_url="/owner/login/"
+)
 def owner_dashboard(request):
-
     MONTHLY_PLATFORM_FEE = Decimal("500.00")
 
     shops = Shop.objects.filter(
@@ -3882,9 +4233,31 @@ def owner_dashboard(request):
     selected_year = request.GET.get("year")
     selected_month = request.GET.get("month")
 
-    all_collected_orders = Order.objects.filter(
-        shop__is_active=True,
-        status="collected",
+    # =========================================================
+    # LIVE PLATFORM OPERATIONS
+    # =========================================================
+
+    active_orders = Order.objects.filter(
+        shop__is_active=True
+    )
+
+    live_status_counts = {
+        "new": active_orders.filter(status="new").count(),
+        "preparing": active_orders.filter(status="preparing").count(),
+        "ready": active_orders.filter(status="ready").count(),
+        "driver_assigned": active_orders.filter(status="driver_assigned").count(),
+        "picked_up": active_orders.filter(status="picked_up").count(),
+        "delivered": active_orders.filter(status="delivered").count(),
+        "collected": active_orders.filter(status="collected").count(),
+        "cancelled": active_orders.filter(status="cancelled").count(),
+    }
+
+    # =========================================================
+    # MONTH SELECTION
+    # =========================================================
+
+    all_collected_orders = active_orders.filter(
+        status="collected"
     )
 
     latest_order = (
@@ -3915,13 +4288,17 @@ def owner_dashboard(request):
         selected_year = now.year
         selected_month = now.month
 
+    # =========================================================
+    # SELECTED-MONTH FINANCIAL REPORT
+    # =========================================================
+
     monthly_orders = (
         all_collected_orders
         .filter(
             updated_at__year=selected_year,
             updated_at__month=selected_month,
         )
-        .select_related("shop")
+        .select_related("shop", "driver")
         .order_by("-updated_at")
     )
 
@@ -3932,14 +4309,96 @@ def owner_dashboard(request):
             order.final_total
             if order.final_total is not None
             else order.estimated_total
-            for order in monthly_orders
-        ),
-        Decimal("0.00")
+        )
+        for order in monthly_orders
+    ) or Decimal("0.00")
+
+    total_delivery_fees = sum(
+        (
+            order.delivery_fee
+            if order.delivery_fee is not None
+            else Decimal("0.00")
+        )
+        for order in monthly_orders
+    ) or Decimal("0.00")
+
+    total_transaction_platform_fees = sum(
+        (
+            order.platform_fee
+            if order.platform_fee is not None
+            else Decimal("0.00")
+        )
+        for order in monthly_orders
+    ) or Decimal("0.00")
+
+    total_driver_payouts = sum(
+        (
+            order.driver_payout
+            if order.driver_payout is not None
+            else Decimal("0.00")
+        )
+        for order in monthly_orders
+    ) or Decimal("0.00")
+
+    net_platform_earnings = (
+        total_transaction_platform_fees
+        - total_driver_payouts
     )
+
+    # =========================================================
+    # PAYMENT MONITORING
+    # =========================================================
+
+    payment_counts = {
+        "paid": active_orders.filter(payment_status="paid").count(),
+        "pending": active_orders.filter(payment_status="pending").count(),
+        "failed": active_orders.filter(payment_status="failed").count(),
+        "refunded": active_orders.filter(payment_status="refunded").count(),
+    }
+
+    # =========================================================
+    # DRIVER MONITORING
+    # =========================================================
+
+    all_drivers = Driver.objects.filter(
+        shop__is_active=True
+    )
+
+    total_drivers = all_drivers.count()
+
+    verified_drivers = all_drivers.filter(
+        airxpress_verified=True
+    ).count()
+
+    pending_drivers = all_drivers.filter(
+        license_verification_status="pending"
+    ).count()
+
+    # =========================================================
+    # OWNER DRIVER VERIFICATION QUEUE
+    # Only drivers awaiting AirXpress verification.
+    # =========================================================
+
+    driver_verification_list = (
+        all_drivers
+        .filter(
+            license_verification_status="pending"
+        )
+        .select_related(
+            "shop"
+        )
+        .order_by(
+            "name"
+        )
+    )
+
+    # =========================================================
+    # SHOP SUBSCRIPTIONS
+    # =========================================================
 
     shop_summaries = []
 
-    total_platform_fees = Decimal("0.00")
+    total_subscription_fees = Decimal("0.00")
     paid_platform_fees = Decimal("0.00")
 
     for shop in shops:
@@ -3955,12 +4414,19 @@ def owner_dashboard(request):
                 order.final_total
                 if order.final_total is not None
                 else order.estimated_total
-                for order in shop_orders
-            ),
-            Decimal("0.00")
-        )
+            )
+            for order in shop_orders
+        ) or Decimal("0.00")
 
-        # Fixed monthly SaaS subscription.
+        shop_transaction_platform_fees = sum(
+            (
+                order.platform_fee
+                if order.platform_fee is not None
+                else Decimal("0.00")
+            )
+            for order in shop_orders
+        ) or Decimal("0.00")
+
         subscription, created = ShopSubscriptionPayment.objects.get_or_create(
             shop=shop,
             year=selected_year,
@@ -3970,7 +4436,7 @@ def owner_dashboard(request):
             },
         )
 
-        shop_platform_fees = subscription.amount
+        shop_subscription_fee = subscription.amount
 
         shop_paid_fees = (
             subscription.amount
@@ -3984,44 +4450,72 @@ def owner_dashboard(request):
             else subscription.amount
         )
 
-        total_platform_fees += shop_platform_fees
+        total_subscription_fees += shop_subscription_fee
         paid_platform_fees += shop_paid_fees
 
         shop_summaries.append({
             "shop": shop,
             "total_orders": len(shop_orders),
             "transaction_value": shop_transaction_value,
-            "platform_fees": shop_platform_fees,
+            "transaction_platform_fees": shop_transaction_platform_fees,
+            "platform_fees": shop_subscription_fee,
             "paid_fees": shop_paid_fees,
             "outstanding_fees": shop_outstanding_fees,
-            "subscription": subscription,
         })
 
     outstanding_platform_fees = (
-        total_platform_fees - paid_platform_fees
+        total_subscription_fees - paid_platform_fees
     )
-
-    available_months = (
-        all_collected_orders
-        .dates("updated_at", "month", order="DESC")
-    )
-
 
     # =========================================================
+    # MONTH OPTIONS
+    # =========================================================
+
+    available_months = (
+        Order.objects
+        .filter(
+            shop__is_active=True,
+            status="collected",
+        )
+        .dates(
+            "updated_at",
+            "month",
+            order="DESC",
+        )
+    )
+
     context = {
-        "shops": shops,
-        "shop_summaries": shop_summaries,
-        "orders": monthly_orders,
         "connected_shops": shops.count(),
+
+        # Live operations
+        "live_status_counts": live_status_counts,
+
+        # Selected-month financials
         "total_orders": total_orders,
         "total_transaction_value": total_transaction_value,
-        "total_platform_fees": total_platform_fees,
+        "total_delivery_fees": total_delivery_fees,
+        "total_transaction_platform_fees": total_transaction_platform_fees,
+        "total_driver_payouts": total_driver_payouts,
+        "net_platform_earnings": net_platform_earnings,
+
+        # Payment monitoring
+        "payment_counts": payment_counts,
+
+        # Driver monitoring
+        "total_drivers": total_drivers,
+        "verified_drivers": verified_drivers,
+        "pending_drivers": pending_drivers,
+        "driver_verification_list": driver_verification_list,
+
+        # Shop subscriptions
+        "total_platform_fees": total_subscription_fees,
         "paid_platform_fees": paid_platform_fees,
         "outstanding_platform_fees": outstanding_platform_fees,
+
+        "shop_summaries": shop_summaries,
         "available_months": available_months,
         "selected_year": selected_year,
         "selected_month": selected_month,
-        "monthly_platform_fee": MONTHLY_PLATFORM_FEE,
     }
 
     return render(
@@ -4030,11 +4524,86 @@ def owner_dashboard(request):
         context
     )
 
+@user_passes_test(
+    is_owner,
+    login_url="/owner/login/"
+)
+
+
+# =========================================================
+# OWNER / AIRXPRESS DRIVER VERIFICATION
+# =========================================================
 
 @user_passes_test(
     is_owner,
     login_url="/owner/login/"
 )
+def owner_verify_driver(request, driver_id):
+
+    if request.method != "POST":
+        return redirect("owner_dashboard")
+
+    driver = get_object_or_404(
+        Driver,
+        id=driver_id,
+        shop__is_active=True,
+    )
+
+    action = request.POST.get(
+        "action",
+        ""
+    ).strip().lower()
+
+    if action == "verify":
+
+        if not driver.driver_license:
+            messages.error(
+                request,
+                "This driver cannot be verified because no driver licence has been uploaded.",
+            )
+            return redirect("owner_dashboard")
+
+        driver.license_verification_status = "verified"
+        driver.airxpress_verified = True
+
+        driver.save(
+            update_fields=[
+                "license_verification_status",
+                "airxpress_verified",
+            ]
+        )
+
+        messages.success(
+            request,
+            f"{driver.name} has been verified as an AirXpress driver.",
+        )
+
+    elif action == "reject":
+
+        driver.license_verification_status = "rejected"
+        driver.airxpress_verified = False
+
+        driver.save(
+            update_fields=[
+                "license_verification_status",
+                "airxpress_verified",
+            ]
+        )
+
+        messages.warning(
+            request,
+            f"{driver.name}'s driver licence has been rejected.",
+        )
+
+    else:
+
+        messages.error(
+            request,
+            "Invalid driver verification action.",
+        )
+
+    return redirect("owner_dashboard")
+
 def mark_platform_fees_paid(request):
     if request.method != "POST":
         return redirect("owner_dashboard")
@@ -4137,6 +4706,7 @@ def mark_platform_fees_paid(request):
 # PAYFAST PAYMENT
 # =========================================================
 
+@csrf_exempt
 def payfast_itn(request):
     """
     Receive and process PayFast Instant Transaction Notifications.
@@ -4180,7 +4750,12 @@ def payfast_itn(request):
 
     try:
         paid_amount = Decimal(
-            str(payment_data.get("amount", "0.00"))
+            str(
+                payment_data.get(
+                    "amount_gross",
+                    payment_data.get("amount", "0.00"),
+                )
+            )
         )
     except (InvalidOperation, TypeError, ValueError):
         return JsonResponse(
@@ -4202,6 +4777,16 @@ def payfast_itn(request):
         "payment_status",
         "",
     ).lower()
+
+    print(
+        "PAYFAST ITN DEBUG:",
+        {
+            "order_id": order_id,
+            "received_amount": str(paid_amount),
+            "expected_amount": str(expected_amount),
+            "payment_status": payment_status,
+        },
+    )
 
     if payment_status != "complete":
         return JsonResponse(
@@ -4234,6 +4819,20 @@ def payfast_itn(request):
                     f"Order #{order.id}."
                 ),
             )
+
+            # =============================================
+            # AUTOMATIC DRIVER DISPATCH AFTER PAYMENT
+            # =============================================
+            # If payment is confirmed after the shop has
+            # already marked the order Ready, dispatch it.
+            # =============================================
+
+            if (
+                order.status == "ready"
+                and order.order_type == "delivery"
+                and not order.driver_id
+            ):
+                dispatch_order_to_available_drivers(order)
 
     return JsonResponse(
         {"status": "payment_confirmed"},
@@ -4365,5 +4964,78 @@ def payfast_payment(request, order_id):
 
 
 
+
+
+# =========================================================
+# STAFF DASHBOARD AJAX UPDATES
+# =========================================================
+
+@login_required(login_url="/staff/login/")
+@user_passes_test(
+    is_tenant_staff,
+    login_url="/staff/login/"
+)
+def staff_dashboard_updates(request):
+
+    shop = get_user_shop(request.user)
+
+    if not shop:
+        return JsonResponse(
+            {"success": False},
+            status=403,
+        )
+
+    orders = (
+        Order.objects
+        .filter(shop=shop)
+        .exclude(
+            status__in=[
+                "delivered",
+                "collected",
+                "cancelled",
+            ]
+        )
+        .prefetch_related("items__menu_item")
+        .order_by("-created_at")
+    )
+
+    drivers = (
+        Driver.objects
+        .filter(
+            shop=shop,
+            is_available=True,
+        )
+        .order_by("name")
+    )
+
+    context = {
+        "shop": shop,
+        "orders": orders,
+        "drivers": drivers,
+        "new_orders": orders.filter(
+            status="new"
+        ).count(),
+        "preparing_orders": orders.filter(
+            status="preparing"
+        ).count(),
+        "ready_orders": orders.filter(
+            status="ready"
+        ).count(),
+        "driver_assigned_orders": orders.filter(
+            status="driver_assigned"
+        ).count(),
+        "picked_up_orders": orders.filter(
+            status="picked_up"
+        ).count(),
+        "on_the_way_orders": orders.filter(
+            status="on_the_way"
+        ).count(),
+    }
+
+    return render(
+        request,
+        "orders/staff_dashboard_updates.html",
+        context,
+    )
 
 

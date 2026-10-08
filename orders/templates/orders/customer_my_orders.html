@@ -13,6 +13,23 @@
             color: #222;
         }
 
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            margin-bottom: 15px;
+            border-radius: 25px;
+            background: white;
+            color: #111;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .back-button:hover {
+            background: #eee;
+        }
         .header {
             background: #111;
             color: white;
@@ -74,7 +91,8 @@
 <body>
 
 <div class="header">
-    <h1>AirXpress Eats</h1>
+        <a href="{% url 'home' %}" class="back-button">&larr; Back</a>
+<h1>AirXpress Eats</h1>
     <p>My Orders</p>
 </div>
 
@@ -116,7 +134,7 @@
                       <a href="{% url 'order_review' order_id=order.id %}"
                          class="track-button"
                          style="margin-left:8px;background:#f5c542;color:#111;">
-                          ⭐ Leave a Review
+                          Leave a Review
                       </a>
                   {% endif %}
               {% endif %}

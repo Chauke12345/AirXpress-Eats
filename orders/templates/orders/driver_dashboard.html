@@ -1,8 +1,15 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link
+        rel="icon"
+        type="image/png"
+        href="{% static 'orders/images/Airxpress-logo.png' %}"
+    >
 
     <link
         href="https://api.mapbox.com/mapbox-gl-js/v3.32.0/mapbox-gl.css"
@@ -206,7 +213,6 @@
             }
         }
     
-<style>
 .driver-rating-section .section-title {
     color: #f5c542;
 }
@@ -234,7 +240,269 @@
 .driver-rating-section .history-row {
     border-color: #3f3620;
 }
+
+/* =========================================================
+   DRIVER PERSONAL DETAILS
+   ========================================================= */
+
+.driver-personal-details-section {
+    margin-bottom: 28px;
+}
+
+.driver-personal-details-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 17px 20px;
+    margin-bottom: 0;
+    background: #1b1b1b;
+    border: 1px solid #333333;
+    border-radius: 14px;
+    cursor: pointer;
+    user-select: none;
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease;
+}
+
+.driver-personal-details-toggle:hover {
+    background: #202020;
+    border-color: #555555;
+}
+
+.driver-personal-details-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.driver-personal-details-icon {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
+.driver-personal-details-arrow {
+    font-size: 20px;
+    transition: transform 0.2s ease;
+}
+
+.driver-personal-details-panel {
+    padding-top: 15px;
+}
+
+.personal-details-subheading {
+    margin: 5px 0 12px;
+    color: #aaaaaa;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.driver-banking-inner-section {
+    margin-top: 18px;
+    margin-bottom: 0;
+}
 </style>
+<style>
+/* ============================================================
+   AIRXPRESS DRIVER - FINAL LAYOUT FIX
+   ============================================================ */
+
+.personal-details-section {
+    width: 100%;
+    margin: 0 0 28px 0;
+}
+
+.personal-details-toggle {
+    width: 100%;
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    margin: 0;
+    background: linear-gradient(135deg, #1f1f1f, #171717);
+    border: 1px solid #3a3a3a;
+    border-radius: 16px;
+    cursor: pointer;
+    user-select: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
+
+.personal-details-toggle:hover {
+    background: linear-gradient(135deg, #242424, #1a1a1a);
+    border-color: #555555;
+    transform: translateY(-1px);
+}
+
+.personal-details-heading {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+
+.personal-details-heading > span {
+    min-width: 0;
+}
+
+.personal-details-heading strong {
+    display: block;
+    color: #ffffff;
+    font-size: 17px;
+    line-height: 1.2;
+}
+
+.personal-details-heading small {
+    display: block;
+    margin-top: 5px;
+    color: #999999;
+    font-size: 12px;
+    line-height: 1.3;
+}
+
+.personal-details-icon {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    object-fit: contain;
+    display: block;
+    flex-shrink: 0;
+}
+
+.personal-details-arrow {
+    flex-shrink: 0;
+    color: #aaaaaa;
+    font-size: 20px;
+    line-height: 1;
+    transition: transform 0.2s ease;
+}
+
+.personal-details-panel {
+    width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.personal-details-content {
+    width: 100%;
+    padding: 16px 0 2px 0;
+    box-sizing: border-box;
+}
+
+.personal-subtitle {
+    margin: 0 0 14px 0;
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.personal-details-content .card {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ============================================================
+   NEW DELIVERY REQUESTS
+   ============================================================ */
+
+.request-section-title {
+    width: 100%;
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 14px 0;
+    padding: 12px 16px;
+    box-sizing: border-box;
+    background: #1b1b1b;
+    border: 1px solid #333333;
+    border-radius: 14px;
+}
+
+.request-title-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.request-section-icon {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+    object-fit: contain;
+    display: block;
+    flex-shrink: 0;
+}
+
+.request-section-title strong {
+    color: #ffffff;
+    font-size: 17px;
+}
+
+.request-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: #f5c542;
+    color: #111111;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.new-request-alert {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+
+    .personal-details-toggle {
+        min-height: 64px;
+        padding: 14px 15px;
+    }
+
+    .personal-details-heading strong {
+        font-size: 15px;
+    }
+
+    .personal-details-heading small {
+        font-size: 11px;
+    }
+
+    .personal-details-icon {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        max-width: 32px !important;
+    }
+
+    .request-section-title {
+        padding: 11px 13px;
+    }
+
+    .request-section-icon {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        max-width: 30px !important;
+    }
+}
 </style>
 </head>
 
@@ -273,10 +541,53 @@
             <h2>Welcome, {{ driver.name }}</h2>
             <p>{{ driver.shop.name }}</p>
         </div>
-          <section class="section">
-              <div class="section-title">
-                  Driver Profile & Vehicle
-              </div>
+          <section class="section personal-details-section">
+
+    <div
+        class="personal-details-toggle"
+        onclick="toggleDriverPersonalDetails()"
+        role="button"
+        tabindex="0"
+        aria-expanded="false"
+        aria-controls="driver-personal-details-panel"
+    >
+
+        <span class="personal-details-heading">
+
+            <img
+                src="{% static 'orders/icons/driver-profile.png' %}"
+                alt="Driver profile"
+                class="personal-details-icon"
+            >
+
+            <span>
+                <strong>Driver's Personal Details</strong>
+                <small>Personal, vehicle, licence and banking information</small>
+            </span>
+
+        </span>
+
+        <span
+            id="driver-personal-details-arrow"
+            class="personal-details-arrow"
+        >
+            &#9662;
+        </span>
+
+    </div>
+
+    <div
+        id="driver-personal-details-panel"
+        class="personal-details-panel"
+        style="display: none;"
+    >
+
+        <div class="personal-details-content">
+
+            <div class="personal-subtitle">
+                Personal &amp; Vehicle Information
+            </div>
+
 
               <div class="card">
                   <form
@@ -331,6 +642,41 @@
                           required
                           style="width: 100%; margin-bottom: 12px;"
                       >
+                      <div
+                          id="driver-personal-physical-address"
+                          style="
+                              margin-bottom: 12px;
+                          "
+                      >
+                          <label>Physical Address</label>
+
+                          <div
+                              style="
+                                  padding: 10px 12px;
+                                  border-radius: 8px;
+                                  background: #202020;
+                              "
+                          >
+                              {% if driver.physical_address %}
+                                  {{ driver.physical_address }}
+                              {% else %}
+                                  <span style="opacity: 0.7;">
+                                      Physical address not yet provided.
+                                  </span>
+                              {% endif %}
+                          </div>
+
+                          <small
+                              style="
+                                  display: block;
+                                  margin-top: 6px;
+                                  opacity: 0.65;
+                              "
+                          >
+                              Obtained from Banking Details.
+                          </small>
+                      </div>
+
 
                       <label>Vehicle Make / Model</label>
                       <input
@@ -371,14 +717,594 @@
                           Save Driver Profile
                       </button>
                   </form>
+
+                  <div style="margin: 20px 0; padding: 18px; border: 1px solid #444; border-radius: 12px; background: rgba(255,255,255,0.03);">
+
+                            <h3 style="margin-top: 0;">Driver Licence Verification</h3>
+
+                            <form
+                                method="post"
+                                action="{% url 'driver_upload_license' %}"
+                                enctype="multipart/form-data"
+                            >
+                                {% csrf_token %}
+
+                            <p style="margin: 0 0 12px; color: #aaa; font-size: 14px;">
+                                Upload your valid driver's licence. AirXpress staff must verify your licence before you can accept delivery requests.
+                            </p>
+
+                            {% if driver.driver_license %}
+                                <div style="margin-bottom: 12px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05);">
+                                    <strong>Licence uploaded:</strong>
+                                    <a href="{{ driver.driver_license.url }}" target="_blank" style="color: #ffffff;">
+                                        View Licence
+                                    </a>
+</div>
+
+
+                            {% endif %}
+
+                            <label>Driver Licence</label>
+                            <input
+                                type="file"
+                                name="driver_license"
+                                accept=".jpg,.jpeg,.png,.pdf"
+                                required
+                                style="width: 100%; margin-bottom: 12px;"
+                            >
+
+                            <button
+                                type="submit"
+                                style="
+                                    width: 100%;
+                                    padding: 11px;
+                                    border: 0;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                    font-weight: 700;
+                                "
+                            >
+                                Upload Licence for Verification
+                            </button>
+
+                            </form>
+
+                            <div style="padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05);">
+                                <strong>Verification Status:</strong>
+
+                                {% if driver.license_verification_status == "verified" %}
+                                    <span style="color: #4ade80;">Verified</span>
+                                {% elif driver.license_verification_status == "rejected" %}
+                                    <span style="color: #f87171;">Licence Rejected</span>
+                                {% else %}
+                                    <span style="color: #fbbf24;">Pending AirXpress Verification</span>
+                                {% endif %}
+                            </div>
+
+                            {% if driver.airxpress_verified %}
+                                <div style="margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(74,222,128,0.12); color: #4ade80;">
+                                    AirXpress Driver Verified
+                                </div>
+                            {% else %}
+                                <div style="margin-top: 10px; padding: 10px; border-radius: 8px; background: rgba(251,191,36,0.10); color: #fbbf24;">
+                                    Your driver account is waiting for AirXpress verification.
+                                </div>
+                            {% endif %}
+
+                        </div>
               </div>
-          </section>
+            <div class="personal-banking-area">
+<div
+                  class="section-title"
+                  onclick="toggleDriverBanking()"
+                  style="
+                      cursor: pointer;
+                      display: flex;
+                      align-items: center;
+                      justify-content: space-between;
+                      user-select: none;
+                  "
+              >
+                  <span>
+                      Banking Details
+                  </span>
 
-        <section class="section">
+                  <span
+                      id="driver-banking-arrow"
+                      style="
+                          font-size: 18px;
+                          transition: transform 0.2s ease;
+                      "
+                  >
+                      &#9662;
+                  </span>
+              </div>
 
-            <div class="section-title">
-                New Delivery Requests
+              <div
+                  id="driver-banking-panel"
+                  style="
+                      display: none;
+                      margin-top: 12px;
+                  "
+              >
+
+                  <div class="card">
+
+                      <div
+                          style="
+                              margin-bottom: 15px;
+                              padding: 12px;
+                              border-radius: 8px;
+                              background: #2b2b2b;
+                          "
+                      >
+                          <strong>Banking Status:</strong>
+
+                          {% if driver.banking_status == "verified" %}
+                              <span style="color: #65d68a;">
+                                  Verified
+                              </span>
+                          {% else %}
+                              <span style="color: #f5c542;">
+                                  Pending Verification
+                              </span>
+                          {% endif %}
+                      </div>
+
+                      <form
+                          method="post"
+                          action="{% url 'driver_update_banking' %}"
+                          autocomplete="off"
+                      >
+
+                          {% csrf_token %}
+
+                          <label>Bank Name</label>
+                          <input
+                              type="text"
+                              name="bank_name"
+                              value="{{ driver.bank_name }}"
+                              placeholder="e.g. Standard Bank"
+                              autocomplete="organization"
+                              required
+                              style="
+                                  width: 100%;
+                                  margin-bottom: 12px;
+                              "
+                          >
+
+                          <label>Account Holder Name</label>
+                          <input
+                              type="text"
+                              name="account_holder_name"
+                              value="{{ driver.account_holder_name }}"
+                              placeholder="Name on bank account"
+                              autocomplete="name"
+                              required
+                              style="
+                                  width: 100%;
+                                  margin-bottom: 12px;
+                              "
+                          >
+
+                          <label>Account Number</label>
+
+                          <div
+                              style="
+                                  display: flex;
+                                  gap: 8px;
+                                  align-items: center;
+                                  margin-bottom: 10px;
+                              "
+                          >
+
+                              <input
+                                  id="driver-account-number"
+                                  type="password"
+                                  name="account_number"
+                                  placeholder="Enter account number"
+                                  autocomplete="new-password"
+                                  inputmode="numeric"
+                                  required
+                                  style="
+                                      width: 100%;
+                                      margin: 0;
+                                  "
+                              >
+
+                              <button
+                                  type="button"
+                                  id="driver-account-toggle"
+                                  onclick="toggleDriverAccountNumber()"
+                                  aria-label="Show or hide account number"
+                                  style="
+                                      flex-shrink: 0;
+                                      padding: 10px 12px;
+                                      border: 0;
+                                      border-radius: 8px;
+                                      cursor: pointer;
+                                      font-weight: bold;
+                                  "
+                              >
+                                  View
+                              </button>
+
+                          </div>
+
+                          {% if driver.account_number %}
+                              <label
+                                  style="
+                                      display: flex;
+                                      align-items: center;
+                                      gap: 8px;
+                                      margin-bottom: 15px;
+                                      cursor: pointer;
+                                  "
+                              >
+                                  <input
+                                      type="checkbox"
+                                      id="change-driver-account-number"
+                                      name="change_account_number"
+                                      value="1"
+                                      style="
+                                          width: auto;
+                                          margin: 0;
+                                      "
+                                      onchange="toggleDriverAccountField()"
+                                  >
+
+                                  <span>
+                                      Change Account Number
+                                  </span>
+                              </label>
+
+                              <div
+                                  id="driver-account-protected-message"
+                                  style="
+                                      margin-bottom: 15px;
+                                      padding: 10px 12px;
+                                      border-radius: 8px;
+                                      background: #202020;
+                                      font-size: 13px;
+                                  "
+                              >
+                                  Current account ending in
+                                  <strong>
+                                      ****{{ driver.account_number|slice:"-4:" }}
+                                  </strong>
+                                  is protected.
+
+                                  Tick
+                                  <strong>Change Account Number</strong>
+                                  only if you need to replace it.
+                              </div>
+                          {% endif %}
+
+                          <label>Account Type</label>
+
+                          <select
+                              name="account_type"
+                              required
+                              style="
+                                  width: 100%;
+                                  margin-bottom: 12px;
+                                  padding: 10px;
+                              "
+                          >
+                              <option value="">
+                                  Select account type
+                              </option>
+
+                              <option
+                                  value="Cheque"
+                                  {% if driver.account_type == "Cheque" %}
+                                      selected
+                                  {% endif %}
+                              >
+                                  Cheque
+                              </option>
+
+                              <option
+                                  value="Savings"
+                                  {% if driver.account_type == "Savings" %}
+                                      selected
+                                  {% endif %}
+                              >
+                                  Savings
+                              </option>
+
+                              <option
+                                  value="Transmission"
+                                  {% if driver.account_type == "Transmission" %}
+                                      selected
+                                  {% endif %}
+                              >
+                                  Transmission
+                              </option>
+                          </select>
+
+                          <label>Branch Code</label>
+
+                          <input
+                              type="text"
+                              name="branch_code"
+                              value="{{ driver.branch_code }}"
+                              placeholder="Branch code"
+                              inputmode="numeric"
+                              required
+                              style="
+                                  width: 100%;
+                                  margin-bottom: 15px;
+                              "
+                          >
+                          <label>Physical Address</label>
+
+                          <textarea
+                              name="physical_address"
+                              rows="3"
+                              placeholder="Enter your physical residential address"
+                              required
+                              style="
+                                  width: 100%;
+                                  margin-bottom: 15px;
+                                  padding: 10px;
+                                  box-sizing: border-box;
+                                  resize: vertical;
+                              "
+                          >{{ driver.physical_address }}</textarea>
+
+
+                          <div
+                              style="
+                                  margin-bottom: 15px;
+                                  padding: 10px 12px;
+                                  border-radius: 8px;
+                                  background: #202020;
+                                  font-size: 13px;
+                              "
+                          >
+                              <strong>Security:</strong>
+                              Your banking details are only accessible
+                              inside your authenticated driver portal.
+                              Account numbers are masked by default.
+                          </div>
+
+                          <button
+                              type="submit"
+                              style="
+                                  padding: 12px 20px;
+                                  border: 0;
+                                  border-radius: 8px;
+                                  cursor: pointer;
+                                  font-weight: bold;
+                              "
+                          >
+                              Update Banking Details
+                          </button>
+
+                      </form>
+
+                  </div>
+
+              </div>
             </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+          <script>
+              
+function toggleDriverPersonalDetails() {
+
+    const panel = document.getElementById(
+        "driver-personal-details-panel"
+    );
+
+    const arrow = document.getElementById(
+        "driver-personal-details-arrow"
+    );
+
+    const toggle = document.querySelector(
+        ".personal-details-toggle"
+    );
+
+    if (!panel) {
+        return;
+    }
+
+    const isClosed =
+        panel.style.display === "none" ||
+        panel.style.display === "";
+
+    if (isClosed) {
+
+        panel.style.display = "block";
+
+        if (arrow) {
+            arrow.style.transform = "rotate(180deg)";
+        }
+
+        if (toggle) {
+            toggle.setAttribute(
+                "aria-expanded",
+                "true"
+            );
+        }
+
+    } else {
+
+        panel.style.display = "none";
+
+        if (arrow) {
+            arrow.style.transform = "rotate(0deg)";
+        }
+
+        if (toggle) {
+            toggle.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+        }
+    }
+}
+
+function toggleDriverBanking() {
+
+                  const panel =
+                      document.getElementById(
+                          "driver-banking-panel"
+                      );
+
+                  const arrow =
+                      document.getElementById(
+                          "driver-banking-arrow"
+                      );
+
+                  if (!panel) {
+                      return;
+                  }
+
+                  if (panel.style.display === "none") {
+
+                      panel.style.display = "block";
+
+                      if (arrow) {
+                          arrow.style.transform =
+                              "rotate(180deg)";
+                      }
+
+                  } else {
+
+                      panel.style.display = "none";
+
+                      if (arrow) {
+                          arrow.style.transform =
+                              "rotate(0deg)";
+                      }
+                  }
+              }
+
+
+              function toggleDriverAccountNumber() {
+
+                  const input =
+                      document.getElementById(
+                          "driver-account-number"
+                      );
+
+                  const button =
+                      document.getElementById(
+                          "driver-account-toggle"
+                      );
+
+                  if (!input || !button) {
+                      return;
+                  }
+
+                  if (input.type === "password") {
+
+                      input.type = "text";
+                      button.textContent = "Hide";
+
+                  } else {
+
+                      input.type = "password";
+                      button.textContent = "View";
+                  }
+              }
+
+
+              function toggleDriverAccountField() {
+
+                  const checkbox =
+                      document.getElementById(
+                          "change-driver-account-number"
+                      );
+
+                  const input =
+                      document.getElementById(
+                          "driver-account-number"
+                      );
+
+                  const message =
+                      document.getElementById(
+                          "driver-account-protected-message"
+                      );
+
+                  if (!checkbox || !input) {
+                      return;
+                  }
+
+                  if (checkbox.checked) {
+
+                      input.disabled = false;
+                      input.required = true;
+                      input.placeholder =
+                          "Enter new account number";
+
+                      if (message) {
+                          message.style.display = "none";
+                      }
+
+                  } else {
+
+                      input.value = "";
+                      input.disabled = true;
+                      input.required = false;
+                      input.placeholder =
+                          "Account number protected";
+
+                      if (message) {
+                          message.style.display = "block";
+                      }
+                  }
+              }
+
+
+              document.addEventListener(
+                  "DOMContentLoaded",
+                  function () {
+
+                      const checkbox =
+                          document.getElementById(
+                              "change-driver-account-number"
+                          );
+
+                      const input =
+                          document.getElementById(
+                              "driver-account-number"
+                          );
+
+                      if (checkbox && input) {
+                          toggleDriverAccountField();
+                      }
+
+                  }
+              );
+          </script>
+<section class="section">
+
+            <div class="section-title request-section-title">
+        <span class="request-title-left">
+            <img
+                src="{% static 'orders/icons/driver-delivery-requests.png' %}"
+                alt=""
+                class="request-section-icon"
+            >
+            <span>New Delivery Requests</span>
+        </span>
+        <span class="request-count">
+            {% if pending_requests %}
+                {{ pending_requests|length }}
+            {% else %}
+                0
+            {% endif %}
+        </span>
+    </div>
 
             {% for request in pending_requests %}
                   <div
@@ -388,7 +1314,7 @@
                       data-order-id="{{ request.order.id }}"
                   >
 
-                      ?? NEW DELIVERY REQUEST
+                      NEW DELIVERY REQUEST
 
                       <div>
                           Order #{{ request.order.id }}
@@ -578,6 +1504,18 @@
                       {% endif %}
 
                     <div class="detail">
+
+                    {% if order.shop.latitude and order.shop.longitude %}
+                        <a
+                            href="https://www.google.com/maps/dir/?api=1&destination={{ order.shop.latitude }},{{ order.shop.longitude }}"
+                            target="_blank"
+                            rel="noopener"
+                            style="display:inline-block;margin-top:10px;margin-bottom:10px;background:#111111;color:#ffffff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;"
+                        >
+                            Navigate to Pickup
+                        </a>
+                    {% endif %}
+
                         <span class="label">Delivery Address</span><br>
                         {{ order.delivery_address }}
                     </div>
@@ -607,32 +1545,232 @@
 
                         {% if order.status == "driver_assigned" %}
 
-                            <form
-                                method="post"
-                                action="{% url 'driver_pickup_order' order.id %}"
-                                style="margin: 0;"
-                            >
+    <div
+        class="driver-gps-panel pickup-gps-panel"
+        data-order-id="{{ order.id }}"
+        data-location-url="{% url 'update_driver_location' order.id %}"
+        data-shop-lat="{{ order.shop.latitude|default:'' }}"
+        data-shop-lng="{{ order.shop.longitude|default:'' }}"
+        style="
+            width:100%;
+            padding:20px;
+            margin-bottom:14px;
+            border-radius:16px;
+            background:linear-gradient(145deg,#111111,#1c1c1c);
+            border:1px solid #333333;
+            color:#ffffff;
+            box-sizing:border-box;
+            box-shadow:0 8px 24px rgba(0,0,0,0.18);
+        "
+    >
 
-                                {% csrf_token %}
+        <div
+            style="
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                gap:12px;
+                flex-wrap:wrap;
+            "
+        >
 
-                                <button
-                                    type="submit"
-                                    style="
-                                        background: #ffffff;
-                                        color: #111111;
-                                        border: none;
-                                        padding: 11px 18px;
-                                        border-radius: 9px;
-                                        font-weight: 800;
-                                        cursor: pointer;
-                                    "
-                                >
-                                    Pick Up Order
-                                </button>
+            <div>
+                <div
+                    style="
+                        font-size:18px;
+                        font-weight:900;
+                        letter-spacing:0.2px;
+                    "
+                >
+                    AirXpress GPS
+                </div>
 
-                            </form>
+                <div
+                    style="
+                        margin-top:4px;
+                        font-size:13px;
+                        color:#aaaaaa;
+                    "
+                >
+                    Live pickup tracking
+                </div>
+            </div>
 
-                        {% elif order.status == "picked_up" %}
+            <div
+                style="
+                    display:flex;
+                    align-items:center;
+                    gap:7px;
+                    padding:7px 11px;
+                    border-radius:999px;
+                    background:#16351f;
+                    color:#55e889;
+                    font-size:12px;
+                    font-weight:800;
+                "
+            >
+                <span
+                    style="
+                        width:8px;
+                        height:8px;
+                        border-radius:50%;
+                        background:#55e889;
+                        display:inline-block;
+                    "
+                ></span>
+                GPS ACTIVE
+            </div>
+
+        </div>
+
+        <div
+            class="driver-gps-status"
+            style="
+                margin-top:16px;
+                padding:11px 13px;
+                border-radius:10px;
+                background:#242424;
+                color:#dddddd;
+                font-size:14px;
+            "
+        >
+            Starting AirXpress GPS...
+        </div>
+
+        <div
+            style="
+                margin-top:12px;
+                padding:15px;
+                border-radius:12px;
+                background:#202020;
+            "
+        >
+
+            <div
+                style="
+                    font-size:12px;
+                    color:#999999;
+                    text-transform:uppercase;
+                    letter-spacing:0.7px;
+                    font-weight:800;
+                "
+            >
+                Distance to pickup
+            </div>
+
+            <div
+                class="pickup-distance"
+                style="
+                    margin-top:5px;
+                    font-size:24px;
+                    line-height:1.2;
+                    font-weight:900;
+                    color:#ffcc00;
+                "
+            >
+                Waiting for GPS location...
+            </div>
+
+        </div>
+
+        <div
+            class="pickup-gps-instruction"
+            style="
+                margin-top:12px;
+                padding:11px 13px;
+                border-left:3px solid #ffcc00;
+                background:#211f15;
+                color:#dddddd;
+                line-height:1.5;
+                font-size:13px;
+                border-radius:6px;
+            "
+        >
+            AirXpress will allow pickup only when you are
+            within <strong>250 metres</strong> of the shop.
+        </div>
+
+        {% if order.shop.latitude and order.shop.longitude %}
+
+            <a
+                href="https://www.google.com/maps/dir/?api=1&destination={{ order.shop.latitude }},{{ order.shop.longitude }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                style="
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    gap:9px;
+                    width:100%;
+                    box-sizing:border-box;
+                    margin-top:14px;
+                    padding:13px 16px;
+                    border-radius:11px;
+                    background:#2563eb;
+                    color:#ffffff;
+                    font-weight:900;
+                    text-decoration:none;
+                    font-size:14px;
+                    box-shadow:0 5px 14px rgba(37,99,235,0.25);
+                "
+            >
+                <span style="font-size:18px;">NAV</span>
+                Open Google Maps Navigation
+            </a>
+
+        {% else %}
+
+            <div
+                style="
+                    margin-top:14px;
+                    padding:12px;
+                    border-radius:10px;
+                    background:#351919;
+                    color:#ff8f8f;
+                    font-size:13px;
+                    font-weight:700;
+                "
+            >
+                Pickup navigation is unavailable because
+                this shop has no GPS coordinates.
+            </div>
+
+        {% endif %}
+
+    </div>
+
+    <form
+        method="post"
+        action="{% url 'driver_pickup_order' order.id %}"
+        style="width:100%;margin:0;"
+    >
+
+        {% csrf_token %}
+
+        <button
+            type="submit"
+            class="pickup-order-button"
+            disabled
+            style="
+                width:100%;
+                box-sizing:border-box;
+                background:#555555;
+                color:#ffffff;
+                border:none;
+                padding:14px 18px;
+                border-radius:11px;
+                font-weight:900;
+                font-size:15px;
+                cursor:not-allowed;
+                opacity:0.65;
+                letter-spacing:0.2px;
+            "
+        >
+            Travel to Shop
+        </button>
+
+    </form>
+{% elif order.status == "picked_up" %}
 
                               <div
                                   class="driver-gps-panel"
@@ -1110,6 +2248,7 @@
         }
 
         function handlePosition(position) {
+
             const latitude =
                 position.coords.latitude;
 
@@ -1122,36 +2261,261 @@
                 );
 
             updatePanelStatus(
-                "Live location active â€¢ GPS accuracy: " +
+                "Live location active - GPS accuracy: " +
                 accuracy +
                 " m"
             );
 
-            const activePanel = Array.from(panels).find(
-
-                panel => panel.dataset.orderId === String(activeDeliveryId)
-
-            );
-
+            const activePanel =
+                Array.from(
+                    panels
+                ).find(
+                    panel =>
+                        panel.dataset.orderId ===
+                        String(activeDeliveryId)
+                )
+                ||
+                document.querySelector(
+                    ".pickup-gps-panel"
+                );
 
             if (!activePanel) {
-
+                console.warn(
+                    "AirXpress GPS: no active delivery panel found."
+                );
                 return;
-
             }
 
+            /*
+             * AIRXPRESS PICKUP GPS
+             *
+             * Calculate the driver's live distance
+             * from the pickup shop.
+             */
+
+            const pickupPanel =
+                activePanel.classList.contains(
+                    "pickup-gps-panel"
+                )
+                    ? activePanel
+                    : document.querySelector(
+                        ".pickup-gps-panel"
+                    );
+
+            if (pickupPanel) {
+
+                const shopLatitude =
+                    parseFloat(
+                        pickupPanel.dataset.shopLat
+                    );
+
+                const shopLongitude =
+                    parseFloat(
+                        pickupPanel.dataset.shopLng
+                    );
+
+                const distanceElement =
+                    pickupPanel.querySelector(
+                        ".pickup-distance"
+                    );
+
+                const pickupButton =
+                    document.querySelector(
+                        ".pickup-order-button"
+                    );
+
+                if (
+                    !Number.isNaN(shopLatitude) &&
+                    !Number.isNaN(shopLongitude)
+                ) {
+
+                    const earthRadiusMetres =
+                        6371000;
+
+                    const latitude1 =
+                        latitude *
+                        Math.PI /
+                        180;
+
+                    const latitude2 =
+                        shopLatitude *
+                        Math.PI /
+                        180;
+
+                    const deltaLatitude =
+                        (
+                            shopLatitude -
+                            latitude
+                        ) *
+                        Math.PI /
+                        180;
+
+                    const deltaLongitude =
+                        (
+                            shopLongitude -
+                            longitude
+                        ) *
+                        Math.PI /
+                        180;
+
+                    const a =
+                        Math.sin(
+                            deltaLatitude / 2
+                        ) *
+                        Math.sin(
+                            deltaLatitude / 2
+                        )
+                        +
+                        Math.cos(latitude1) *
+                        Math.cos(latitude2) *
+                        Math.sin(
+                            deltaLongitude / 2
+                        ) *
+                        Math.sin(
+                            deltaLongitude / 2
+                        );
+
+                    const c =
+                        2 *
+                        Math.atan2(
+                            Math.sqrt(a),
+                            Math.sqrt(1 - a)
+                        );
+
+                    const distanceMetres =
+                        earthRadiusMetres * c;
+
+                    if (distanceElement) {
+
+                        if (
+                            distanceMetres <= 250
+                        ) {
+
+                            distanceElement.textContent =
+                                "You have arrived at the pickup shop ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â " +
+                                Math.round(
+                                    distanceMetres
+                                ) +
+                                " m away.";
+
+                            distanceElement.style.color =
+                                "#00ff88";
+
+                        }
+                        else {
+
+                            if (
+                                distanceMetres >= 1000
+                            ) {
+
+                                distanceElement.textContent =
+                                    "Distance to pickup: " +
+                                    (
+                                        distanceMetres /
+                                        1000
+                                    ).toFixed(2) +
+                                    " km";
+
+                            }
+                            else {
+
+                                distanceElement.textContent =
+                                    "Distance to pickup: " +
+                                    Math.round(
+                                        distanceMetres
+                                    ) +
+                                    " m";
+
+                            }
+
+                            distanceElement.style.color =
+                                "#ffcc00";
+                        }
+                    }
+
+                    if (pickupButton) {
+
+                        if (
+                            distanceMetres <= 250
+                        ) {
+
+                            pickupButton.disabled =
+                                false;
+
+                            pickupButton.textContent =
+                                "PICK UP ORDER";
+
+                            pickupButton.style.background =
+                                "#198754";
+
+                            pickupButton.style.cursor =
+                                "pointer";
+
+                            pickupButton.style.opacity =
+                                "1";
+
+                        }
+                        else {
+
+                            pickupButton.disabled =
+                                true;
+
+                            pickupButton.textContent =
+                                "Travel to Shop";
+
+                            pickupButton.style.background =
+                                "#777777";
+
+                            pickupButton.style.cursor =
+                                "not-allowed";
+
+                            pickupButton.style.opacity =
+                                "0.6";
+                        }
+                    }
+                }
+                else {
+
+                    if (distanceElement) {
+
+                        distanceElement.textContent =
+                            "Shop GPS coordinates unavailable.";
+
+                        distanceElement.style.color =
+                            "#ff5555";
+                    }
+
+                    if (pickupButton) {
+
+                        pickupButton.disabled =
+                            true;
+
+                        pickupButton.textContent =
+                            "Pickup GPS unavailable";
+
+                        pickupButton.style.background =
+                            "#777777";
+
+                        pickupButton.style.cursor =
+                            "not-allowed";
+
+                        pickupButton.style.opacity =
+                            "0.6";
+                    }
+                }
+            }
+
+            /*
+             * Send the driver's live GPS position
+             * to the AirXpress backend.
+             */
 
             sendLocation(
-
                 activePanel,
-
                 latitude,
-
                 longitude
-
             );
         }
-
         function handleError(error) {
             let message =
                 "Unable to access GPS.";
