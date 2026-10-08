@@ -1094,7 +1094,102 @@
     padding: 0 10px !important;
     font-size: 13px !important;
 }
-        /* AIRXPRESS MOBILE EXPERIENCE */
+        /* MENU IMAGE CONTAINMENT */
+.restaurant-icon {
+    overflow: hidden !important;
+}
+
+.restaurant-icon img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+    border-radius: inherit !important;
+}
+/* AIRXPRESS MOBILE FOOD CARDS */
+@media (max-width: 650px) {
+    .restaurant-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 16px !important;
+    }
+
+    .restaurant-card {
+        min-height: 0 !important;
+        height: 210px !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        position: relative !important;
+        display: flex !important;
+        justify-content: flex-end !important;
+        border-radius: 18px !important;
+        background: #111 !important;
+    }
+
+    .restaurant-icon {
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: #171717 !important;
+        z-index: 0 !important;
+    }
+
+    .restaurant-icon img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        display: block !important;
+    }
+
+    .restaurant-card::after {
+        content: "" !important;
+        position: absolute !important;
+        inset: 0 !important;
+        background: linear-gradient(
+            to top,
+            rgba(0,0,0,.88) 0%,
+            rgba(0,0,0,.35) 48%,
+            rgba(0,0,0,.05) 100%
+        ) !important;
+        z-index: 1 !important;
+    }
+
+    .restaurant-card h3,
+    .restaurant-location,
+    .restaurant-card .order-link {
+        position: relative !important;
+        z-index: 2 !important;
+    }
+
+    .restaurant-card h3 {
+        margin: 0 18px 4px !important;
+        font-size: 21px !important;
+    }
+
+    .restaurant-location {
+        margin: 0 18px 8px !important;
+        color: #ddd !important;
+        font-size: 12px !important;
+    }
+
+    .restaurant-card .order-link {
+        margin: 0 18px 16px !important;
+        padding: 0 !important;
+        border: 0 !important;
+    }
+
+    .restaurant-card .order-link span {
+        display: inline-block !important;
+        color: #f5c542 !important;
+        font-size: 13px !important;
+        font-weight: 800 !important;
+    }
+}
+/* AIRXPRESS MOBILE EXPERIENCE */
         @media (max-width: 650px) {
 
             /* Give each major section more vertical presence */
@@ -1568,9 +1663,7 @@
                     data-search="{{ shop.name|lower }} {{ shop.location|lower }}"
                 >
 
-                    <div class="restaurant-icon">
-                        
-                    </div>
+                    {% with featured_item=shop.menu_items.all|first %}<div class="restaurant-icon">{% if featured_item.image %}<img src="{{ featured_item.image.url }}" alt="{{ featured_item.name }}">{% endif %}</div>{% endwith %}
 
                     <h3>
                         {{ shop.name }}
@@ -2035,6 +2128,7 @@
 
 </body>
 </html>
+
 
 
 
