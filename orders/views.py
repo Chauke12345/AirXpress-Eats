@@ -1,4 +1,4 @@
-import math
+﻿import math
 from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
@@ -1002,6 +1002,10 @@ def checkout(request, shop_slug):
         "orders/checkout.html",
         context,
     )
+def login_gateway(request):
+    return render(request, "orders/login.html")
+
+
 def customer_login(request):
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
@@ -5037,5 +5041,6 @@ def staff_dashboard_updates(request):
         "orders/staff_dashboard_updates.html",
         context,
     )
+
 
 

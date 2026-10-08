@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -1095,6 +1095,132 @@
     font-size: 13px !important;
 }
 </style>
+<style>
+.airxpress-portals {
+    background: linear-gradient(180deg, #0b0b0b 0%, #111111 100%);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 55px 25px;
+}
+
+.portals-inner {
+    max-width: 1150px;
+    margin: auto;
+}
+
+.portals-heading {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.portals-kicker {
+    color: #999;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 3px;
+}
+
+.portals-heading h2 {
+    margin: 8px 0 5px;
+    color: #fff;
+    font-size: 30px;
+    font-weight: 900;
+}
+
+.portals-heading p {
+    color: #8d8d8d;
+    font-size: 14px;
+}
+
+.portal-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.portal-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 145px;
+    padding: 24px;
+    background: #151515;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 14px;
+    color: #fff;
+    overflow: hidden;
+    transition: all 0.25s ease;
+}
+
+.portal-card:hover {
+    transform: translateY(-5px);
+    background: #1c1c1c;
+    border-color: rgba(255,255,255,0.28);
+    box-shadow: 0 14px 35px rgba(0,0,0,0.35);
+}
+
+.portal-icon {
+    width: 58px;
+    height: 58px;
+    flex: 0 0 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #222;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    font-size: 27px;
+}
+
+.portal-content {
+    flex: 1;
+}
+
+.portal-content h3 {
+    margin: 0 0 6px;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.portal-content p {
+    margin: 0;
+    color: #999;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.portal-arrow {
+    color: #aaa;
+    font-size: 24px;
+    transition: transform 0.2s ease;
+}
+
+.portal-card:hover .portal-arrow {
+    transform: translateX(4px);
+    color: #fff;
+}
+
+@media (max-width: 850px) {
+    .portal-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .portal-card {
+        min-height: 120px;
+    }
+}
+
+@media (max-width: 500px) {
+    .airxpress-portals {
+        padding: 40px 16px;
+    }
+
+    .portals-heading h2 {
+        font-size: 25px;
+    }
+}
+</style>
 </head>
 
 <body>
@@ -1186,6 +1312,48 @@
     </div>
 
 </nav>
+<!-- AIRXPRESS PORTALS -->
+<section class="airxpress-portals">
+    <div class="portals-inner">
+
+        <div class="portals-heading">
+            <span class="portals-kicker">AIRXPRESS EATS</span>
+            <h2>Choose Your Portal</h2>
+            <p>Secure access for AirXpress operations</p>
+        </div>
+
+        <div class="portal-cards">
+
+            <a href="{% url 'driver_login' %}" class="portal-card">
+                <div class="portal-icon">D</div>
+                <div class="portal-content">
+                    <h3>Driver Portal</h3>
+                    <p>Manage deliveries, requests and live delivery activity.</p>
+                </div>
+                <span class="portal-arrow">OPEN</span>
+            </a>
+
+            <a href="{% url 'staff_login' %}" class="portal-card">
+                <div class="portal-icon">S</div>
+                <div class="portal-content">
+                    <h3>Staff Portal</h3>
+                    <p>Manage orders, customers, shops and daily operations.</p>
+                </div>
+                <span class="portal-arrow">OPEN</span>
+            </a>
+
+            <a href="{% url 'owner_login' %}" class="portal-card">
+                <div class="portal-icon">O</div>
+                <div class="portal-content">
+                    <h3>Owner Portal</h3>
+                    <p>Monitor the business, drivers, payments and performance.</p>
+                </div>
+                <span class="portal-arrow">OPEN</span>
+            </a>
+
+        </div>
+    </div>
+</section>
 
 
 <!-- ==============================
@@ -1369,9 +1537,7 @@
     <span>
         View Menu &amp; Order &rarr;
     </span>
-    <span>
-        ?
-    </span>
+
 </div>
 
                 </a>
@@ -1720,7 +1886,7 @@
         <div class="footer-bottom">
 
             <span>
-    &copy; {% now "Y" %} AirXpress Eats &middot; Powered by AirXpress Eats
+    &copy; {% now "Y" %} AirXpress Eats &middot; Powered by AirXpress Eats &nbsp; <a href="{% url 'admin:index' %}" title="Django Admin" style="text-decoration:none;font-size:13px;opacity:.65;">&#128274;</a>
 </span>
 
         </div>
@@ -1808,6 +1974,15 @@
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
 
 
 

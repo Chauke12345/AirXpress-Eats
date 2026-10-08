@@ -1,10 +1,11 @@
-from django.urls import path
+﻿from django.urls import path
 from django.contrib.auth import views as auth_views
 
 from . import views
 
 
 urlpatterns = [
+    path('login/', views.login_gateway, name='login_gateway'),
 
     # =========================================================
     # MAPBOX ADDRESS SUGGESTIONS
@@ -373,6 +374,7 @@ path(
         views.mark_driver_payout_paid,
         name="mark_driver_payout_paid",
     ),]
+
 
 
 
