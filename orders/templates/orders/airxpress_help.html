@@ -1,0 +1,169 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AirXpress Eats | Help Centre</title>
+    <style>
+        :root {
+            --black: #050505;
+            --dark: #101010;
+            --silver: #bdbdbd;
+            --white: #ffffff;
+            --muted: #a8a8a8;
+            --blue: #2563eb;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, Helvetica, sans-serif;
+            color: var(--white);
+            background: radial-gradient(circle at top, #222 0%, var(--black) 55%, #000 100%);
+        }
+
+        .help-wrapper { width: 100%; max-width: 760px; }
+
+        .help-card {
+            padding: 38px;
+            border: 1px solid rgba(255,255,255,.13);
+            border-radius: 22px;
+            background: linear-gradient(145deg, #171717, #090909);
+            box-shadow: 0 25px 70px rgba(0,0,0,.5);
+        }
+
+        .brand { text-align: center; margin-bottom: 30px; }
+
+        .logo-wrap {
+            width: 82px;
+            height: 82px;
+            margin: 0 auto 16px;
+            padding: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: white;
+        }
+
+        .logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
+
+        h1 { margin: 0; font-size: 30px; }
+        .subtitle { color: var(--silver); line-height: 1.6; }
+
+        .support-options {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            margin: 28px 0;
+        }
+
+        .support-option {
+            padding: 22px;
+            border: 1px solid rgba(255,255,255,.13);
+            border-radius: 15px;
+            background: #111;
+        }
+
+        .support-option h2 { margin: 0 0 10px; font-size: 19px; }
+        .support-option p { color: var(--muted); line-height: 1.6; font-size: 14px; }
+
+        .support-btn {
+            display: block;
+            margin-top: 18px;
+            padding: 14px;
+            border-radius: 9px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 700;
+            color: white;
+        }
+
+        .whatsapp { background: #168447; }
+        .phone { background: var(--blue); }
+        .support-btn:hover { filter: brightness(1.12); }
+
+        .topics {
+            padding: 20px;
+            border-radius: 12px;
+            background: rgba(255,255,255,.05);
+            line-height: 1.9;
+            color: #dedede;
+        }
+
+        .back-link { text-align: center; margin-top: 25px; }
+        .back-link a { color: var(--silver); text-decoration: none; }
+        .back-link a:hover { color: white; }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #777;
+            font-size: 11px;
+            letter-spacing: .5px;
+        }
+
+        @media (max-width: 560px) {
+            body { padding: 14px; }
+            .help-card { padding: 25px 18px; }
+            h1 { font-size: 25px; }
+            .support-options { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="help-wrapper">
+    <main class="help-card">
+        <header class="brand">
+            <div class="logo-wrap">
+                <img src="{% static 'orders/images/Airxpress-logo.png' %}" alt="AirXpress Eats">
+            </div>
+            <h1>AirXpress Eats Help Centre</h1>
+            <p class="subtitle">Support for our shops, staff and delivery drivers.</p>
+        </header>
+
+        <div class="support-options">
+            <section class="support-option">
+                <h2>WhatsApp Support</h2>
+                <p>Message us about login problems, orders, payments, driver verification or technical issues.</p>
+                <a class="support-btn whatsapp"
+                   href="https://wa.me/{{ support_whatsapp }}?text=Hello%20AirXpress%20Eats%20Support"
+                   target="_blank" rel="noopener noreferrer">
+                    Chat on WhatsApp
+                </a>
+            </section>
+
+            <section class="support-option">
+                <h2>Phone Support</h2>
+                <p>Call AirXpress support if you need assistance with your shop or driver account.</p>
+                <a class="support-btn phone" href="tel:{{ support_phone_tel }}">
+                    Call {{ support_phone_display }}
+                </a>
+            </section>
+        </div>
+
+        <section class="topics">
+            <strong>How can we help?</strong><br>
+            • Shop login and account access<br>
+            • Driver verification and passwords<br>
+            • Orders, menus and payments<br>
+            • Delivery requests and GPS problems<br>
+            • Technical issues with AirXpress Eats
+        </section>
+
+        <div class="back-link">
+            <a href="{% url 'home' %}">← Back to AirXpress Eats</a>
+        </div>
+    </main>
+
+    <footer class="footer">AIRXPRESS EATS • SUPPORT CENTRE</footer>
+</div>
+</body>
+</html>

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 {% load static %}
 <html lang="en">
 <head>
@@ -515,7 +515,8 @@
             <p>Driver Portal</p>
         </div>
 
-        <form method="POST" action="{% url 'driver_logout' %}" style="display: inline;">
+        <a href="{% url 'airxpress_help' %}" class="logout" style="display:inline-block;margin-right:12px;">Need Help?</a>
+<form method="POST" action="{% url 'driver_logout' %}" style="display: inline;">
 
     {% csrf_token %}
 

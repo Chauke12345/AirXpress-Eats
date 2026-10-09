@@ -24,3 +24,9 @@ staticfiles/
 *.before-*
 *_before_*
 *.bak
+# AirXpress local data and sensitive uploads
+media/driver_licenses/
+airxpress_local_master*.json
+airxpress_master_ready.json
+airxpress_media.zip
+airxpress_menu_images.zip

@@ -1,7 +1,9 @@
-﻿import math
+import math
 from decimal import Decimal, InvalidOperation
+from django.contrib.auth.password_validation import validate_password
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.contrib import messages
 
 from django.contrib.auth import (
@@ -1002,6 +1004,17 @@ def checkout(request, shop_slug):
         "orders/checkout.html",
         context,
     )
+def airxpress_help(request):
+    return render(
+        request,
+        "orders/airxpress_help.html",
+        {
+            "support_phone_display": "081 570 2241",
+            "support_phone_tel": "+27815702241",
+            "support_whatsapp": "27815702241",
+        },
+    )
+
 def login_gateway(request):
     return render(request, "orders/login.html")
 
@@ -3342,6 +3355,8 @@ def staff_dashboard(request):
         "orders": orders,
         "drivers": drivers,
           "driver_verification_list": driver_verification_list,
+        "driver_password_reset_list": driver_password_reset_list,
+        "staff_password_reset_list": staff_password_reset_list,
 
         "new_orders": new_orders,
         "preparing_orders": preparing_orders,
@@ -4397,6 +4412,24 @@ def owner_dashboard(request):
     )
 
     # =========================================================
+    # All active-shop drivers for owner password management.
+    driver_password_reset_list = (
+        all_drivers
+        .select_related("shop", "user")
+        .order_by("name")
+    )
+
+    # Active shop staff accounts available for owner password management.
+    staff_password_reset_list = (
+        StaffProfile.objects
+        .filter(
+            shop__is_active=True,
+            is_active=True,
+            user__is_active=True,
+        )
+        .select_related("shop", "user")
+        .order_by("shop__name", "user__username")
+    )
     # SHOP SUBSCRIPTIONS
     # =========================================================
 
@@ -4510,6 +4543,8 @@ def owner_dashboard(request):
         "verified_drivers": verified_drivers,
         "pending_drivers": pending_drivers,
         "driver_verification_list": driver_verification_list,
+        "driver_password_reset_list": driver_password_reset_list,
+        "staff_password_reset_list": staff_password_reset_list,
 
         # Shop subscriptions
         "total_platform_fees": total_subscription_fees,
@@ -4535,6 +4570,99 @@ def owner_dashboard(request):
 
 
 # =========================================================
+# OWNER / AIRXPRESS DRIVER PASSWORD RESET
+# =========================================================
+
+@user_passes_test(
+    is_owner,
+    login_url="/owner/login/"
+)
+def owner_reset_driver_password(request, driver_id):
+    if request.method != "POST":
+        return redirect("owner_dashboard")
+
+    driver = get_object_or_404(
+        Driver,
+        id=driver_id,
+        shop__is_active=True,
+    )
+
+    if not driver.user:
+        messages.error(
+            request,
+            f"{driver.name} does not have a linked login account.",
+        )
+        return redirect("owner_dashboard")
+
+    password = request.POST.get("new_password", "")
+    confirm_password = request.POST.get("confirm_password", "")
+
+    if not password or password != confirm_password:
+        messages.error(
+            request,
+            "The passwords are empty or do not match. Please try again.",
+        )
+        return redirect("owner_dashboard")
+
+    try:
+        validate_password(password, user=driver.user)
+    except ValidationError as exc:
+        for error in exc.messages:
+            messages.error(request, error)
+        return redirect("owner_dashboard")
+
+    driver.user.set_password(password)
+    driver.user.save(update_fields=["password"])
+
+    messages.success(
+        request,
+        f"Password reset successfully for driver {driver.name}. Share the new password privately.",
+    )
+    return redirect("owner_dashboard")
+
+# =========================================================
+
+@user_passes_test(
+    is_owner,
+    login_url="/owner/login/"
+)
+def owner_reset_staff_password(request, staff_id):
+    if request.method != "POST":
+        return redirect("owner_dashboard")
+
+    staff_profile = get_object_or_404(
+        StaffProfile.objects.select_related("user", "shop"),
+        id=staff_id,
+        shop__is_active=True,
+        is_active=True,
+    )
+
+    staff_user = staff_profile.user
+    password = request.POST.get("new_password", "")
+    confirm_password = request.POST.get("confirm_password", "")
+
+    if not password or password != confirm_password:
+        messages.error(
+            request,
+            "The passwords are empty or do not match. Please try again.",
+        )
+        return redirect("owner_dashboard")
+
+    try:
+        validate_password(password, user=staff_user)
+    except ValidationError as exc:
+        for error in exc.messages:
+            messages.error(request, error)
+        return redirect("owner_dashboard")
+
+    staff_user.set_password(password)
+    staff_user.save(update_fields=["password"])
+
+    messages.success(
+        request,
+        f"Password reset successfully for shop staff {staff_user.username}.",
+    )
+    return redirect("owner_dashboard")
 # OWNER / AIRXPRESS DRIVER VERIFICATION
 # =========================================================
 

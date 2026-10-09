@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>    {% load static %}
     <meta charset="UTF-8">
@@ -1848,7 +1848,8 @@
         Daily Report
     </a>
 
-    <form method="POST" action="{% url 'staff_logout' %}" class="logout-form">
+    <a href="{% url 'airxpress_help' %}" class="history-link icon-nav-link">Need Help?</a>
+<form method="POST" action="{% url 'staff_logout' %}" class="logout-form">
         {% csrf_token %}
         <button type="submit" class="logout-btn">
             Logout

@@ -1,4 +1,4 @@
-﻿from django.urls import path
+from django.urls import path
 from django.contrib.auth import views as auth_views
 
 from . import views
@@ -6,6 +6,12 @@ from . import views
 
 urlpatterns = [
     path('login/', views.login_gateway, name='login_gateway'),
+
+    path(
+        "help/",
+        views.airxpress_help,
+        name="airxpress_help",
+    ),
 
     # =========================================================
     # MAPBOX ADDRESS SUGGESTIONS
@@ -354,6 +360,18 @@ path(
         "owner/driver/<int:driver_id>/verify/",
         views.owner_verify_driver,
         name="owner_verify_driver",
+    ),
+
+    path(
+        "owner/driver/<int:driver_id>/reset-password/",
+        views.owner_reset_driver_password,
+        name="owner_reset_driver_password",
+    ),
+
+    path(
+        "owner/staff/<int:staff_id>/reset-password/",
+        views.owner_reset_staff_password,
+        name="owner_reset_staff_password",
     ),
 
     path(
