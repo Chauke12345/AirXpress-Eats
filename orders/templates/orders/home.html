@@ -1635,6 +1635,9 @@
 
 </nav>
 <div class="mobile-menu-panel" id="mobileMenuPanel" hidden>
+    {% if user.is_authenticated and user.customer_profile %}
+    <a href="{% url 'customer_my_orders' %}">Track My Order</a>
+    {% endif %}
     <a href="{% url 'customer_login' %}">Customer Login</a>
     <a href="{% url 'driver_login' %}">Driver Portal</a>
     <a href="{% url 'staff_login' %}">Staff Portal</a>
