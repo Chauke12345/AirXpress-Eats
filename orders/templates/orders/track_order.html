@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -105,7 +105,7 @@
               margin-top: 4px;
           }
 
-        
+
           .done-button {
               display: inline-block;
               margin-top: 12px;
@@ -769,51 +769,28 @@
         {% endif %}
 
 
-        {% if order.driver %}
 
-            <div class="driver-box">
-    <strong>Driver Assigned</strong>
+<div class="driver-box" id="driver-box">
+    <strong id="driver-heading">{% if order.driver %}Driver Assigned{% else %}Waiting for Driver{% endif %}</strong>
 
-    {% if order.driver.photo %}
-        <div style="margin: 12px 0;">
-            <img
-                src="{{ order.driver.photo.url }}"
-                alt="{{ order.driver.name }}"
-                style="
-                    width: 90px;
-                    height: 90px;
-                    object-fit: cover;
-                    border-radius: 50%;
-                    border: 3px solid #f4b942;
-                "
-            >
-        </div>
-    {% endif %}
+    <div id="driver-photo-container"
+         style="margin: 12px 0; {% if not order.driver or not order.driver.photo %}display: none;{% endif %}">
+        <img
+            id="driver-photo"
+            {% if order.driver.photo %}src="{{ order.driver.photo.url }}"{% endif %}
+            alt="{% if order.driver %}{{ order.driver.name }}{% else %}Driver{% endif %}"
+            style="width: 90px; height: 90px; object-fit: cover; border-radius: 50%; border: 3px solid #f4b942;"
+        >
+    </div>
 
-    <p class="driver-status">
-        {{ order.driver.name }}
+    <p class="driver-status" id="driver-name">
+        {% if order.driver %}{{ order.driver.name }}{% else %}Your driver will appear here once one has been assigned.{% endif %}
     </p>
 
-    {% if order.driver.vehicle_make_model %}
-        <p>Vehicle: {{ order.driver.vehicle_make_model }}</p>
-    {% endif %}
-
-    {% if order.driver.vehicle_colour %}
-        <p>Colour: {{ order.driver.vehicle_colour }}</p>
-    {% endif %}
-
-    {% if order.driver.vehicle_registration %}
-        <p>Registration: {{ order.driver.vehicle_registration }}</p>
-    {% endif %}
+    <p id="driver-vehicle">{% if order.driver %}{% if order.driver.vehicle_make_model %}Vehicle: {{ order.driver.vehicle_make_model }}{% endif %}{% endif %}</p>
+    <p id="driver-colour">{% if order.driver %}{% if order.driver.vehicle_colour %}Colour: {{ order.driver.vehicle_colour }}{% endif %}{% endif %}</p>
+    <p id="driver-registration">{% if order.driver %}{% if order.driver.vehicle_registration %}Registration: {{ order.driver.vehicle_registration }}{% endif %}{% endif %}</p>
 </div>
-
-        {% else %}
-
-            <p>
-                Your driver will appear here once one has been assigned.
-            </p>
-
-        {% endif %}
 
     </div>
 
@@ -1250,33 +1227,53 @@
                       `
                   ).join("");
           }
+          const driverName = data.driver_name || data.driver || "";
+          const driverPhoto = data.driver_photo || "";
 
-          const existingDriver =
-              document.querySelector(
-                  ".driver-status"
-              );
+          const driverHeading = document.getElementById("driver-heading");
+          const driverNameElement = document.getElementById("driver-name");
+          const photoContainer = document.getElementById("driver-photo-container");
+          const photoElement = document.getElementById("driver-photo");
 
-          if (data.driver) {
+          if (driverHeading) {
+              driverHeading.textContent = driverName
+                  ? "Driver Assigned"
+                  : "Waiting for Driver";
+          }
 
-              if (existingDriver) {
-                  existingDriver.textContent =
-                      data.driver;
-              }
-              else if (driverBox) {
+          if (driverNameElement) {
+              driverNameElement.textContent = driverName ||
+                  "Your driver will appear here once one has been assigned.";
+          }
 
-                  const p =
-                      driverBox.querySelector("p");
-
-                  if (p) {
-                      p.classList.add(
-                          "driver-status"
-                      );
-
-                      p.textContent =
-                          data.driver;
+          if (photoContainer && photoElement) {
+              if (driverPhoto) {
+                  if (photoElement.getAttribute("src") !== driverPhoto) {
+                      photoElement.src = driverPhoto;
                   }
+                  photoElement.alt = driverName || "Driver";
+                  photoContainer.style.display = "block";
+              } else {
+                  photoElement.removeAttribute("src");
+                  photoContainer.style.display = "none";
               }
           }
+
+          const driverFields = [
+              ["driver-vehicle", data.vehicle_make_model, "Vehicle: "],
+              ["driver-colour", data.vehicle_colour, "Colour: "],
+              ["driver-registration", data.vehicle_registration, "Registration: "]
+          ];
+
+          driverFields.forEach(([id, value, label]) => {
+              const element = document.getElementById(id);
+              if (element) {
+                  element.textContent = value ? label + value : "";
+                  element.style.display = value ? "" : "none";
+              }
+          });
+
+
 
           /*
            * Keep the map synchronized with the
@@ -1404,6 +1401,11 @@
             );
 
             if (!response.ok) {
+                console.error(
+                    "AirXpress tracking HTTP error:",
+                    response.status,
+                    response.statusText
+                );
                 return;
             }
 

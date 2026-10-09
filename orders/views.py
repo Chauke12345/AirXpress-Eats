@@ -1688,6 +1688,11 @@ def track_order_status(request, tracking_token):
             "driver_location": {
                 "latitude": driver_latitude,
                 "longitude": driver_longitude,
+                "updated_at": (
+                    order.driver_location_updated_at.isoformat()
+                    if order.driver_location_updated_at
+                    else None
+                ),
             },
 
             "live_route": None,
