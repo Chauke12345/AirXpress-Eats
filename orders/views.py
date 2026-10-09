@@ -3355,8 +3355,6 @@ def staff_dashboard(request):
         "orders": orders,
         "drivers": drivers,
           "driver_verification_list": driver_verification_list,
-        "driver_password_reset_list": driver_password_reset_list,
-        "staff_password_reset_list": staff_password_reset_list,
 
         "new_orders": new_orders,
         "preparing_orders": preparing_orders,
