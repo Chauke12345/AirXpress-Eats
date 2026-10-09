@@ -1106,6 +1106,90 @@
     display: block !important;
     border-radius: inherit !important;
 }
+/* MOBILE HAMBURGER NAVIGATION */
+.mobile-menu-toggle {
+    display: none;
+    border: 1px solid rgba(255,255,255,.2);
+    background: #171717;
+    border-radius: 10px;
+    width: 44px;
+    height: 44px;
+    padding: 10px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+}
+.mobile-menu-toggle span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: #f5c542;
+    border-radius: 2px;
+}
+.mobile-menu-panel[hidden] {
+    display: none !important;
+}
+@media (max-width: 650px) {
+    .nav-container {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 10px !important;
+        padding: 10px 14px !important;
+        min-height: 68px !important;
+    }
+    .brand {
+        min-width: 0 !important;
+        gap: 8px !important;
+    }
+    .brand img {
+        width: 42px !important;
+        height: 42px !important;
+        flex-shrink: 0 !important;
+    }
+    .brand-name {
+        font-size: 16px !important;
+    }
+    .brand-subtitle {
+        font-size: 9px !important;
+    }
+    .mobile-menu-toggle {
+        display: flex !important;
+        flex: 0 0 44px !important;
+    }
+    .nav-links {
+        display: none !important;
+    }
+    .mobile-menu-panel:not([hidden]) {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0 !important;
+        margin: 0 14px 12px !important;
+        padding: 8px !important;
+        background: #151515 !important;
+        border: 1px solid rgba(245,197,66,.25) !important;
+        border-radius: 14px !important;
+        box-sizing: border-box !important;
+    }
+    .mobile-menu-panel a {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 14px 12px !important;
+        color: #fff !important;
+        text-decoration: none !important;
+        border-bottom: 1px solid rgba(255,255,255,.08) !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+    }
+    .mobile-menu-panel a:last-child {
+        border-bottom: 0 !important;
+    }
+    .airxpress-portals {
+        display: none !important;
+    }
+}
 /* AIRXPRESS MOBILE DESIGN */
 @media (max-width:650px) {
 
@@ -1465,6 +1549,12 @@
 
         </a>
 
+        <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobileMenuPanel">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
         <div class="nav-links">
 
             <a href="#restaurants" class="customer-nav-item">
@@ -1525,6 +1615,13 @@
     </div>
 
 </nav>
+<div class="mobile-menu-panel" id="mobileMenuPanel" hidden>
+    <a href="{% url 'customer_login' %}">Customer Login</a>
+    <a href="{% url 'driver_login' %}">Driver Portal</a>
+    <a href="{% url 'staff_login' %}">Staff Portal</a>
+    <a href="{% url 'owner_login' %}">Owner Portal</a>
+</div>
+
 <!-- AIRXPRESS PORTALS -->
 <section class="airxpress-portals">
     <div class="portals-inner">
@@ -2181,6 +2278,28 @@
 
     }
 
+    const mobileMenuToggle = document.getElementById("mobileMenuToggle");
+    const mobileMenuPanel = document.getElementById("mobileMenuPanel");
+
+    if (mobileMenuToggle && mobileMenuPanel) {
+        mobileMenuToggle.addEventListener("click", function () {
+            const isOpen = !mobileMenuPanel.hidden;
+            mobileMenuPanel.hidden = isOpen;
+            mobileMenuToggle.setAttribute("aria-expanded", String(!isOpen));
+            mobileMenuToggle.setAttribute(
+                "aria-label",
+                isOpen ? "Open navigation menu" : "Close navigation menu"
+            );
+        });
+
+        mobileMenuPanel.querySelectorAll("a").forEach(function (link) {
+            link.addEventListener("click", function () {
+                mobileMenuPanel.hidden = true;
+                mobileMenuToggle.setAttribute("aria-expanded", "false");
+                mobileMenuToggle.setAttribute("aria-label", "Open navigation menu");
+            });
+        });
+    }
 </script>
 
 </body>
