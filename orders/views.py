@@ -2779,6 +2779,57 @@ def driver_dashboard(request):
     )
 
     # =========================================================
+    # DRIVER DELIVERY HISTORY DATE FILTERS
+    # These filters affect history only, not earnings totals.
+    # =========================================================
+
+    history_range = request.GET.get("history_range", "all")
+    history_start = request.GET.get("history_start", "").strip()
+    history_end = request.GET.get("history_end", "").strip()
+
+    history_payouts = driver_payouts
+
+    today = timezone.localdate()
+
+    if history_range == "today":
+        history_payouts = history_payouts.filter(
+            created_at__date=today
+        )
+
+    elif history_range == "7days":
+        history_payouts = history_payouts.filter(
+            created_at__date__gte=today - timedelta(days=6),
+            created_at__date__lte=today,
+        )
+
+    elif history_range == "month":
+        history_payouts = history_payouts.filter(
+            created_at__date__year=today.year,
+            created_at__date__month=today.month,
+        )
+
+    elif history_range == "custom":
+        from django.utils.dateparse import parse_date
+
+        start_date = parse_date(history_start) if history_start else None
+        end_date = parse_date(history_end) if history_end else None
+
+        if start_date and end_date and start_date > end_date:
+            messages.warning(
+                request,
+                "The start date must not be after the end date.",
+            )
+        else:
+            if start_date:
+                history_payouts = history_payouts.filter(
+                    created_at__date__gte=start_date
+                )
+            if end_date:
+                history_payouts = history_payouts.filter(
+                    created_at__date__lte=end_date
+                )
+
+    # =========================================================
     # DRIVER CUSTOMER RATINGS
     # =========================================================
 
@@ -2822,6 +2873,10 @@ def driver_dashboard(request):
         "pending_requests": pending_requests,
         "assigned_orders": assigned_orders,
         "driver_payouts": driver_payouts,
+        "history_payouts": history_payouts,
+        "history_range": history_range,
+        "history_start": history_start,
+        "history_end": history_end,
         "total_earned": total_earned,
         "pending_payout": pending_payout,
         "paid_to_date": paid_to_date,

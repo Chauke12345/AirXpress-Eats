@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 {% load static %}
 <html lang="en">
 <head>
@@ -468,6 +468,183 @@
 .new-request-alert {
     width: 100%;
     box-sizing: border-box;
+    margin: 0 0 14px 0;
+    padding: 18px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #382b08, #171717);
+    border: 2px solid #f5c542;
+    border-left: 7px solid #f5c542;
+    border-radius: 14px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.new-request-alert > div {
+    margin-top: 7px;
+    color: #f4f4f4;
+}
+
+.new-request-alert button {
+    min-height: 42px;
+    margin-top: 12px;
+    padding: 10px 18px;
+    color: #171717;
+    background: #f5c542;
+    border: 0;
+    border-radius: 9px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.new-request-alert button:hover {
+    background: #ffda69;
+}
+
+.driver-history-section .history-filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 12px;
+    margin: 0 0 18px;
+    padding: 16px;
+    color: #ffffff;
+    background: #1b1b1b;
+    border: 1px solid #383838;
+    border-radius: 14px;
+}
+
+.driver-history-section .history-filter-form label {
+    display: block;
+    margin-bottom: 6px;
+    color: #d8d8d8;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.driver-history-section .history-filter-form select,
+.driver-history-section .history-filter-form input[type="date"] {
+    min-height: 42px;
+    max-width: 100%;
+    padding: 9px 10px;
+    color: #ffffff;
+    background: #292929;
+    border: 1px solid #555555;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.history-custom-dates {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 10px;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.history-custom-dates button {
+    min-height: 42px;
+    padding: 10px 16px;
+    color: #171717;
+    background: #f5c542;
+    border: 0;
+    border-radius: 8px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.history-custom-dates a {
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    color: #f5c542;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.driver-history-card {
+    padding: 16px;
+    border: 1px solid #383838;
+    border-radius: 14px;
+}
+
+.driver-history-card .history-row {
+    gap: 16px;
+    padding: 18px 12px;
+    border-bottom: 1px solid #383838;
+    overflow-wrap: anywhere;
+}
+
+.driver-history-card .history-row:last-child {
+    border-bottom: 0;
+}
+
+.driver-history-card .history-row > div {
+    min-width: 100px;
+}
+
+.driver-history-card .history-row .label {
+    margin-bottom: 6px;
+    color: #bdbdbd;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.history-earnings {
+    color: #f5c542;
+    font-size: 17px;
+}
+
+.history-empty {
+    padding: 20px;
+    border: 1px dashed #555555;
+    border-radius: 12px;
+    line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+    .new-request-alert {
+        padding: 15px;
+        font-size: 14px;
+    }
+
+    .driver-history-section .history-filter-form {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .driver-history-section .history-filter-form select {
+        width: 100%;
+    }
+
+    .history-custom-dates {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .history-custom-dates input[type="date"],
+    .history-custom-dates button {
+        width: 100%;
+    }
+
+    .driver-history-card {
+        padding: 10px;
+    }
+
+    .driver-history-card .history-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        padding: 16px 6px;
+    }
+
+    .driver-history-card .history-row > div {
+        min-width: 0;
+    }
 }
 
 @media (max-width: 600px) {
@@ -1335,7 +1512,7 @@ function toggleDriverBanking() {
 
                       <button
                           type="button"
-                          onclick="dismissRequestAlert('{{ request.id }}')"
+                          onclick="document.getElementById('delivery-request-card-{{ request.id }}').scrollIntoView({behavior: 'smooth', block: 'center'})"
                       >
                           View Request
                       </button>
@@ -1343,7 +1520,7 @@ function toggleDriverBanking() {
                   </div>
 
 
-                <div class="card">
+                <div class="card delivery-request-card" id="delivery-request-card-{{ request.id }}">
 
                     <div class="order-number">
                         Order #{{ request.order.id }}
@@ -1884,6 +2061,10 @@ function toggleDriverBanking() {
              DRIVER EARNINGS
         ====================================================== -->
 
+        <!-- =====================================================
+             DRIVER EARNINGS
+        ====================================================== -->
+
         <section class="section">
 
             <div class="section-title">
@@ -2160,6 +2341,71 @@ function toggleDriverBanking() {
 
             {% endif %}
 
+        </section>
+
+<!-- DRIVER DELIVERY HISTORY -->
+        <section class="section driver-history-section">
+            <div class="section-title">My Completed Delivery History</div>
+
+            <form method="get" class="history-filter-form">
+                <label for="history_range">Filter completed deliveries</label>
+                <select id="history_range" name="history_range" onchange="this.form.submit()">
+                    <option value="all" {% if history_range == "all" %}selected{% endif %}>All dates</option>
+                    <option value="today" {% if history_range == "today" %}selected{% endif %}>Today</option>
+                    <option value="7days" {% if history_range == "7days" %}selected{% endif %}>Last 7 days</option>
+                    <option value="month" {% if history_range == "month" %}selected{% endif %}>This month</option>
+                    <option value="custom" {% if history_range == "custom" %}selected{% endif %}>Custom date range</option>
+                </select>
+                <div class="history-custom-dates">
+                    <label for="history_start">From</label>
+                    <input type="date" id="history_start" name="history_start" value="{{ history_start }}">
+                    <label for="history_end">To</label>
+                    <input type="date" id="history_end" name="history_end" value="{{ history_end }}">
+                    <button type="submit" onclick="document.getElementById('history_range').value='custom'">Apply dates</button>
+                    <a href="{% url 'driver_dashboard' %}">Reset</a>
+                </div>
+            </form>
+
+            {% if history_payouts %}
+                <div class="card driver-history-card">
+                    {% for payout in history_payouts %}
+                        <div class="history-row">
+                            <div>
+                                <div class="label">Order</div>
+                                <strong>#{{ payout.order.id }}</strong>
+                            </div>
+                            <div>
+                                <div class="label">Shop</div>
+                                <strong>{{ payout.order.shop.name }}</strong>
+                            </div>
+                            <div>
+                                <div class="label">Distance</div>
+                                {{ payout.order.delivery_distance_km|default:"0" }} km
+                            </div>
+                            <div>
+                                <div class="label">Your Earnings</div>
+                                <strong class="history-earnings">R{{ payout.amount|floatformat:2 }}</strong>
+                            </div>
+                            <div>
+                                <div class="label">Delivery Fee</div>
+                                R{{ payout.order.delivery_fee|floatformat:2 }}
+                            </div>
+                            <div>
+                                <div class="label">Payout Status</div>
+                                <span class="payout-status">{{ payout.get_status_display }}</span>
+                            </div>
+                            <div>
+                                <div class="label">Completed / Recorded</div>
+                                {{ payout.created_at|date:"d M Y, H:i" }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty history-empty">
+                    No delivery earnings match the selected date range. Try another date range or reset the filter.
+                </div>
+            {% endif %}
         </section>
 
     </main>

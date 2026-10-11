@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -846,7 +846,36 @@
             color: white;
         }
 
-        .footer-bottom {
+
+/* Subtle EdVance Tech brand credit */
+.footer-powered-brand {
+    display: inline-block;
+    margin-left: 3px;
+    padding: 4px 8px;
+    color: #f5c542;
+    background: rgba(245, 197, 66, 0.08);
+    border: 1px solid rgba(245, 197, 66, 0.45);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.footer-powered-brand:hover {
+    background: rgba(245, 197, 66, 0.16);
+    border-color: #f5c542;
+}
+
+@media (max-width: 600px) {
+    .footer-powered-brand {
+        padding: 4px 7px;
+        font-size: 11px;
+    }
+}
+
+.footer-bottom {
             display: flex;
 
             justify-content: space-between;
@@ -1714,6 +1743,92 @@ section:not(.hero) {
 
 /* END AIRXPRESS COMPACT HOMEPAGE */
 </style>
+<style>
+/* AIRXPRESS HOMEPAGE SPACING REFINEMENT */
+@media (min-width: 651px) {
+    .how-container,
+    .business-section {
+        padding-top: 48px !important;
+        padding-bottom: 48px !important;
+    }
+
+    .how-header {
+        margin-bottom: 26px !important;
+    }
+
+    .step {
+        padding: 20px !important;
+    }
+
+    .step-number {
+        margin-bottom: 16px !important;
+    }
+
+    .step-icon {
+        margin-bottom: 12px !important;
+    }
+
+    .business-card {
+        padding: 36px !important;
+    }
+
+    .airxpress-portals {
+        padding-top: 38px !important;
+        padding-bottom: 38px !important;
+    }
+
+    .portal-card {
+        min-height: 112px !important;
+        padding: 18px !important;
+    }
+
+    .footer-container {
+        padding-top: 32px !important;
+        padding-bottom: 20px !important;
+    }
+}
+
+@media (max-width: 650px) {
+    .how-container,
+    .business-section {
+        padding: 28px 16px !important;
+    }
+
+    .how-header {
+        margin-bottom: 18px !important;
+    }
+
+    .step {
+        padding: 13px 10px !important;
+    }
+
+    .step-number {
+        margin-bottom: 10px !important;
+    }
+
+    .step-icon {
+        margin-bottom: 8px !important;
+    }
+
+    .business-card {
+        padding: 22px 16px !important;
+    }
+
+    .airxpress-portals {
+        padding: 24px 14px !important;
+    }
+
+    .portal-card {
+        min-height: 82px !important;
+        padding: 12px !important;
+    }
+
+    .footer-container {
+        padding: 24px 16px 16px !important;
+    }
+}
+/* END AIRXPRESS HOMEPAGE SPACING REFINEMENT */
+</style>
 </head>
 
 <body>
@@ -2316,24 +2431,22 @@ section:not(.hero) {
 ============================== -->
 
 <!-- TECHNOLOGY PARTNER: EDVANCE TECH -->
-<section id="technology-partner" style="padding:12px 20px;background:#080808;border-top:1px solid #222;border-bottom:1px solid #222;">
-    <div style="max-width:1160px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
-        <span style="color:#9ca3af;font-size:11px;font-weight:600;letter-spacing:1px;">
+<section id="technology-partner" style="padding:16px 20px;background:linear-gradient(135deg,#0b0b0b,#15130c);border-top:1px solid rgba(245,197,66,.35);border-bottom:1px solid #222;">
+    <div style="max-width:1160px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;">
+        <span style="color:#b8b8b8;font-size:11px;font-weight:700;letter-spacing:1px;">
             TECHNOLOGY PARTNER
         </span>
-        <span style="color:#444;">|</span>
+        <span style="color:#555;">|</span>
         <img
             src="{% static 'orders/images/EdVance Tech.png' %}"
             alt="EdVance Tech logo"
             loading="lazy"
-            style="width:42px;height:32px;object-fit:contain;background:#fff;border-radius:4px;"
+            style="width:54px;height:42px;object-fit:contain;background:#fff;border:1px solid rgba(245,197,66,.6);border-radius:6px;padding:2px;box-sizing:border-box;"
         >
-        <span style="color:#fff;font-size:13px;font-weight:700;">
-            EdVance Tech
-        </span>
-        <span style="color:#9ca3af;font-size:12px;">
-            Technology for a Brighter Tomorrow
-        </span>
+        <div style="display:flex;flex-direction:column;gap:3px;">
+            <strong style="color:#fff;font-size:14px;letter-spacing:.2px;">EdVance Tech</strong>
+            <span style="color:#c2b27a;font-size:12px;">Powered by innovation</span>
+        </div>
     </div>
 </section>
 <footer>
@@ -2414,7 +2527,7 @@ section:not(.hero) {
         <div class="footer-bottom">
 
             <span>
-    &copy; {% now "Y" %} AirXpress Eats &middot; Powered by AirXpress Eats &nbsp; <a href="{% url 'admin:index' %}" title="Django Admin" style="text-decoration:none;font-size:13px;opacity:.65;">&#128274;</a>
+    &copy; {% now "Y" %} AirXpress Eats &middot; Powered by <strong class="footer-powered-brand">EdVance Tech</strong> &nbsp; <a href="{% url 'admin:index' %}" title="Django Admin" style="text-decoration:none;font-size:13px;opacity:.65;">&#128274;</a>
 </span>
 
         </div>
