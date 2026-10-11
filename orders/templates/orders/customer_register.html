@@ -83,6 +83,84 @@
             border-radius: 8px;
             margin-bottom: 15px;
         }
+
+        .terms-trigger {
+            display: inline;
+            width: auto;
+            margin: 0;
+            padding: 0;
+            background: none;
+            color: #198754;
+            font-size: inherit;
+            font-weight: bold;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .terms-check {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 18px;
+            font-weight: normal;
+            line-height: 1.5;
+        }
+
+        .terms-check input {
+            width: 18px;
+            min-width: 18px;
+            height: 18px;
+            margin-top: 3px;
+        }
+
+        .terms-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(0,0,0,0.65);
+            padding: 18px;
+            box-sizing: border-box;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .terms-modal.open {
+            display: flex;
+        }
+
+        .terms-content {
+            background: #fff;
+            width: 100%;
+            max-width: 650px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 24px;
+            border-radius: 14px;
+            box-sizing: border-box;
+        }
+
+        .terms-content h2 {
+            margin-top: 0;
+        }
+
+        .terms-content h3 {
+            margin-bottom: 6px;
+        }
+
+        .terms-content p,
+        .terms-content li {
+            line-height: 1.6;
+        }
+
+        .terms-content .agree-button {
+            background: #198754;
+        }
+
+        .terms-content .close-button {
+            background: #666;
+            margin-top: 10px;
+        }
     </style>
 </head>
 
@@ -137,6 +215,16 @@
         {{ form.password2 }}
         {{ form.password2.errors }}
 
+        <label class="terms-check">
+            <input type="checkbox" name="accept_terms" id="accept_terms" required>
+            <span>
+                I have read and agree to the
+                <button type="button" class="terms-trigger" id="openTerms">
+                    AirXpress Eats Terms and Conditions
+                </button>.
+            </span>
+        </label>
+
         <button type="submit">
             CREATE ACCOUNT
         </button>
@@ -148,6 +236,125 @@
     </div>
 
 </div>
+
+<div class="terms-modal" id="termsModal" role="dialog"
+     aria-modal="true" aria-labelledby="termsTitle">
+    <div class="terms-content">
+        <h2 id="termsTitle">AirXpress Eats Terms and Conditions</h2>
+        <p>Please read these terms before creating your account.</p>
+
+        <h3>1. Account information</h3>
+        <p>You must provide accurate information, including your name,
+        email address and contact number. Keep your password secure and
+        notify AirXpress Eats if you suspect unauthorised account access.</p>
+
+        <h3>2. Orders and payments</h3>
+        <p>Please review your order, delivery address, fees and total before
+        placing it. Orders are subject to confirmation and availability.
+        Applicable charges will be shown during checkout.</p>
+
+        <h3>3. Delivery and collection</h3>
+        <p>Provide a correct delivery address and reachable contact number.
+        Delivery times may vary due to traffic, weather, shop preparation
+        and other circumstances outside our reasonable control.</p>
+
+        <h3>4. Cancellations and refunds</h3>
+        <p>Cancellation and refund requests will be assessed according to
+        the order status, circumstances and applicable consumer law.
+        Please contact AirXpress Eats support promptly if there is a
+        problem with an order. The separate Refund Policy provides further
+        information.</p>
+
+        <h3>5. Appropriate use</h3>
+        <p>Do not use the platform for unlawful activity, provide
+        deliberately misleading information, or interfere with the
+        operation or security of the service.</p>
+
+        <h3>6. Privacy</h3>
+        <p>Your account information will be handled in accordance with
+        the applicable privacy requirements and AirXpress Eats privacy
+        practices. Provide only accurate information needed for your account
+        and orders.</p>
+
+        <h3>7. Changes and support</h3>
+        <p>Platform features and these terms may be updated when necessary.
+        Material changes should be communicated appropriately. Contact
+        AirXpress Eats support if you need clarification before agreeing.</p>
+
+        <p><strong>Important:</strong> These are draft terms and should be
+        reviewed against your actual business practices and applicable
+        South African consumer and privacy laws before launch.</p>
+
+        <button type="button" class="agree-button" id="agreeTerms">
+            I AGREE &amp; CONTINUE
+        </button>
+        <button type="button" class="close-button" id="closeTerms">
+            CLOSE WITHOUT AGREEING
+        </button>
+    </div>
+</div>
+
+<script>
+(function () {
+    const modal = document.getElementById("termsModal");
+    const openButton = document.getElementById("openTerms");
+    const agreeButton = document.getElementById("agreeTerms");
+    const closeButton = document.getElementById("closeTerms");
+    const checkbox = document.getElementById("accept_terms");
+    let termsOpened = false;
+
+    // Customers must open the Terms popup before they can accept.
+    checkbox.disabled = true;
+
+    openButton.addEventListener("click", function () {
+        termsOpened = true;
+        modal.classList.add("open");
+    });
+
+    closeButton.addEventListener("click", function () {
+        modal.classList.remove("open");
+    });
+
+    agreeButton.addEventListener("click", function () {
+        if (!termsOpened) {
+            return;
+        }
+
+        checkbox.disabled = false;
+        checkbox.checked = true;
+        modal.classList.remove("open");
+        checkbox.focus();
+    });
+
+    modal.addEventListener("click", function (event) {
+        if (event.target === modal) {
+            modal.classList.remove("open");
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            modal.classList.remove("open");
+        }
+    });
+
+    document.querySelector("form").addEventListener("submit", function (event) {
+        if (!termsOpened || !checkbox.checked || checkbox.disabled) {
+            event.preventDefault();
+
+            alert(
+                "Please open and agree to the AirXpress Eats Terms and Conditions before creating your account."
+            );
+
+            if (!termsOpened) {
+                openButton.focus();
+            } else if (!checkbox.checked || checkbox.disabled) {
+                checkbox.focus();
+            }
+        }
+    });
+})();
+</script>
 
 </body>
 </html>

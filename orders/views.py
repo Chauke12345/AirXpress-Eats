@@ -177,6 +177,12 @@ def home(request):
     )
 
 
+
+def refund_policy(request):
+    """Display the public AirXpress Eats refund policy."""
+    return render(request, "orders/refund_policy.html")
+
+
 def add_to_cart(request, shop_slug, menu_item_id):
 
     shop = get_object_or_404(
@@ -1050,7 +1056,12 @@ def customer_register(request):
     if request.method == "POST":
         form = CustomerRegistrationForm(request.POST)
 
-        if form.is_valid():
+        if request.POST.get("accept_terms") != "on":
+            messages.error(
+                request,
+                "You must agree to the AirXpress Eats Terms and Conditions before creating an account.",
+            )
+        elif form.is_valid():
             user = form.save()
 
             login(
@@ -1633,8 +1644,19 @@ def track_order_status(request, tracking_token):
         else None
     )
 
+    history = [
+        {
+            "status": entry.status,
+            "status_display": entry.get_status_display(),
+            "notes": entry.notes,
+            "created_at": entry.created_at.isoformat() if entry.created_at else None,
+        }
+        for entry in order.status_history.all()
+    ]
+
     return JsonResponse(
         {
+            "history": history,
             "status": order.status,
             "status_display": order.get_status_display(),
 
@@ -4857,6 +4879,31 @@ def payfast_itn(request):
 
     payment_data = request.POST.dict()
 
+    # Reject notifications without a valid PayFast signature.
+    from .payfast import validate_itn_signature, validate_itn_with_payfast
+
+    if not validate_itn_signature(payment_data):
+        return JsonResponse(
+            {"status": "invalid_signature"},
+            status=400,
+        )
+
+    # Confirm the notification directly with PayFast.
+    if not validate_itn_with_payfast(payment_data):
+        return JsonResponse(
+            {"status": "payfast_validation_failed"},
+            status=400,
+        )
+
+    received_merchant_id = str(payment_data.get("merchant_id", "")).strip()
+    expected_merchant_id = str(settings.PAYFAST_MERCHANT_ID).strip()
+
+    if not received_merchant_id or received_merchant_id != expected_merchant_id:
+        return JsonResponse(
+            {"status": "merchant_mismatch"},
+            status=400,
+        )
+
     order_id = payment_data.get("m_payment_id")
 
     if not order_id:
@@ -5172,6 +5219,3 @@ def staff_dashboard_updates(request):
         "orders/staff_dashboard_updates.html",
         context,
     )
-
-
-

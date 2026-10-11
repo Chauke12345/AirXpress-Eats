@@ -314,69 +314,49 @@
 
             position: relative;
         }
-
         .logo-orbit {
             width: 440px;
             height: 440px;
-
             display: flex;
             align-items: center;
             justify-content: center;
-
             position: relative;
-
             border-radius: 50%;
-
-            border: 1px solid rgba(255,255,255,0.09);
-
-            background:
-                radial-gradient(
-                    circle,
-                    rgba(255,255,255,0.04),
-                    transparent 65%
-                );
+            border: 1px solid rgba(255,255,255,0.035);
+            background: radial-gradient(
+                circle,
+                rgba(0,150,255,0.10),
+                rgba(255,255,255,0.015) 48%,
+                transparent 72%
+            );
         }
 
         .logo-orbit::before {
             content: "";
-
             position: absolute;
-
             width: 360px;
             height: 360px;
-
             border-radius: 50%;
-
-            border: 1px solid rgba(255,255,255,0.07);
+            border: 1px solid rgba(0,160,255,0.10);
         }
 
         .logo-orbit::after {
             content: "";
-
             position: absolute;
-
             width: 500px;
             height: 500px;
-
             border-radius: 50%;
-
-            border: 1px solid rgba(255,255,255,0.035);
+            border: 1px solid rgba(255,255,255,0.02);
         }
 
         .main-brand-logo {
             width: 410px;
             max-width: 92%;
-
             height: auto;
-
             position: relative;
             z-index: 5;
-
             object-fit: contain;
-
-            filter:
-                drop-shadow(0 25px 35px rgba(0,0,0,0.75));
-
+            filter: drop-shadow(0 12px 25px rgba(0,120,255,0.18));
             transition: transform 0.3s ease;
         }
 
@@ -1536,7 +1516,204 @@
         font-size: 25px;
     }
 }
-        </style>
+
+/* CINEMATIC AIRXPRESS HERO OVERRIDE */
+.hero {
+    position: relative !important;
+    isolation: isolate;
+    overflow: hidden;
+    background-color: #080808 !important;
+    background-image:
+        linear-gradient(90deg,
+            rgba(0,0,0,.93) 0%,
+            rgba(0,0,0,.78) 38%,
+            rgba(0,0,0,.34) 72%,
+            rgba(0,0,0,.48) 100%),
+        url("/media/menu_items/beef_steak.jpg") !important;
+    background-size: cover !important;
+    background-position: center center !important;
+}
+
+.hero-container {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-badge {
+    border-color: #ff7900 !important;
+}
+
+.hero h1 {
+    text-shadow: 0 3px 22px rgba(0,0,0,.65);
+}
+
+.hero-actions a:first-child {
+    background: linear-gradient(135deg,#ff8a00,#ff4b00) !important;
+    border-color: #ff6800 !important;
+    color: #fff !important;
+    box-shadow: 0 8px 24px rgba(255,90,0,.24);
+}
+
+.logo-orbit {
+    background: radial-gradient(circle,rgba(255,111,0,.12),#050505 70%) !important;
+    border: 2px solid rgba(255,119,0,.85);
+    box-shadow:
+        0 0 18px rgba(255,94,0,.8),
+        0 0 55px rgba(255,94,0,.35),
+        inset 0 0 24px rgba(255,94,0,.16);
+}
+
+.logo-orbit::before {
+    border: 2px solid rgba(255,132,0,.7) !important;
+    box-shadow: 0 0 18px rgba(255,105,0,.5);
+}
+
+.logo-orbit::after {
+    border: 1px solid rgba(255,132,0,.35) !important;
+}
+
+.main-brand-logo {
+    filter: drop-shadow(0 0 12px rgba(255,111,0,.3));
+}
+
+@media (min-width: 951px) {
+    .hero {
+        background-position: center 55% !important;
+    }
+
+    .hero-container {
+        min-height: 620px;
+    }
+}
+
+@media (max-width: 650px) {
+    .hero {
+        background-image:
+            linear-gradient(rgba(0,0,0,.70),rgba(0,0,0,.84)),
+            url("/media/menu_items/beef_steak.jpg") !important;
+        background-size: cover !important;
+        background-position: center center !important;
+    }
+
+    .hero::before {
+        background-image: none !important;
+    }
+
+    .hero-container {
+        position: relative;
+        z-index: 2;
+    }
+
+    .logo-orbit {
+        border-width: 1px;
+        box-shadow:
+            0 0 12px rgba(255,94,0,.7),
+            0 0 30px rgba(255,94,0,.3);
+    }
+}
+/* END CINEMATIC AIRXPRESS HERO OVERRIDE */
+
+/* AIRXPRESS SMOOTH SCROLL */
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 90px;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+section[id],
+[id].section-header {
+    scroll-margin-top: 90px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+}
+
+/* END AIRXPRESS SMOOTH SCROLL */
+
+/* AIRXPRESS COMPACT HOMEPAGE */
+
+/* Reduce the height of the hero on desktop */
+@media (min-width: 951px) {
+    .hero-container {
+        min-height: 490px !important;
+        padding-top: 35px !important;
+        padding-bottom: 35px !important;
+        gap: 25px !important;
+    }
+
+    .hero-visual {
+        min-height: 360px !important;
+    }
+
+    .logo-orbit {
+        width: 350px !important;
+        height: 350px !important;
+    }
+
+    .logo-orbit::before {
+        width: 290px !important;
+        height: 290px !important;
+    }
+
+    .logo-orbit::after {
+        width: 400px !important;
+        height: 400px !important;
+    }
+
+    .main-brand-logo {
+        width: 320px !important;
+    }
+}
+
+/* Reduce excess vertical space between homepage sections */
+.search-section,
+.restaurants-section,
+.how-it-works-section,
+.partners-section,
+.testimonials-section,
+.contact-section {
+    scroll-margin-top: 80px;
+}
+
+/* Compact common section padding */
+section:not(.hero) {
+    scroll-margin-top: 80px;
+}
+
+.section-header {
+    margin-bottom: 18px !important;
+}
+
+/* Keep mobile sections compact */
+@media (max-width: 650px) {
+    .hero-container {
+        padding-top: 20px !important;
+        padding-bottom: 12px !important;
+    }
+
+    .hero-visual {
+        min-height: 155px !important;
+        height: 155px !important;
+    }
+
+    .logo-orbit {
+        width: 150px !important;
+        height: 150px !important;
+    }
+
+    .main-brand-logo {
+        width: 140px !important;
+    }
+}
+
+/* END AIRXPRESS COMPACT HOMEPAGE */
+</style>
 </head>
 
 <body>
@@ -1622,10 +1799,6 @@
 
             <a href="#restaurants"
    class="nav-button customer-nav-item">
-    <img
-        src="{% static 'orders/icons/customer-orders.png' %}"
-        alt=""
-        class="customer-nav-icon">
     <span>Order Food</span>
 </a>
 
@@ -1640,8 +1813,8 @@
     {% endif %}
     <a href="{% url 'customer_login' %}">Customer Login</a>
     <a href="{% url 'driver_login' %}">Driver Portal</a>
-    <a href="{% url 'staff_login' %}">Staff Portal</a>
-    <a href="{% url 'owner_login' %}">Owner Portal</a>
+    <a href="{% url 'staff_login' %}">Merchant Portal</a>
+    <a href="{% url 'owner_login' %}">Admin Portal</a>
 </div>
 
 <!-- AIRXPRESS PORTALS -->
@@ -1668,7 +1841,7 @@
             <a href="{% url 'staff_login' %}" class="portal-card">
                 <div class="portal-icon">S</div>
                 <div class="portal-content">
-                    <h3>Staff Portal</h3>
+                    <h3>Merchant Portal</h3>
                     <p>Manage orders, customers, shops and daily operations.</p>
                 </div>
                 <span class="portal-arrow">OPEN</span>
@@ -1677,7 +1850,7 @@
             <a href="{% url 'owner_login' %}" class="portal-card">
                 <div class="portal-icon">O</div>
                 <div class="portal-content">
-                    <h3>Owner Portal</h3>
+                    <h3>Admin Portal</h3>
                     <p>Monitor the business, drivers, payments and performance.</p>
                 </div>
                 <span class="portal-arrow">OPEN</span>
@@ -2145,6 +2318,27 @@
      FOOTER
 ============================== -->
 
+<!-- TECHNOLOGY PARTNER: EDVANCE TECH -->
+<section id="technology-partner" style="padding:12px 20px;background:#080808;border-top:1px solid #222;border-bottom:1px solid #222;">
+    <div style="max-width:1160px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
+        <span style="color:#9ca3af;font-size:11px;font-weight:600;letter-spacing:1px;">
+            TECHNOLOGY PARTNER
+        </span>
+        <span style="color:#444;">|</span>
+        <img
+            src="{% static 'orders/images/Edvance Tech.png' %}"
+            alt="EdVance Tech logo"
+            loading="lazy"
+            style="width:42px;height:32px;object-fit:contain;background:#fff;border-radius:4px;"
+        >
+        <span style="color:#fff;font-size:13px;font-weight:700;">
+            EdVance Tech
+        </span>
+        <span style="color:#9ca3af;font-size:12px;">
+            Technology for a Brighter Tomorrow
+        </span>
+    </div>
+</section>
 <footer>
 
     <div class="footer-container">
@@ -2188,6 +2382,13 @@
                     <a href="#how-it-works">
                         How It Works
                     </a>
+
+                    <a href="{% url 'refund_policy' %}"
+   title="Read our Refund and Cancellation Policy"
+   style="display:inline-flex;align-items:center;gap:7px;margin-top:6px;padding:7px 10px;background:#166534;color:#ffffff!important;border:1px solid #4ade80;border-radius:7px;font-size:13px;font-weight:600;text-decoration:none;">
+    <span aria-hidden="true" style="font-size:17px;line-height:1;">&#128176;</span>
+    <span>Refund Policy</span>
+</a>
 
                 </div>
 
@@ -2326,20 +2527,3 @@
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

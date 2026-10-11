@@ -1,4 +1,4 @@
-﻿import hashlib
+import hashlib
 from urllib.parse import quote_plus
 
 from django.conf import settings
@@ -155,3 +155,81 @@ def build_payment_data(
 
     return data
 
+
+# =========================================================
+# PAYFAST ITN SECURITY VALIDATION
+# =========================================================
+
+import hmac
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+
+
+def validate_itn_signature(payment_data):
+    """Verify the signature of an incoming PayFast ITN."""
+    received_signature = payment_data.get("signature", "")
+
+    if not received_signature:
+        return False
+
+    # PayFast ITN signing uses fields in received order,
+    # stopping immediately before the signature field.
+    fields = []
+
+    for key, value in payment_data.items():
+        if key == "signature":
+            break
+        if value is not None:
+            fields.append((key, str(value).strip()))
+
+    parameter_string = "&".join(
+        f"{key}={quote_plus(value, safe='')}"
+        for key, value in fields
+    )
+
+    passphrase = (settings.PAYFAST_PASSPHRASE or "").strip()
+    if passphrase:
+        parameter_string += (
+            "&passphrase=" + quote_plus(passphrase, safe="")
+        )
+
+    expected_signature = hashlib.md5(
+        parameter_string.encode("utf-8")
+    ).hexdigest()
+
+    return hmac.compare_digest(
+        expected_signature.lower(),
+        received_signature.strip().lower(),
+    )
+
+
+def validate_itn_with_payfast(payment_data):
+    """Ask PayFast to confirm an incoming ITN server-to-server."""
+    if settings.PAYFAST_SANDBOX:
+        validation_url = "https://sandbox.payfast.co.za/eng/query/validate"
+    else:
+        validation_url = "https://www.payfast.co.za/eng/query/validate"
+
+    fields = [
+        (key, value)
+        for key, value in payment_data.items()
+        if key != "signature" and value is not None
+    ]
+
+    body = urlencode(fields).encode("utf-8")
+    request = Request(
+        validation_url,
+        data=body,
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "AirXpress-Eats-PayFast-ITN",
+        },
+        method="POST",
+    )
+
+    try:
+        with urlopen(request, timeout=15) as response:
+            result = response.read(100).decode("utf-8").strip()
+            return response.status == 200 and result == "VALID"
+    except Exception:
+        return False

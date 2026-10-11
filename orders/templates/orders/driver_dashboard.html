@@ -1719,6 +1719,15 @@ function toggleDriverBanking() {
                 Open Google Maps Navigation
             </a>
 
+                <a
+                    href="https://waze.com/ul?ll={{ order.shop.latitude }},{{ order.shop.longitude }}&navigate=yes"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style="display:flex;align-items:center;justify-content:center;width:100%;box-sizing:border-box;margin-top:10px;padding:13px 16px;border-radius:11px;background:#33ccff;color:#111111;font-weight:900;text-decoration:none;font-size:14px;"
+                >
+                    Navigate with Waze
+                </a>
+
         {% else %}
 
             <div
@@ -2236,7 +2245,20 @@ function toggleDriverBanking() {
                 if (!response.ok || !data.success) {
                     console.error(
                         "GPS update rejected:",
+                        response.status,
                         data
+                    );
+                    updatePanelStatus(
+                        "GPS update rejected by server. Check the browser console."
+                    );
+                } else {
+                    console.log(
+                        "AirXpress GPS accepted:",
+                        data.latitude,
+                        data.longitude
+                    );
+                    updatePanelStatus(
+                        "Live GPS sent to AirXpress successfully."
                     );
                 }
             }
@@ -2537,6 +2559,16 @@ function toggleDriverBanking() {
             updatePanelStatus(message);
         }
 
+        if (!window.isSecureContext) {
+            updatePanelStatus(
+                "Live GPS requires HTTPS on this device. Open AirXpress Eats using a secure HTTPS address."
+            );
+            console.error(
+                "AirXpress GPS blocked: insecure browser context.",
+                window.location.href
+            );
+            return;
+        }
         if (!navigator.geolocation) {
             updatePanelStatus(
                 "This device does not support GPS location."
@@ -2558,6 +2590,28 @@ function toggleDriverBanking() {
                 timeout: 15000
             }
         );
+
+        /*
+         * AIRXPRESS LIVE GPS FALLBACK
+         * Request a fresh position every 10 seconds,
+         * even when watchPosition does not fire again.
+         */
+        if (!window.airxpressGpsHeartbeat) {
+            window.airxpressGpsHeartbeat = window.setInterval(
+                function() {
+                    navigator.geolocation.getCurrentPosition(
+                        handlePosition,
+                        handleError,
+                        {
+                            enableHighAccuracy: true,
+                            maximumAge: 0,
+                            timeout: 15000
+                        }
+                    );
+                },
+                10000
+            );
+        }
     }
 
     document.addEventListener(
@@ -2707,24 +2761,3 @@ function toggleDriverBanking() {
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

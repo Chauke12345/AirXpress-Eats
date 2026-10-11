@@ -25,6 +25,8 @@ urlpatterns = [
 
 
     # =========================================================
+    path("refund-policy/", views.refund_policy, name="refund_policy"),
+
     # PUBLIC PLATFORM HOMEPAGE
     # =========================================================
 

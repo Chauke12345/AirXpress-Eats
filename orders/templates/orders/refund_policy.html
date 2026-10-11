@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refund Policy | AirXpress Eats</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f7f6;
+            color: #26332b;
+            line-height: 1.7;
+        }
+        header {
+            background: #123d2a;
+            color: white;
+            padding: 22px 18px;
+        }
+        .header-inner, main, footer {
+            max-width: 900px;
+            margin: auto;
+        }
+        .brand {
+            font-size: 23px;
+            font-weight: bold;
+        }
+        .brand span { color: #61dc91; }
+        .back-link {
+            display: inline-block;
+            margin-top: 12px;
+            color: white;
+            text-decoration: none;
+        }
+        main {
+            padding: 32px 18px 48px;
+        }
+        .policy-card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 8px 28px rgba(0,0,0,.06);
+        }
+        .eyebrow {
+            color: #198754;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 12px;
+        }
+        h1 { line-height: 1.2; }
+        h2 {
+            margin-top: 28px;
+            font-size: 19px;
+            color: #123d2a;
+        }
+        .notice {
+            background: #eaf7ef;
+            border-left: 4px solid #198754;
+            padding: 14px 16px;
+            border-radius: 6px;
+        }
+        .support-link {
+            display: inline-block;
+            background: #198754;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+        footer {
+            padding: 20px 18px 30px;
+            color: #66736b;
+            font-size: 13px;
+        }
+        @media (max-width: 600px) {
+            .policy-card { padding: 20px 17px; }
+            h1 { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="header-inner">
+        <div class="brand">AirXpress <span>Eats</span></div>
+        <a class="back-link" href="{% url 'home' %}">&#8592; Back to homepage</a>
+    </div>
+</header>
+
+<main>
+    <article class="policy-card">
+        <div class="eyebrow">Customer information</div>
+        <h1>Refund and Cancellation Policy</h1>
+        <p>
+            We want customers to have a positive experience with AirXpress Eats.
+            This policy explains how to report an order problem and request
+            a cancellation or refund.
+        </p>
+
+        <div class="notice">
+            <strong>Please note:</strong> Refund requests are reviewed according
+            to the circumstances of the order and applicable consumer law.
+            Nothing in this policy removes rights that customers have under
+            applicable South African law.
+        </div>
+
+        <h2>1. Cancelling an order</h2>
+        <p>
+            If you need to cancel an order, contact the relevant shop or
+            AirXpress Eats support as soon as possible. Cancellation may be
+            more difficult once a shop has started preparing the order or
+            a driver has collected it. We will assess the request based on
+            the order's status and the circumstances.
+        </p>
+
+        <h2>2. Incorrect, missing or damaged items</h2>
+        <p>
+            If an order arrives with an incorrect or missing item, or an item
+            is damaged, contact support promptly. Please provide your order
+            details and a clear description of the problem. Photographs may
+            help us investigate where appropriate.
+        </p>
+
+        <h2>3. Late or undelivered orders</h2>
+        <p>
+            Delivery times can be affected by traffic, weather, shop
+            preparation and other circumstances. If your order has not arrived
+            or there is a significant delivery problem, contact support so
+            the order can be checked and an appropriate resolution considered.
+        </p>
+
+        <h2>4. Refund assessment</h2>
+        <p>
+            Each request is assessed individually. Depending on the facts,
+            possible resolutions may include a correction, replacement,
+            cancellation or refund where appropriate. A refund is not
+            guaranteed for every request, and any decision must comply with
+            applicable consumer law.
+        </p>
+
+        <h2>5. Refund processing</h2>
+        <p>
+            If a refund is approved, the payment method and processing time
+            will depend on the payment provider and transaction. Some refunds
+            may take additional time to appear in the customer's account.
+            We will communicate any relevant processing information available
+            to us.
+        </p>
+
+        <h2>6. How to request help</h2>
+        <p>
+            Contact AirXpress Eats support as soon as possible and provide
+            your order number, the contact details used for the order, and
+            a description of the issue. Keep any relevant receipts or
+            supporting evidence until the matter is resolved.
+        </p>
+        <a class="support-link" href="{% url 'airxpress_help' %}">
+            Contact AirXpress Eats Support
+        </a>
+
+        <h2>7. Consumer rights</h2>
+        <p>
+            This policy is intended to explain our request process and must
+            be applied consistently with applicable South African law,
+            including any consumer rights that cannot lawfully be excluded.
+        </p>
+
+        <h2>8. Policy updates</h2>
+        <p>
+            AirXpress Eats may update this policy as its services and
+            procedures develop. Customers should review the current version
+            when using the platform.
+        </p>
+
+        <p><strong>AirXpress Eats</strong></p>
+    </article>
+</main>
+
+<footer>
+    &copy; {% now "Y" %} AirXpress Eats. All rights reserved.
+</footer>
+</body>
+</html>

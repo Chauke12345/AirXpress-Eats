@@ -30,3 +30,4 @@ airxpress_local_master*.json
 airxpress_master_ready.json
 airxpress_media.zip
 airxpress_menu_images.zip
+*.BEFORE_*

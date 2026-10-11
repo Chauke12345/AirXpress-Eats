@@ -556,7 +556,7 @@
                 white-space: normal;
             }
         }
-    
+
     /* =========================================================
        SHOP STATUS SUMMARY
        ========================================================= */
@@ -568,18 +568,63 @@
         margin-bottom: 25px;
     }
 
-    .shop-status-card {
-        background: #151515;
-        border: 1px solid #2b2b2b;
-        border-radius: 14px;
-        padding: 18px 16px;
-        min-height: 125px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.20);
-    }
+   .shop-status-card {
+    background: #151515;
+    border: 2px solid #555;
+    border-radius: 14px;
+    padding: 18px 16px;
+    min-height: 125px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.30);
+    transition: background 0.25s ease, border-color 0.25s ease;
+}
 
+/* NEW ORDERS - AMBER */
+.shop-status-card:has(.shop-status-label) {
+    border-color: #FBBF24;
+}
+
+/* PREPARING - BLUE */
+.shop-status-card:nth-child(2) {
+    background: #172554;
+    border-color: #3B82F6;
+}
+
+/* READY - PURPLE */
+.shop-status-card:nth-child(3) {
+    background: #3B0764;
+    border-color: #C084FC;
+}
+
+/* DRIVER ASSIGNED - PINK */
+.shop-status-card:nth-child(4) {
+    background: #500724;
+    border-color: #F472B6;
+}
+
+/* MAKE THE NUMBERS AND LABELS CLEAR */
+.shop-status-card .shop-status-label,
+.shop-status-card .shop-status-number,
+.shop-status-card .shop-status-subtitle {
+    color: #FFFFFF;
+}
+
+.shop-status-card .shop-status-number {
+    font-size: 32px;
+    font-weight: 900;
+}
+
+.shop-status-card .shop-status-label {
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.shop-status-card .shop-status-subtitle {
+    font-size: 13px;
+    opacity: 0.95;
+}
     .shop-status-label {
         font-size: 13px;
         font-weight: 700;
@@ -1507,7 +1552,134 @@
     }
 }
 
-</style>
+
+
+
+        /* HIGH VISIBILITY STATUS OVERRIDES */
+
+        .status-box {
+            border: 3px solid !important;
+            border-left-width: 14px !important;
+            border-radius: 12px !important;
+            padding: 16px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.18) !important;
+        }
+
+        .status-box .status-value {
+            display: inline-block !important;
+            padding: 10px 16px !important;
+            border-radius: 8px !important;
+            color: #FFFFFF !important;
+            font-size: 20px !important;
+            font-weight: 900 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+        }
+
+        .status-new {
+            border-color: #D97706 !important;
+            background: #FBBF24 !important;
+        }
+        .status-new .status-value { background: #92400E !important; }
+
+        .status-preparing {
+            border-color: #1D4ED8 !important;
+            background: #60A5FA !important;
+        }
+        .status-preparing .status-value { background: #1E3A8A !important; }
+
+        .status-ready {
+            border-color: #7E22CE !important;
+            background: #C084FC !important;
+        }
+        .status-ready .status-value { background: #581C87 !important; }
+
+        .status-driver_assigned {
+            border-color: #BE185D !important;
+            background: #F472B6 !important;
+        }
+        .status-driver_assigned .status-value { background: #831843 !important; }
+
+        .status-picked_up {
+            border-color: #0F766E !important;
+            background: #5EEAD4 !important;
+        }
+        .status-picked_up .status-value { background: #134E4A !important; }
+
+        .status-delivered,
+        .status-collected {
+            border-color: #15803D !important;
+            background: #4ADE80 !important;
+        }
+        .status-delivered .status-value,
+        .status-collected .status-value { background: #14532D !important; }
+
+        .status-cancelled {
+            border-color: #B91C1C !important;
+            background: #F87171 !important;
+        }
+        .status-cancelled .status-value { background: #7F1D1D !important; }
+
+
+        /* LIVE ORDER STATUS BADGE COLOURS */
+
+        .order-status {
+            display: inline-block !important;
+            padding: 10px 16px !important;
+            border-radius: 10px !important;
+            border: 3px solid currentColor !important;
+            font-size: 16px !important;
+            font-weight: 900 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.4px !important;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.18) !important;
+        }
+
+        .order-status.status-new {
+            background: #FBBF24 !important;
+            border-color: #B45309 !important;
+            color: #78350F !important;
+        }
+
+        .order-status.status-preparing {
+            background: #2563EB !important;
+            border-color: #1E3A8A !important;
+            color: #FFFFFF !important;
+        }
+
+        .order-status.status-ready {
+            background: #9333EA !important;
+            border-color: #581C87 !important;
+            color: #FFFFFF !important;
+        }
+
+        .order-status.status-driver_assigned {
+            background: #DB2777 !important;
+            border-color: #831843 !important;
+            color: #FFFFFF !important;
+        }
+
+        .order-status.status-picked_up {
+            background: #0F766E !important;
+            border-color: #134E4A !important;
+            color: #FFFFFF !important;
+        }
+
+        .order-status.status-delivered,
+        .order-status.status-collected {
+            background: #16A34A !important;
+            border-color: #14532D !important;
+            color: #FFFFFF !important;
+        }
+
+        .order-status.status-cancelled {
+            background: #DC2626 !important;
+            border-color: #7F1D1D !important;
+            color: #FFFFFF !important;
+        }
+
+
+    </style>
 <style>
 .icon-nav-link {
     display: inline-flex;
@@ -1772,6 +1944,76 @@
     }
 }
 
+
+/* STATUS-ONLY COLOUR FIX */
+#staff-status-summary .shop-status-card:nth-child(1) {
+    background: #FACC15 !important;
+    border-color: #EAB308 !important;
+}
+#staff-status-summary .shop-status-card:nth-child(2) {
+    background: #2563EB !important;
+    border-color: #1D4ED8 !important;
+}
+#staff-status-summary .shop-status-card:nth-child(3) {
+    background: #9333EA !important;
+    border-color: #7E22CE !important;
+}
+#staff-status-summary .shop-status-card:nth-child(4) {
+    background: #EC4899 !important;
+    border-color: #DB2777 !important;
+}
+#staff-status-summary .shop-status-card:nth-child(5) {
+    background: #0D9488 !important;
+    border-color: #0F766E !important;
+}
+#staff-status-summary .shop-status-card:nth-child(6) {
+    background: #16A34A !important;
+    border-color: #15803D !important;
+}
+
+/* ENFORCED CURRENT STATUS COLOURS */
+#staff-orders-container .meta-box.status-box.status-new,
+.meta-box.status-box.status-new {
+    background-color: #FACC15 !important;
+    border: 3px solid #EAB308 !important;
+}
+#staff-orders-container .meta-box.status-box.status-preparing,
+.meta-box.status-box.status-preparing {
+    background-color: #2563EB !important;
+    border: 3px solid #1D4ED8 !important;
+}
+#staff-orders-container .meta-box.status-box.status-ready,
+.meta-box.status-box.status-ready {
+    background-color: #9333EA !important;
+    border: 3px solid #7E22CE !important;
+}
+#staff-orders-container .meta-box.status-box.status-driver_assigned,
+.meta-box.status-box.status-driver_assigned {
+    background-color: #EC4899 !important;
+    border: 3px solid #DB2777 !important;
+}
+#staff-orders-container .meta-box.status-box.status-picked_up,
+.meta-box.status-box.status-picked_up {
+    background-color: #0D9488 !important;
+    border: 3px solid #0F766E !important;
+}
+#staff-orders-container .meta-box.status-box.status-delivered,
+#staff-orders-container .meta-box.status-box.status-collected,
+.meta-box.status-box.status-delivered,
+.meta-box.status-box.status-collected {
+    background-color: #16A34A !important;
+    border: 3px solid #15803D !important;
+}
+#staff-orders-container .meta-box.status-box.status-cancelled,
+.meta-box.status-box.status-cancelled {
+    background-color: #DC2626 !important;
+    border: 3px solid #B91C1C !important;
+}
+#staff-orders-container .meta-box.status-box .status-value,
+.meta-box.status-box .status-value {
+    color: #FFFFFF !important;
+    font-weight: 900 !important;
+}
 </style>
     <link
         rel="icon"
@@ -2043,7 +2285,7 @@
     <div id="staff-orders-container">
     {% for order in orders %}
 
-    
+
 
         <section class="order-card">
 
@@ -2683,6 +2925,3 @@
 
 })();
 </script>
-
-
-

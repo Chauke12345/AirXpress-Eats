@@ -47,7 +47,7 @@
                 <p>{{ order.created_at|date:"d M Y H:i" }}</p>
             </div>
 
-            <div class="order-status">
+            <div class="order-status status-{{ order.status }}">
                 {{ order.get_status_display }}
             </div>
         </div>

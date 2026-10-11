@@ -636,6 +636,250 @@
     color: #f7f7f7 !important;
 }
 </style>
+
+<style id="airxpress-vibrant-status-colours">
+    .current-status {
+        border: 3px solid #F59E0B !important;
+        background: linear-gradient(135deg, #422006, #78350F) !important;
+        border-radius: 18px !important;
+        box-shadow: 0 0 24px rgba(245,158,11,.35) !important;
+        transition: background .3s ease, border-color .3s ease, box-shadow .3s ease;
+    }
+
+    .current-status-label {
+        color: #FFFFFF !important;
+        font-weight: 800 !important;
+    }
+
+    .current-status-value {
+        color: #FBBF24 !important;
+        font-size: 28px !important;
+        font-weight: 900 !important;
+        text-shadow: 0 0 12px rgba(251,191,36,.25);
+        overflow-wrap: anywhere;
+    }
+
+    .current-status.status-new {
+        background: linear-gradient(135deg, #422006, #92400E) !important;
+        border-color: #F59E0B !important;
+        box-shadow: 0 0 26px rgba(245,158,11,.4) !important;
+    }
+    .current-status.status-new .current-status-value {
+        color: #FCD34D !important;
+    }
+
+    .current-status.status-preparing {
+        background: linear-gradient(135deg, #172554, #1D4ED8) !important;
+        border-color: #60A5FA !important;
+        box-shadow: 0 0 26px rgba(59,130,246,.4) !important;
+    }
+    .current-status.status-preparing .current-status-value {
+        color: #FFFFFF !important;
+    }
+
+    .current-status.status-ready,
+    .current-status.status-driver-assigned {
+        background: linear-gradient(135deg, #3B0764, #7E22CE) !important;
+        border-color: #C084FC !important;
+        box-shadow: 0 0 26px rgba(168,85,247,.4) !important;
+    }
+    .current-status.status-ready .current-status-value,
+    .current-status.status-driver-assigned .current-status-value {
+        color: #FFFFFF !important;
+    }
+
+    .current-status.status-picked-up {
+        background: linear-gradient(135deg, #7C2D12, #EA580C) !important;
+        border-color: #FDBA74 !important;
+        box-shadow: 0 0 26px rgba(249,115,22,.4) !important;
+    }
+    .current-status.status-picked-up .current-status-value {
+        color: #FFFFFF !important;
+    }
+
+    .current-status.status-delivered,
+    .current-status.status-collected {
+        background: linear-gradient(135deg, #052E16, #15803D) !important;
+        border-color: #4ADE80 !important;
+        box-shadow: 0 0 26px rgba(34,197,94,.4) !important;
+    }
+    .current-status.status-delivered .current-status-value,
+    .current-status.status-collected .current-status-value {
+        color: #FFFFFF !important;
+    }
+
+    .current-status.status-cancelled {
+        background: linear-gradient(135deg, #450A0A, #B91C1C) !important;
+        border-color: #FCA5A5 !important;
+        box-shadow: 0 0 26px rgba(239,68,68,.4) !important;
+    }
+    .current-status.status-cancelled .current-status-value {
+        color: #FFFFFF !important;
+    }
+
+    #tracking-refresh-indicator {
+        display: block;
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #172554;
+        color: #BFDBFE;
+        border: 1px solid #3B82F6;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    #tracking-refresh-indicator.refresh-error {
+        background: #450A0A;
+        color: #FECACA;
+        border-color: #EF4444;
+    }
+
+    #tracking-refresh-indicator.refresh-ok {
+        background: #052E16;
+        color: #BBF7D0;
+        border-color: #22C55E;
+    }
+
+    .timeline-item.current .timeline-content {
+        border: 2px solid #FBBF24 !important;
+        box-shadow: 0 0 18px rgba(251,191,36,.2) !important;
+    }
+
+    .timeline-item.completed .timeline-dot {
+        background: #22C55E !important;
+        border-color: #86EFAC !important;
+        box-shadow: 0 0 0 4px rgba(34,197,94,.2) !important;
+    }
+</style>
+
+<style id="airxpress-individual-timeline-colours">
+    /* Order received - AMBER */
+    .timeline-item.status-new .timeline-dot {
+        background: #F59E0B !important;
+        border: 3px solid #FDE68A !important;
+        box-shadow: 0 0 0 4px rgba(245,158,11,.25), 0 0 15px rgba(245,158,11,.65) !important;
+    }
+
+    /* Preparing - BLUE */
+    .timeline-item.status-preparing .timeline-dot {
+        background: #3B82F6 !important;
+        border: 3px solid #BFDBFE !important;
+        box-shadow: 0 0 0 4px rgba(59,130,246,.25), 0 0 15px rgba(59,130,246,.65) !important;
+    }
+
+    /* Ready - PURPLE */
+    .timeline-item.status-ready .timeline-dot {
+        background: #A855F7 !important;
+        border: 3px solid #E9D5FF !important;
+        box-shadow: 0 0 0 4px rgba(168,85,247,.25), 0 0 15px rgba(168,85,247,.65) !important;
+    }
+
+    /* Driver assigned - PINK */
+    .timeline-item.status-driver-assigned .timeline-dot {
+        background: #EC4899 !important;
+        border: 3px solid #FBCFE8 !important;
+        box-shadow: 0 0 0 4px rgba(236,72,153,.25), 0 0 15px rgba(236,72,153,.65) !important;
+    }
+
+    /* Picked up - ORANGE */
+    .timeline-item.status-picked-up .timeline-dot {
+        background: #F97316 !important;
+        border: 3px solid #FED7AA !important;
+        box-shadow: 0 0 0 4px rgba(249,115,22,.25), 0 0 15px rgba(249,115,22,.65) !important;
+    }
+
+    /* Delivered or collected - GREEN */
+    .timeline-item.status-delivered .timeline-dot,
+    .timeline-item.status-collected .timeline-dot {
+        background: #22C55E !important;
+        border: 3px solid #BBF7D0 !important;
+        box-shadow: 0 0 0 4px rgba(34,197,94,.25), 0 0 15px rgba(34,197,94,.65) !important;
+    }
+
+    /* Cancelled - RED */
+    .timeline-item.status-cancelled .timeline-dot {
+        background: #EF4444 !important;
+        border: 3px solid #FECACA !important;
+        box-shadow: 0 0 0 4px rgba(239,68,68,.25), 0 0 15px rgba(239,68,68,.65) !important;
+    }
+
+    /* Match each timeline card's left border to its status. */
+    .timeline-item.status-new .timeline-content {
+        border-left: 4px solid #F59E0B !important;
+    }
+
+    .timeline-item.status-preparing .timeline-content {
+        border-left: 4px solid #3B82F6 !important;
+    }
+
+    .timeline-item.status-ready .timeline-content {
+        border-left: 4px solid #A855F7 !important;
+    }
+
+    .timeline-item.status-driver-assigned .timeline-content {
+        border-left: 4px solid #EC4899 !important;
+    }
+
+    .timeline-item.status-picked-up .timeline-content {
+        border-left: 4px solid #F97316 !important;
+    }
+
+    .timeline-item.status-delivered .timeline-content,
+    .timeline-item.status-collected .timeline-content {
+        border-left: 4px solid #22C55E !important;
+    }
+
+    .timeline-item.status-cancelled .timeline-content {
+        border-left: 4px solid #EF4444 !important;
+    }
+</style>
+<style id="airxpress-final-status-colour-override">
+.timeline-item.completed.status-new .timeline-dot,
+.timeline-item.current.status-new .timeline-dot {
+    background: #F59E0B !important;
+    border: 3px solid #FDE68A !important;
+    box-shadow: 0 0 0 4px rgba(245,158,11,.25) !important;
+}
+.timeline-item.completed.status-preparing .timeline-dot,
+.timeline-item.current.status-preparing .timeline-dot {
+    background: #3B82F6 !important;
+    border: 3px solid #BFDBFE !important;
+    box-shadow: 0 0 0 4px rgba(59,130,246,.25) !important;
+}
+.timeline-item.completed.status-ready .timeline-dot,
+.timeline-item.current.status-ready .timeline-dot {
+    background: #A855F7 !important;
+    border: 3px solid #E9D5FF !important;
+    box-shadow: 0 0 0 4px rgba(168,85,247,.25) !important;
+}
+.timeline-item.completed.status-driver-assigned .timeline-dot,
+.timeline-item.current.status-driver-assigned .timeline-dot {
+    background: #EC4899 !important;
+    border: 3px solid #FBCFE8 !important;
+    box-shadow: 0 0 0 4px rgba(236,72,153,.25) !important;
+}
+.timeline-item.completed.status-picked-up .timeline-dot,
+.timeline-item.current.status-picked-up .timeline-dot {
+    background: #F97316 !important;
+    border: 3px solid #FED7AA !important;
+    box-shadow: 0 0 0 4px rgba(249,115,22,.25) !important;
+}
+.timeline-item.completed.status-delivered .timeline-dot,
+.timeline-item.current.status-delivered .timeline-dot,
+.timeline-item.completed.status-collected .timeline-dot,
+.timeline-item.current.status-collected .timeline-dot {
+    background: #22C55E !important;
+    border: 3px solid #BBF7D0 !important;
+    box-shadow: 0 0 0 4px rgba(34,197,94,.25) !important;
+}
+.timeline-item.completed.status-cancelled .timeline-dot,
+.timeline-item.current.status-cancelled .timeline-dot {
+    background: #EF4444 !important;
+    border: 3px solid #FECACA !important;
+    box-shadow: 0 0 0 4px rgba(239,68,68,.25) !important;
+}
+</style>
 </head>
 
 <body>
@@ -662,7 +906,7 @@
     </div>
 
 
-    <div class="current-status">
+    <div class="current-status" id="current-status-card">
 
         <div class="current-status-label">
             Current Status
@@ -829,16 +1073,8 @@
           Contact AirXpress Support
       </a>
 
-
-
-    <a
-        href="{% url 'order_review' order_id=order.id %}"
-        class="back-link"
-    >
-        Place Another Order
-    </a>
       <a
-          href="{% url 'order_review' order_id=order.id %}"
+          href="{% url 'home' %}"
           class="done-button"
       >
           Done
@@ -884,7 +1120,22 @@
                   "top-right"
               );
 
-              customerMarker = new mapboxgl.Marker()
+              const customerHouseElement = document.createElement("div");
+              customerHouseElement.className = "airxpress-customer-house-marker";
+              customerHouseElement.innerHTML = "&#127968;";
+              customerHouseElement.style.width = "42px";
+              customerHouseElement.style.height = "42px";
+              customerHouseElement.style.display = "flex";
+              customerHouseElement.style.alignItems = "center";
+              customerHouseElement.style.justifyContent = "center";
+              customerHouseElement.style.fontSize = "34px";
+              customerHouseElement.style.filter = "drop-shadow(0 2px 3px rgba(0,0,0,0.35))";
+              customerHouseElement.style.cursor = "pointer";
+
+              customerMarker = new mapboxgl.Marker({
+                  element: customerHouseElement,
+                  anchor: "bottom"
+              })
                   .setLngLat([customerLon, customerLat])
                   .setPopup(
                       new mapboxgl.Popup().setText(
@@ -922,7 +1173,22 @@
           ];
 
           if (!customerMarker) {
-              customerMarker = new mapboxgl.Marker()
+              const customerHouseElement = document.createElement("div");
+              customerHouseElement.className = "airxpress-customer-house-marker";
+              customerHouseElement.innerHTML = "&#127968;";
+              customerHouseElement.style.width = "42px";
+              customerHouseElement.style.height = "42px";
+              customerHouseElement.style.display = "flex";
+              customerHouseElement.style.alignItems = "center";
+              customerHouseElement.style.justifyContent = "center";
+              customerHouseElement.style.fontSize = "34px";
+              customerHouseElement.style.filter = "drop-shadow(0 2px 3px rgba(0,0,0,0.35))";
+              customerHouseElement.style.cursor = "pointer";
+
+              customerMarker = new mapboxgl.Marker({
+                  element: customerHouseElement,
+                  anchor: "bottom"
+              })
                   .setLngLat(customerPoint)
                   .setPopup(
                       new mapboxgl.Popup().setText(
@@ -948,8 +1214,19 @@
               console.log("AirXpress ENFORCED driver position:", driverPoint);
 
               if (!driverMarker) {
+                  const scooterElement = document.createElement("div");
+                  scooterElement.className = "airxpress-scooter-map-marker";
+                  scooterElement.style.width = "76px";
+                  scooterElement.style.height = "58px";
+                  scooterElement.style.backgroundImage = "url('/static/orders/images/airxpress-scooter.png')";
+                  scooterElement.style.backgroundSize = "contain";
+                  scooterElement.style.backgroundRepeat = "no-repeat";
+                  scooterElement.style.backgroundPosition = "center";
+                  scooterElement.style.cursor = "pointer";
+
                   driverMarker = new mapboxgl.Marker({
-                      color: "#e53935"
+                      element: scooterElement,
+                      anchor: "center"
                   })
                       .setLngLat(driverPoint)
                       .setPopup(
@@ -1139,6 +1416,28 @@
     }
 
       function renderTracking(data) {
+          const statusCard = document.getElementById("current-status-card");
+          if (statusCard) {
+              const statusKey = String(data.status || "").toLowerCase().trim();
+              const statusClasses = {
+                  new: "status-new",
+                  preparing: "status-preparing",
+                  ready: "status-ready",
+                  driver_assigned: "status-driver-assigned",
+                  picked_up: "status-picked-up",
+                  delivered: "status-delivered",
+                  collected: "status-collected",
+                  cancelled: "status-cancelled"
+              };
+              statusCard.classList.remove(
+                  "status-new", "status-preparing", "status-ready",
+                  "status-driver-assigned", "status-picked-up",
+                  "status-delivered", "status-collected", "status-cancelled"
+              );
+              if (statusClasses[statusKey]) {
+                  statusCard.classList.add(statusClasses[statusKey]);
+              }
+          }
 
           if (statusElement) {
               statusElement.textContent =
@@ -1197,7 +1496,7 @@
               timelineElement.innerHTML =
                   data.history.map(
                       (item, index) => `
-                          <div class="timeline-item ${index === data.history.length - 1 ? "current" : "completed"}">
+                          <div class="timeline-item ${index === data.history.length - 1 ? "current" : "completed"} status-${String(item.status || "").toLowerCase().replace(/_/g, "-")}">
                               <div class="timeline-line"></div>
 
                               <div class="timeline-dot"></div>
@@ -1433,22 +1732,3 @@
 </body>
 
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
