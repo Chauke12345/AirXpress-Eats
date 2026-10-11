@@ -1,4 +1,4 @@
-from decimal import Decimal
+﻿from decimal import Decimal
 import uuid
 
 from django.contrib.auth.models import User
@@ -64,6 +64,22 @@ class Shop(models.Model):
 
     created_at = models.DateTimeField(
         auto_now_add=True
+    )
+    # Shop banking details for verified weekly payouts.
+    bank_name = models.CharField(max_length=100, blank=True)
+    account_holder_name = models.CharField(max_length=150, blank=True)
+    account_number = models.CharField(max_length=50, blank=True)
+    account_type = models.CharField(max_length=30, blank=True)
+    branch_code = models.CharField(max_length=20, blank=True)
+
+    banking_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", "Pending Verification"),
+            ("verified", "Verified"),
+            ("rejected", "Rejected"),
+        ],
+        default="pending",
     )
 
     def __str__(self):
@@ -535,6 +551,27 @@ class Order(models.Model):
         blank=True
     )
 
+    # Customer delivery OTP verification.
+    delivery_otp_hash = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+    )
+
+    delivery_otp_expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    delivery_otp_attempts = models.PositiveSmallIntegerField(
+        default=0,
+    )
+
+    delivery_otp_verified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
     delivery_address = models.TextField(
         blank=True
     )
@@ -926,6 +963,30 @@ class DriverPayout(models.Model):
         blank=True,
     )
 
+    payment_reference = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+
+    payment_notes = models.TextField(
+        blank=True,
+    )
+
+    statement_number = models.CharField(
+        max_length=50,
+        blank=True,
+        unique=True,
+        null=True,
+    )
+
+    batch = models.ForeignKey(
+        "DriverPayoutBatch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="payouts",
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
@@ -942,6 +1003,75 @@ class DriverPayout(models.Model):
             f"R{self.amount}"
         )
 
+
+# =========================================================
+# WEEKLY DRIVER PAYOUT BATCH
+# =========================================================
+
+class DriverPayoutBatch(models.Model):
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("paid", "Paid"),
+    ]
+
+    driver = models.ForeignKey(
+        Driver,
+        on_delete=models.PROTECT,
+        related_name="payout_batches",
+    )
+
+    week_start = models.DateField()
+    week_end = models.DateField()
+
+    total_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending",
+    )
+
+    payment_reference = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+
+    payment_notes = models.TextField(
+        blank=True,
+    )
+
+    statement_number = models.CharField(
+        max_length=50,
+        unique=True,
+    )
+
+    paid_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-week_start", "driver__name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["driver", "week_start", "week_end"],
+                name="unique_driver_weekly_payout_batch",
+            ),
+        ]
+
+    def __str__(self):
+        return (
+            f"Weekly payout - {self.driver.name} - "
+            f"{self.week_start} to {self.week_end}"
+        )
 
 # =========================================================
 # DELIVERY REQUEST
@@ -1078,3 +1208,104 @@ class OrderReview(models.Model):
             f"Review - Order #{self.order.id} - "
             f"{self.overall_rating}/5"
         )
+
+
+
+# =========================================================
+# SHOP PAYOUTS AND WEEKLY BATCHES
+# =========================================================
+
+class ShopPayoutBatch(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("paid", "Paid"),
+    ]
+
+    shop = models.ForeignKey(
+        Shop,
+        on_delete=models.PROTECT,
+        related_name="payout_batches",
+    )
+    week_start = models.DateField()
+    week_end = models.DateField()
+    total_food_sales = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal("0.00")
+    )
+    total_commission = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal("0.00")
+    )
+    total_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal("0.00")
+    )
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="pending"
+    )
+    payment_reference = models.CharField(max_length=100, blank=True)
+    payment_notes = models.TextField(blank=True)
+    statement_number = models.CharField(max_length=50, unique=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-week_start", "shop__name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["shop", "week_start", "week_end"],
+                name="unique_shop_weekly_payout_batch",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.shop.name} - {self.week_start} to {self.week_end}"
+
+
+class ShopPayout(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("paid", "Paid"),
+    ]
+
+    shop = models.ForeignKey(
+        Shop,
+        on_delete=models.PROTECT,
+        related_name="payouts",
+    )
+    order = models.OneToOneField(
+        Order,
+        on_delete=models.PROTECT,
+        related_name="shop_payout_record",
+    )
+    food_sales = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal("0.00")
+    )
+    commission = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal("0.00")
+    )
+    amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal("0.00")
+    )
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="pending"
+    )
+    payment_reference = models.CharField(max_length=100, blank=True)
+    payment_notes = models.TextField(blank=True)
+    statement_number = models.CharField(
+        max_length=50, unique=True, null=True, blank=True
+    )
+    batch = models.ForeignKey(
+        ShopPayoutBatch,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="payouts",
+    )
+    paid_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.shop.name} - Order #{self.order_id} - R{self.amount}"

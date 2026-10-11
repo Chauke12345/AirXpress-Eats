@@ -1,4 +1,9 @@
 import math
+import secrets
+import hashlib
+import hmac
+from datetime import timedelta
+from pathlib import Path
 from decimal import Decimal, InvalidOperation
 from django.contrib.auth.password_validation import validate_password
 
@@ -21,6 +26,12 @@ from django.contrib.auth.decorators import (
 from django.views.decorators.csrf import csrf_exempt
 
 from django.http import JsonResponse
+from django.http import HttpResponse
+from io import BytesIO
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+from reportlab.lib import colors
 from django.shortcuts import (
     render,
     redirect,
@@ -39,6 +50,9 @@ from .forms import (
 from .models import (
     Driver,
     DriverPayout,
+    DriverPayoutBatch,
+    ShopPayout,
+    ShopPayoutBatch,
     DeliveryRequest,
     DeliveryRate,
     MenuItem,
@@ -52,6 +66,66 @@ from .models import (
 )
 
 from .mapbox import MapboxError, calculate_driving_distance, calculate_driver_route
+from .services import send_delivery_otp_sms
+def _delivery_otp_hash(order_id, code):
+    """Hash a delivery OTP for one specific order."""
+    value = f"{order_id}:{code}".encode("utf-8")
+    return hashlib.sha256(value).hexdigest()
+
+
+def _generate_delivery_otp(order):
+    """Generate and store a short-lived customer delivery OTP."""
+    code = f"{secrets.randbelow(1_000_000):06d}"
+
+    order.delivery_otp_hash = _delivery_otp_hash(order.id, code)
+    order.delivery_otp_expires_at = timezone.now() + timedelta(minutes=10)
+    order.delivery_otp_attempts = 0
+    order.delivery_otp_verified_at = None
+
+    order.save(update_fields=[
+        "delivery_otp_hash",
+        "delivery_otp_expires_at",
+        "delivery_otp_attempts",
+        "delivery_otp_verified_at",
+        "updated_at",
+    ])
+
+    return code
+
+
+def _verify_delivery_otp(order, submitted_code):
+    """Verify a delivery OTP without exposing the stored code."""
+    if order.delivery_otp_verified_at:
+        return False, "This delivery has already been verified."
+
+    if not order.delivery_otp_hash or not order.delivery_otp_expires_at:
+        return False, "No active delivery code exists."
+
+    if order.delivery_otp_attempts >= 5:
+        return False, "Too many incorrect attempts. A new code is required."
+
+    if timezone.now() >= order.delivery_otp_expires_at:
+        return False, "The delivery code has expired. A new code is required."
+
+    order.delivery_otp_attempts += 1
+
+    expected_hash = order.delivery_otp_hash
+    submitted_hash = _delivery_otp_hash(order.id, submitted_code)
+
+    if not hmac.compare_digest(expected_hash, submitted_hash):
+        order.save(update_fields=["delivery_otp_attempts", "updated_at"])
+        return False, "Incorrect delivery code."
+
+    order.delivery_otp_verified_at = timezone.now()
+    order.save(update_fields=[
+        "delivery_otp_attempts",
+        "delivery_otp_verified_at",
+        "updated_at",
+    ])
+
+    return True, "Customer delivery code verified."
+
+
 # =========================================================
 # CUSTOMER ORDER PAGE
 # =========================================================
@@ -3405,6 +3479,68 @@ def staff_dashboard(request):
 
 
 
+
+# =========================================================
+# SHOP BANKING DETAILS
+# =========================================================
+
+@login_required(login_url="/staff/login/")
+def shop_banking_details(request):
+    profile = get_staff_profile(request.user)
+
+    if profile is None:
+        messages.error(request, "You are not authorised to access shop banking details.")
+        return redirect("staff_login")
+
+    shop = profile.shop
+
+    if request.method == "POST":
+        bank_name = request.POST.get("bank_name", "").strip()
+        account_holder_name = request.POST.get("account_holder_name", "").strip()
+        account_number = request.POST.get("account_number", "").strip()
+        account_type = request.POST.get("account_type", "").strip()
+        branch_code = request.POST.get("branch_code", "").strip()
+
+        if not all([
+            bank_name,
+            account_holder_name,
+            account_number,
+            account_type,
+            branch_code,
+        ]):
+            messages.error(request, "Please complete all banking fields.")
+        else:
+            changed = any([
+                shop.bank_name != bank_name,
+                shop.account_holder_name != account_holder_name,
+                shop.account_number != account_number,
+                shop.account_type != account_type,
+                shop.branch_code != branch_code,
+            ])
+
+            shop.bank_name = bank_name
+            shop.account_holder_name = account_holder_name
+            shop.account_number = account_number
+            shop.account_type = account_type
+            shop.branch_code = branch_code
+
+            if changed:
+                shop.banking_status = "pending"
+
+            shop.save()
+            messages.success(
+                request,
+                "Shop banking details saved. Verification status: "
+                + shop.get_banking_status_display() + ".",
+            )
+            return redirect("shop_banking_details")
+
+    return render(
+        request,
+        "orders/shop_banking_details.html",
+        {"shop": shop},
+    )
+
 # =========================================================
 # AUTOMATIC DRIVER DISPATCH HELPER
 # =========================================================
@@ -4200,8 +4336,22 @@ def owner_driver_payouts(request):
         or Decimal("0.00")
     )
 
+    from datetime import timedelta
+
+    today = timezone.localdate()
+    default_week_start = today - timedelta(days=today.weekday())
+
+    weekly_batches = (
+        DriverPayoutBatch.objects
+        .select_related("driver")
+        .prefetch_related("payouts__order__shop")
+        .order_by("-week_start", "driver__name")
+    )
+
     # =========================================================
     context = {
+        "weekly_batches": weekly_batches,
+        "default_week_start": default_week_start.isoformat(),
         "payouts": payouts,
         "pending_payouts": pending_payouts,
         "paid_payouts": paid_payouts,
@@ -4220,16 +4370,118 @@ def owner_driver_payouts(request):
     is_owner,
     login_url="/owner/login/"
 )
-def mark_driver_payout_paid(
-    request,
-    payout_id,
-):
 
+@user_passes_test(
+    is_owner,
+    login_url="/owner/login/"
+)
+def download_driver_payout_statement(request, payout_id):
+    payout = get_object_or_404(
+        DriverPayout.objects.select_related(
+            "driver",
+            "order",
+            "order__shop",
+        ),
+        id=payout_id,
+    )
+
+    if payout.status != "paid":
+        messages.error(
+            request,
+            "A statement is available only after the payout is recorded as paid.",
+        )
+        return redirect("owner_driver_payouts")
+
+    if not payout.statement_number:
+        payout.statement_number = f"AXD-{payout.id:06d}"
+        payout.save(update_fields=["statement_number", "updated_at"])
+
+    buffer = BytesIO()
+    document = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=45,
+        leftMargin=45,
+        topMargin=45,
+        bottomMargin=45,
+    )
+
+    styles = getSampleStyleSheet()
+    story = [
+        Paragraph("AIRXPRESS EATS", styles["Title"]),
+        Paragraph("Driver Payment Statement", styles["Heading2"]),
+        Spacer(1, 12),
+    ]
+
+    paid_date = (
+        payout.paid_at.strftime("%d %B %Y at %H:%M")
+        if payout.paid_at
+        else "-"
+    )
+
+    statement_data = [
+        ["Statement Number", payout.statement_number],
+        ["Driver", str(payout.driver.name)],
+        ["Order Number", f"#{payout.order.id}"],
+        ["Shop", str(payout.order.shop.name)],
+        ["Payment Status", "Paid"],
+        ["Amount Paid", f"R {payout.amount:,.2f}"],
+        ["Payment Date", paid_date],
+        ["Bank Transaction Reference", payout.payment_reference or "-"],
+        ["Payment Notes", payout.payment_notes or "-"],
+    ]
+
+    table = Table(statement_data, colWidths=[180, 320])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#EAF0F6")),
+        ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#172B4D")),
+        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 9),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 9),
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+    ]))
+
+    story.extend([
+        table,
+        Spacer(1, 18),
+        Paragraph(
+            "This statement records the payment details entered in AirXpress Eats. "
+            "It is not a bank-issued proof of transfer.",
+            styles["Normal"],
+        ),
+    ])
+
+    document.build(story)
+    pdf = buffer.getvalue()
+    buffer.close()
+
+    response = HttpResponse(pdf, content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f'attachment; filename="driver-payment-{payout.statement_number}.pdf"'
+    )
+    return response
+@user_passes_test(
+    is_owner,
+    login_url="/owner/login/"
+)
+def mark_driver_payout_paid(request, payout_id):
     if request.method != "POST":
         return redirect("owner_driver_payouts")
 
-    with transaction.atomic():
+    payment_reference = request.POST.get("payment_reference", "").strip()
+    payment_notes = request.POST.get("payment_notes", "").strip()
 
+    if not payment_reference:
+        messages.error(
+            request,
+            "Enter the bank transaction reference before confirming payment.",
+        )
+        return redirect("owner_driver_payouts")
+
+    with transaction.atomic():
         payout = get_object_or_404(
             DriverPayout.objects.select_for_update(),
             id=payout_id,
@@ -4242,11 +4494,38 @@ def mark_driver_payout_paid(
             )
             return redirect("owner_driver_payouts")
 
+        if payout.batch_id and payout.batch.status == "pending":
+            messages.error(
+                request,
+                f"Payout for Order #{payout.order.id} belongs to weekly batch "
+                f"{payout.batch.statement_number}. Process payment through the batch "
+                "to keep the weekly statement and individual records consistent.",
+            )
+            return redirect("owner_driver_payouts")
+
+        if not payout.driver.bank_name or not payout.driver.account_number:
+            messages.error(
+                request,
+                "This driver's bank details are incomplete. Payment was not marked as paid.",
+            )
+            return redirect("owner_driver_payouts")
+
+        if payout.driver.banking_status != "verified":
+            messages.error(
+                request,
+                "This driver's bank details must be verified before payment can be confirmed.",
+            )
+            return redirect("owner_driver_payouts")
+
+        payout.payment_reference = payment_reference
+        payout.payment_notes = payment_notes
         payout.status = "paid"
         payout.paid_at = timezone.now()
 
         payout.save(
             update_fields=[
+                "payment_reference",
+                "payment_notes",
                 "status",
                 "paid_at",
                 "updated_at",
@@ -4255,13 +4534,498 @@ def mark_driver_payout_paid(
 
     messages.success(
         request,
-        (
-            f"Driver payout for Order #{payout.order.id} "
-            f"has been marked as paid."
-        ),
+        f"Driver payout for Order #{payout.order.id} recorded as paid. Reference: {payment_reference}",
     )
+    return redirect("owner_driver_payouts")
+
+@user_passes_test(
+    is_owner,
+    login_url="/owner/login/"
+)
+def create_weekly_driver_payout_batches(request):
+    if request.method != "POST":
+        return redirect("owner_driver_payouts")
+
+    from datetime import date, timedelta
+
+    raw_week_start = request.POST.get("week_start", "").strip()
+
+    try:
+        week_start = date.fromisoformat(raw_week_start)
+    except (ValueError, TypeError):
+        messages.error(request, "Choose a valid Monday for the payout week.")
+        return redirect("owner_driver_payouts")
+
+    if week_start.weekday() != 0:
+        messages.error(request, "The payout week must start on a Monday.")
+        return redirect("owner_driver_payouts")
+
+    week_end = week_start + timedelta(days=6)
+    created_count = 0
+    assigned_count = 0
+    skipped_count = 0
+
+    with transaction.atomic():
+        eligible_payouts = list(
+            DriverPayout.objects.select_for_update()
+            .select_related("driver", "order", "order__shop")
+            .filter(
+                status="pending",
+                batch__isnull=True,
+                order__status__in=["delivered", "collected"],
+                order__payment_status="paid",
+            )
+            .order_by("driver_id", "id")
+        )
+
+        grouped = {}
+        for payout in eligible_payouts:
+            latest_history = payout.order.status_history.order_by(
+                "-created_at", "-id"
+            ).first()
+
+            if (
+                not latest_history
+                or latest_history.status not in ("delivered", "collected")
+            ):
+                skipped_count += 1
+                continue
+
+            completion_date = timezone.localtime(
+                latest_history.created_at
+            ).date()
+
+            if not (week_start <= completion_date <= week_end):
+                skipped_count += 1
+                continue
+
+            grouped.setdefault(payout.driver_id, []).append(payout)
+
+        for driver_id, driver_payouts in grouped.items():
+            driver = driver_payouts[0].driver
+            statement_number = f"AXWB-{driver.id}-{week_start:%Y%m%d}"
+
+            batch, created = DriverPayoutBatch.objects.get_or_create(
+                driver=driver,
+                week_start=week_start,
+                week_end=week_end,
+                defaults={
+                    "statement_number": statement_number,
+                    "status": "pending",
+                },
+            )
+
+            if created:
+                created_count += 1
+            elif batch.status != "pending":
+                skipped_count += len(driver_payouts)
+                continue
+
+            for payout in driver_payouts:
+                if payout.batch_id is not None or payout.status != "pending":
+                    skipped_count += 1
+                    continue
+
+                payout.batch = batch
+                payout.save(update_fields=["batch", "updated_at"])
+                assigned_count += 1
+
+            batch.total_amount = sum(
+                batch.payouts.filter(status="pending").values_list(
+                    "amount", flat=True
+                ),
+                Decimal("0.00"),
+            )
+            batch.save(update_fields=["total_amount", "updated_at"])
+
+    if assigned_count:
+        messages.success(
+            request,
+            f"Assigned {assigned_count} eligible payout(s) to "
+            f"{created_count} new batch(es) for "
+            f"{week_start:%d %b %Y} to {week_end:%d %b %Y}. "
+            "No payments were marked paid.",
+        )
+    else:
+        messages.info(
+            request,
+            "No eligible unassigned payouts were found for that week.",
+        )
+
+    if skipped_count:
+        messages.warning(
+            request,
+            f"{skipped_count} payout(s) were skipped because their status "
+            "or existing batch did not allow assignment.",
+        )
 
     return redirect("owner_driver_payouts")
+
+
+@user_passes_test(
+    is_owner,
+    login_url="/owner/login/"
+)
+def mark_driver_payout_batch_paid(request, batch_id):
+    if request.method != "POST":
+        return redirect("owner_driver_payouts")
+
+    payment_reference = request.POST.get("payment_reference", "").strip()
+    payment_notes = request.POST.get("payment_notes", "").strip()
+
+    if not payment_reference:
+        messages.error(request, "Enter the bank transaction reference.")
+        return redirect("owner_driver_payouts")
+
+    if request.POST.get("transfer_confirmed") != "yes":
+        messages.error(
+            request,
+            "Confirm that the bank transfer succeeded before recording payment.",
+        )
+        return redirect("owner_driver_payouts")
+
+    with transaction.atomic():
+        batch = get_object_or_404(
+            DriverPayoutBatch.objects.select_for_update().select_related("driver"),
+            id=batch_id,
+        )
+
+        if batch.status == "paid":
+            messages.info(
+                request,
+                f"Weekly batch {batch.statement_number} is already marked as paid.",
+            )
+            return redirect("owner_driver_payouts")
+
+        driver = batch.driver
+
+        if not driver.bank_name or not driver.account_number:
+            messages.error(
+                request,
+                "The driver's bank details are incomplete. No payment was recorded.",
+            )
+            return redirect("owner_driver_payouts")
+
+        if driver.banking_status != "verified":
+            messages.error(
+                request,
+                "The driver's banking details must be verified. No payment was recorded.",
+            )
+            return redirect("owner_driver_payouts")
+
+        payouts = list(
+            DriverPayout.objects.select_for_update()
+            .select_related("order")
+            .filter(batch_id=batch.id)
+            .order_by("id")
+        )
+
+        if not payouts:
+            messages.error(
+                request,
+                "This batch has no payouts. No payment was recorded.",
+            )
+            return redirect("owner_driver_payouts")
+
+        invalid_payouts = []
+
+        for payout in payouts:
+            latest_history = payout.order.status_history.order_by(
+                "-created_at", "-id"
+            ).first()
+
+            completion_date = (
+                timezone.localtime(latest_history.created_at).date()
+                if latest_history else None
+            )
+
+            if (
+                payout.status != "pending"
+                or payout.driver_id != driver.id
+                or payout.order.status not in ("delivered", "collected")
+                or payout.order.payment_status != "paid"
+                or not latest_history
+                or latest_history.status not in ("delivered", "collected")
+                or completion_date is None
+                or not (batch.week_start <= completion_date <= batch.week_end)
+            ):
+                invalid_payouts.append(payout)
+
+        if invalid_payouts:
+            messages.error(
+                request,
+                "The batch contains a payout that is already paid or is no longer "
+                "eligible. No records were changed; review the batch first.",
+            )
+            return redirect("owner_driver_payouts")
+
+        paid_at = timezone.now()
+
+        for payout in payouts:
+            if not payout.statement_number:
+                payout.statement_number = f"AXD-{payout.id:06d}"
+
+            payout.status = "paid"
+            payout.payment_reference = payment_reference
+            payout.payment_notes = payment_notes
+            payout.paid_at = paid_at
+            payout.save(
+                update_fields=[
+                    "statement_number",
+                    "status",
+                    "payment_reference",
+                    "payment_notes",
+                    "paid_at",
+                    "updated_at",
+                ]
+            )
+
+        batch.total_amount = sum(
+            (payout.amount for payout in payouts),
+            Decimal("0.00"),
+        )
+        batch.payment_reference = payment_reference
+        batch.payment_notes = payment_notes
+        batch.status = "paid"
+        batch.paid_at = paid_at
+        batch.save(
+            update_fields=[
+                "total_amount",
+                "payment_reference",
+                "payment_notes",
+                "status",
+                "paid_at",
+                "updated_at",
+            ]
+        )
+
+    messages.success(
+        request,
+        f"Weekly batch {batch.statement_number} recorded as paid for "
+        f"R{batch.total_amount:,.2f}. Reference: {payment_reference}",
+    )
+    return redirect("owner_driver_payouts")
+
+
+@user_passes_test(
+    is_owner,
+    login_url="/owner/login/"
+)
+def simulate_driver_payout_batch(request, batch_id):
+    """
+    Validate a weekly payout batch for testing without changing any records.
+    """
+    if request.method != "POST":
+        return redirect("owner_driver_payouts")
+
+    batch = get_object_or_404(
+        DriverPayoutBatch.objects.select_related("driver").prefetch_related(
+            "payouts__order"
+        ),
+        id=batch_id,
+    )
+
+    if batch.status != "pending":
+        messages.error(
+            request,
+            "Only pending batches can be simulated. No records were changed.",
+        )
+        return redirect("owner_driver_payouts")
+
+    payouts = list(batch.payouts.select_related("order").order_by("id"))
+
+    if not payouts:
+        messages.error(
+            request,
+            "The batch has no payouts to test. No records were changed.",
+        )
+        return redirect("owner_driver_payouts")
+
+    invalid_orders = []
+
+    for payout in payouts:
+        latest_history = payout.order.status_history.order_by(
+            "-created_at", "-id"
+        ).first()
+
+        completion_date = (
+            timezone.localtime(latest_history.created_at).date()
+            if latest_history else None
+        )
+
+        if (
+            payout.status != "pending"
+            or payout.driver_id != batch.driver_id
+            or payout.order.status not in ("delivered", "collected")
+            or payout.order.payment_status != "paid"
+            or not latest_history
+            or latest_history.status not in ("delivered", "collected")
+            or completion_date is None
+            or not (batch.week_start <= completion_date <= batch.week_end)
+        ):
+            invalid_orders.append(payout.order_id)
+
+    if invalid_orders:
+        messages.error(
+            request,
+            "SIMULATION FAILED ? NO REAL PAYMENT MADE. "
+            f"Review ineligible orders: {', '.join(map(str, invalid_orders))}. "
+            "No records were changed.",
+        )
+        return redirect("owner_driver_payouts")
+
+    simulated_total = sum(
+        (payout.amount for payout in payouts),
+        Decimal("0.00"),
+    )
+
+    messages.success(
+        request,
+        "SIMULATION PASSED ? NO REAL PAYMENT MADE. "
+        f"Batch {batch.statement_number}: {len(payouts)} payouts, "
+        f"total R{simulated_total:,.2f}. "
+        "All payout and payment records remain unchanged.",
+    )
+    return redirect("owner_driver_payouts")
+
+
+@user_passes_test(
+    is_owner,
+    login_url="/owner/login/"
+)
+def download_driver_payout_batch_statement(request, batch_id):
+    batch = get_object_or_404(
+        DriverPayoutBatch.objects.select_related("driver").prefetch_related(
+            "payouts__order__shop"
+        ),
+        id=batch_id,
+    )
+
+    if batch.status != "paid":
+        messages.error(
+            request,
+            "The weekly statement is available only after payment is recorded.",
+        )
+        return redirect("owner_driver_payouts")
+
+    payouts = list(batch.payouts.select_related("order", "order__shop").order_by("id"))
+
+    if not payouts:
+        messages.error(request, "This batch contains no payout records.")
+        return redirect("owner_driver_payouts")
+
+    buffer = BytesIO()
+    document = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=35,
+        leftMargin=35,
+        topMargin=40,
+        bottomMargin=40,
+    )
+
+    styles = getSampleStyleSheet()
+
+    logo_path = (
+        Path(__file__).resolve().parent.parent
+        / "static"
+        / "orders"
+        / "images"
+        / "Airxpress-main-logo.png"
+    )
+
+    story = []
+    if logo_path.exists():
+        logo = Image(str(logo_path), width=90, height=90, kind="proportional")
+        logo.hAlign = "CENTER"
+        story.append(logo)
+        story.append(Spacer(1, 8))
+
+    story.extend([
+        Paragraph("AIRXPRESS EATS", styles["Title"]),
+        Paragraph("Weekly Driver Payment Statement", styles["Heading2"]),
+        Spacer(1, 12),
+    ])
+
+    paid_date = (
+        batch.paid_at.strftime("%d %B %Y at %H:%M")
+        if batch.paid_at else "-"
+    )
+
+    details = [
+        ["Statement Number", batch.statement_number],
+        ["Driver", str(batch.driver.name)],
+        ["Payout Week", f"{batch.week_start:%d %B %Y} to {batch.week_end:%d %B %Y}"],
+        ["Payment Status", "Paid"],
+        ["Payment Date", paid_date],
+        ["Bank Transaction Reference", batch.payment_reference or "-"],
+        ["Payment Notes", batch.payment_notes or "-"],
+    ]
+
+    details_table = Table(details, colWidths=[165, 335])
+    details_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#EAF0F6")),
+        ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#172B4D")),
+        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 7),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+        ("TOPPADDING", (0, 0), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+    ]))
+
+    story.extend([
+        details_table,
+        Spacer(1, 18),
+        Paragraph("Included Orders", styles["Heading2"]),
+        Spacer(1, 8),
+    ])
+
+    order_rows = [["Order", "Shop", "Amount"]]
+    for payout in payouts:
+        order_rows.append([
+            f"#{payout.order.id}",
+            str(payout.order.shop.name),
+            f"R {payout.amount:,.2f}",
+        ])
+
+    order_rows.append(["", "TOTAL PAID", f"R {batch.total_amount:,.2f}"])
+
+    orders_table = Table(order_rows, colWidths=[65, 290, 100], repeatRows=1)
+    orders_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EAF0F6")),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (1, -1), (-1, -1), "Helvetica-Bold"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
+        ("ALIGN", (2, 1), (2, -1), "RIGHT"),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 7),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+        ("TOPPADDING", (0, 0), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+    ]))
+
+    story.extend([
+        orders_table,
+        Spacer(1, 18),
+        Paragraph(
+            "This statement records payment details entered in AirXpress Eats. "
+            "It is not a bank-issued proof of transfer.",
+            styles["Normal"],
+        ),
+    ])
+
+    document.build(story)
+    pdf = buffer.getvalue()
+    buffer.close()
+
+    response = HttpResponse(pdf, content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f'attachment; filename="weekly-driver-statement-{batch.statement_number}.pdf"'
+    )
+    return response
+
 
 @user_passes_test(
     is_owner,
@@ -5218,4 +5982,502 @@ def staff_dashboard_updates(request):
         request,
         "orders/staff_dashboard_updates.html",
         context,
+    )
+
+
+
+
+# =========================================================
+
+# =========================================================
+# SHOP PAYOUT TEST SIMULATION - READ ONLY
+# =========================================================
+
+@user_passes_test(is_owner, login_url="/owner/login/")
+def simulate_shop_payouts(request):
+    from datetime import date, timedelta
+    from decimal import ROUND_HALF_UP
+
+    if request.method != "POST":
+        return redirect("owner_shop_payouts")
+
+    try:
+        week_start = date.fromisoformat(request.POST.get("week_start", ""))
+    except (ValueError, TypeError):
+        messages.error(request, "Simulation failed: select a valid Monday.")
+        return redirect("owner_shop_payouts")
+
+    if week_start.weekday() != 0:
+        messages.error(request, "Simulation failed: the week must start on Monday.")
+        return redirect("owner_shop_payouts")
+
+    week_end = week_start + timedelta(days=6)
+    eligible_count = 0
+    blocked_count = 0
+    total_sales = Decimal("0.00")
+    total_commission = Decimal("0.00")
+    total_shop_payable = Decimal("0.00")
+    shop_totals = {}
+
+    orders = (
+        Order.objects.filter(
+            status__in=["delivered", "collected"],
+            payment_status="paid",
+        )
+        .select_related("shop")
+        .prefetch_related("items")
+        .order_by("shop__name", "id")
+    )
+
+    for order in orders:
+        latest_history = (
+            OrderStatusHistory.objects.filter(order=order)
+            .order_by("-created_at", "-id")
+            .first()
+        )
+
+        if (
+            not latest_history
+            or latest_history.status not in ["delivered", "collected"]
+        ):
+            continue
+
+        completed_date = timezone.localtime(
+            latest_history.created_at
+        ).date()
+
+        if not (week_start <= completed_date <= week_end):
+            continue
+
+        food_sales = sum(
+            (
+                item.final_amount
+                if item.final_amount is not None
+                else item.requested_amount
+                if item.requested_amount is not None
+                else item.unit_price or Decimal("0.00")
+            )
+            for item in order.items.all()
+        )
+        food_sales = Decimal(food_sales or 0).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+
+        if food_sales <= Decimal("0.00"):
+            blocked_count += 1
+            continue
+
+        existing = ShopPayout.objects.filter(order=order).first()
+        if existing:
+            blocked_count += 1
+            continue
+
+        commission = (food_sales * Decimal("0.15")).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+        shop_amount = (food_sales - commission).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+
+        shop_key = order.shop_id
+        if shop_key not in shop_totals:
+            shop_totals[shop_key] = {
+                "name": order.shop.name,
+                "orders": 0,
+                "sales": Decimal("0.00"),
+                "commission": Decimal("0.00"),
+                "payable": Decimal("0.00"),
+            }
+
+        shop_totals[shop_key]["orders"] += 1
+        shop_totals[shop_key]["sales"] += food_sales
+        shop_totals[shop_key]["commission"] += commission
+        shop_totals[shop_key]["payable"] += shop_amount
+
+        eligible_count += 1
+        total_sales += food_sales
+        total_commission += commission
+        total_shop_payable += shop_amount
+
+    lines = [
+        f"{value['name']}: {value['orders']} orders, "
+        f"food sales R{value['sales']:.2f}, "
+        f"commission R{value['commission']:.2f}, "
+        f"shop payable R{value['payable']:.2f}"
+        for value in shop_totals.values()
+    ]
+
+    if eligible_count:
+        messages.success(
+            request,
+            "SIMULATION PASSED - NO PAYOUT RECORDS CHANGED AND NO MONEY PAID. "
+            f"Week {week_start} to {week_end}. "
+            f"Eligible orders: {eligible_count}; blocked/already recorded: "
+            f"{blocked_count}; food sales R{total_sales:.2f}; "
+            f"AirXpress commission R{total_commission:.2f}; "
+            f"shop payable R{total_shop_payable:.2f}. "
+            + " | ".join(lines)
+        )
+    else:
+        messages.info(
+            request,
+            "SIMULATION COMPLETE - NO PAYOUT RECORDS CHANGED AND NO MONEY PAID. "
+            f"No new eligible orders were found for {week_start} to {week_end}. "
+            f"Orders already recorded or with invalid food totals were skipped."
+        )
+
+    return redirect("owner_shop_payouts")
+# SHOP WEEKLY PAYOUT MANAGEMENT
+# =========================================================
+
+@user_passes_test(is_owner, login_url="/owner/login/")
+def download_shop_payout_batch_statement(request, batch_id):
+    batch = get_object_or_404(
+        ShopPayoutBatch.objects.select_related("shop").prefetch_related(
+            "payouts__order"
+        ),
+        id=batch_id,
+    )
+
+    payouts = list(
+        batch.payouts.select_related("order", "order__shop").order_by("order_id")
+    )
+
+    if not payouts:
+        messages.error(request, "This shop batch contains no payout records.")
+        return redirect("owner_shop_payouts")
+
+    buffer = BytesIO()
+    document = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=35,
+        leftMargin=35,
+        topMargin=40,
+        bottomMargin=40,
+    )
+
+    styles = getSampleStyleSheet()
+    payment_status = "PAID" if batch.status == "paid" else "NOT PAID"
+    paid_date = (
+        timezone.localtime(batch.paid_at).strftime("%d %B %Y at %H:%M")
+        if batch.paid_at else "-"
+    )
+
+    logo_path = (
+        Path(__file__).resolve().parent.parent
+        / "static"
+        / "orders"
+        / "images"
+        / "Airxpress-main-logo.png"
+    )
+
+    story = []
+
+    if logo_path.exists():
+        logo = Image(str(logo_path), width=90, height=90, kind="proportional")
+        logo.hAlign = "CENTER"
+        story.append(logo)
+        story.append(Spacer(1, 8))
+
+    story.extend([
+        Paragraph("AIRXPRESS EATS", styles["Title"]),
+        Paragraph("Weekly Shop Payment Statement", styles["Heading2"]),
+        Spacer(1, 12),
+    ])
+
+    details = [
+        ["Statement Number", batch.statement_number],
+        ["Shop", str(batch.shop.name)],
+        ["Payout Week", f"{batch.week_start:%d %B %Y} to {batch.week_end:%d %B %Y}"],
+        ["Payment Status", payment_status],
+        ["Payment Date", paid_date],
+        ["Bank Transaction Reference", batch.payment_reference or "-"],
+        ["Payment Notes", batch.payment_notes or "-"],
+    ]
+
+    details_table = Table(details, colWidths=[165, 335])
+    details_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#EAF0F6")),
+        ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#172B4D")),
+        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 7),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+        ("TOPPADDING", (0, 0), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+    ]))
+
+    story.extend([
+        details_table,
+        Spacer(1, 18),
+        Paragraph("Included Orders", styles["Heading2"]),
+        Spacer(1, 8),
+    ])
+
+    order_rows = [["Order", "Food Sales", "Commission", "Shop Receives"]]
+    for payout in payouts:
+        order_rows.append([
+            f"#{payout.order_id}",
+            f"R {payout.food_sales:,.2f}",
+            f"R {payout.commission:,.2f}",
+            f"R {payout.amount:,.2f}",
+        ])
+
+    order_rows.append([
+        "",
+        f"R {batch.total_food_sales:,.2f}",
+        f"R {batch.total_commission:,.2f}",
+        f"R {batch.total_amount:,.2f}",
+    ])
+
+    orders_table = Table(
+        order_rows,
+        colWidths=[65, 130, 130, 130],
+        repeatRows=1,
+    )
+    orders_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EAF0F6")),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
+        ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 5),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+        ("TOPPADDING", (0, 0), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+    ]))
+
+    story.extend([
+        orders_table,
+        Spacer(1, 12),
+        Paragraph(
+            "AirXpress commission is 15% of food sales. The shop receives "
+            "the remaining 85%, subject to the figures recorded in this batch.",
+            styles["Normal"],
+        ),
+        Spacer(1, 12),
+        Paragraph(
+            (
+                "PAYMENT HAS NOT BEEN RECORDED AS PAID. No bank transfer is "
+                "confirmed by this statement."
+            ) if batch.status != "paid" else (
+                "This statement records payment details entered in AirXpress Eats. "
+                "It is not a bank-issued proof of transfer."
+            ),
+            styles["Normal"],
+        ),
+    ])
+
+    document.build(story)
+    pdf = buffer.getvalue()
+    buffer.close()
+
+    response = HttpResponse(pdf, content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f'attachment; filename="shop-payment-{batch.statement_number}.pdf"'
+    )
+    return response
+
+@user_passes_test(is_owner, login_url="/owner/login/")
+def owner_shop_payouts(request):
+    from datetime import date, datetime, time, timedelta
+    from decimal import ROUND_HALF_UP
+
+    today = timezone.localdate()
+    default_start = today - timedelta(days=today.weekday())
+    selected_start = default_start
+    errors = []
+
+    if request.method == "POST":
+        try:
+            selected_start = date.fromisoformat(
+                request.POST.get("week_start", "")
+            )
+        except (ValueError, TypeError):
+            selected_start = None
+
+        if selected_start is None:
+            messages.error(request, "Please select a valid Monday.")
+            return redirect("owner_shop_payouts")
+
+        if selected_start.weekday() != 0:
+            messages.error(request, "The week must start on a Monday.")
+            return redirect("owner_shop_payouts")
+
+        selected_end = selected_start + timedelta(days=6)
+
+        with transaction.atomic():
+            shops = Shop.objects.filter(is_active=True).order_by("name")
+
+            for shop in shops:
+                eligible_orders = Order.objects.filter(
+                    shop=shop,
+                    status__in=["delivered", "collected"],
+                    payment_status="paid",
+                ).prefetch_related("items").order_by("id")
+
+                for order in eligible_orders:
+                    completion = (
+                        OrderStatusHistory.objects.filter(
+                            order=order,
+
+                        ).order_by("-created_at", "-id").first()
+                    )
+
+                    if (
+                        not completion
+                        or completion.status not in ("delivered", "collected")
+                    ):
+                        continue
+
+                    completion_date = timezone.localtime(
+                        completion.created_at
+                    ).date()
+
+                    if not (selected_start <= completion_date <= selected_end):
+                        continue
+
+                    food_sales = sum(
+                        (
+                            item.final_amount
+                            if item.final_amount is not None
+                            else item.requested_amount
+                            if item.requested_amount is not None
+                            else item.unit_price or Decimal("0.00")
+                        )
+                        for item in order.items.all()
+                    )
+                    food_sales = Decimal(food_sales or 0).quantize(
+                        Decimal("0.01"), rounding=ROUND_HALF_UP
+                    )
+
+                    if food_sales <= Decimal("0.00"):
+                        continue
+
+                    payout, created = ShopPayout.objects.get_or_create(
+                        order=order,
+                        defaults={
+                            "shop": shop,
+                            "food_sales": food_sales,
+                            "commission": (
+                                food_sales * Decimal("0.15")
+                            ).quantize(
+                                Decimal("0.01"),
+                                rounding=ROUND_HALF_UP,
+                            ),
+                            "amount": (
+                                food_sales * Decimal("0.85")
+                            ).quantize(
+                                Decimal("0.01"),
+                                rounding=ROUND_HALF_UP,
+                            ),
+                            "statement_number": f"AXSP-{order.id}",
+                        },
+                    )
+
+                    if payout.shop_id != shop.id:
+                        raise ValueError(
+                            f"Shop mismatch on order #{order.id}."
+                        )
+
+                    if payout.batch_id and (
+                        payout.batch.week_start != selected_start
+                        or payout.batch.week_end != selected_end
+                    ):
+                        continue
+
+                weekly_payouts = ShopPayout.objects.filter(
+                    shop=shop,
+                    order__status__in=["delivered", "collected"],
+                    order__payment_status="paid",
+                    batch__isnull=True,
+                    status="pending",
+                )
+
+                eligible_ids = []
+                for payout in weekly_payouts.select_related("order"):
+                    completion = (
+                        OrderStatusHistory.objects.filter(
+                            order=payout.order,
+
+                        ).order_by("-created_at", "-id").first()
+                    )
+                    if (
+                        completion
+                        and completion.status in ("delivered", "collected")
+                    ):
+                        completion_date = timezone.localtime(
+                            completion.created_at
+                        ).date()
+                        if selected_start <= completion_date <= selected_end:
+                            eligible_ids.append(payout.id)
+
+                if not eligible_ids:
+                    continue
+
+                batch, _ = ShopPayoutBatch.objects.get_or_create(
+                    shop=shop,
+                    week_start=selected_start,
+                    week_end=selected_end,
+                    defaults={
+                        "statement_number": (
+                            f"AXSB-{shop.id}-{selected_start:%Y%m%d}"
+                        ),
+                    },
+                )
+
+                if batch.status == "paid":
+                    continue
+
+                ShopPayout.objects.filter(
+                    id__in=eligible_ids,
+                    batch__isnull=True,
+                    status="pending",
+                ).update(batch=batch)
+
+                batch_payouts = batch.payouts.all()
+                batch.total_food_sales = (
+                    batch_payouts.aggregate(total=Sum("food_sales"))["total"]
+                    or Decimal("0.00")
+                )
+                batch.total_commission = (
+                    batch_payouts.aggregate(total=Sum("commission"))["total"]
+                    or Decimal("0.00")
+                )
+                batch.total_amount = (
+                    batch_payouts.aggregate(total=Sum("amount"))["total"]
+                    or Decimal("0.00")
+                )
+                batch.save(update_fields=[
+                    "total_food_sales",
+                    "total_commission",
+                    "total_amount",
+                    "updated_at",
+                ])
+
+        messages.success(
+            request,
+            "Weekly shop batches prepared. No bank payments were made."
+        )
+        return redirect("owner_shop_payouts")
+
+    from datetime import timedelta
+    batches = (
+        ShopPayoutBatch.objects
+        .select_related("shop")
+        .prefetch_related("payouts__order")
+        .order_by("-week_start", "shop__name")
+    )
+
+    return render(
+        request,
+        "orders/owner_shop_payouts.html",
+        {
+            "batches": batches,
+            "default_week_start": default_start.isoformat(),
+            "selected_week_start": selected_start.isoformat(),
+        },
     )

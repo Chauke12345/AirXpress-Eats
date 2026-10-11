@@ -2090,6 +2090,10 @@
         Daily Report
     </a>
 
+    <a href="{% url 'shop_banking_details' %}" class="history-link icon-nav-link">
+        Banking Details
+    </a>
+
     <a href="{% url 'airxpress_help' %}" class="history-link icon-nav-link">Need Help?</a>
 <form method="POST" action="{% url 'staff_logout' %}" class="logout-form">
         {% csrf_token %}

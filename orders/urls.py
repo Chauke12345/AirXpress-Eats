@@ -302,6 +302,12 @@ path(
 ),
 
 path(
+    "staff/banking-details/",
+    views.shop_banking_details,
+    name="shop_banking_details",
+),
+
+path(
     "staff/dashboard/updates/",
     views.staff_dashboard_updates,
     name="staff_dashboard_updates",
@@ -384,41 +390,61 @@ path(
 
 
     path(
+        "owner/driver-payouts/create-weekly-batches/",
+        views.create_weekly_driver_payout_batches,
+        name="create_weekly_driver_payout_batches",
+    ),
+
+    path(
         "owner/driver-payouts/",
         views.owner_driver_payouts,
         name="owner_driver_payouts",
     ),
 
     path(
+        "owner/driver-payout/<int:payout_id>/statement/",
+        views.download_driver_payout_statement,
+        name="download_driver_payout_statement",
+    ),
+
+    path(
         "owner/driver-payout/<int:payout_id>/mark-paid/",
         views.mark_driver_payout_paid,
         name="mark_driver_payout_paid",
+    ),
+
+    path(
+        "owner/driver-payout-batch/<int:batch_id>/simulate/",
+        views.simulate_driver_payout_batch,
+        name="simulate_driver_payout_batch",
+    ),
+
+    path(
+        "owner/driver-payout-batch/<int:batch_id>/mark-paid/",
+        views.mark_driver_payout_batch_paid,
+        name="mark_driver_payout_batch_paid",
+    ),
+
+    path(
+        "owner/driver-payout-batch/<int:batch_id>/statement/",
+        views.download_driver_payout_batch_statement,
+        name="download_driver_payout_batch_statement",
+    ),
+
+
+
+    path(
+        "owner/shop-payouts/",
+        views.owner_shop_payouts,
+        name="owner_shop_payouts",
+    ),
+    path(
+        "owner/shop-payouts/simulate/",
+        views.simulate_shop_payouts,
+        name="simulate_shop_payouts",
+    ),
+    path(
+        "owner/shop-payout-batch/<int:batch_id>/statement/",
+        views.download_shop_payout_batch_statement,
+        name="download_shop_payout_batch_statement",
     ),]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

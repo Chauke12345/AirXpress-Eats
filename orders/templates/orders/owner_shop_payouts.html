@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AirXpress Eats - Shop Payouts</title>
+</head>
+<body style="font-family:Arial,sans-serif;max-width:1100px;margin:35px auto;padding:0 18px;color:#172b4d;">
+    <h1>Weekly Shop Payouts</h1>
+    <p>Prepare Monday-to-Sunday shop payout batches. Only completed orders with confirmed customer payment are eligible.</p>
+    <p><strong>Test environment:</strong> preparing batches does not transfer money or mark a batch as paid.</p>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p role="alert" style="padding:12px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;">
+                {{ message }}
+            </p>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" action="{% url 'simulate_shop_payouts' %}" style="padding:18px;border:1px solid #93c5fd;background:#eff6ff;border-radius:10px;margin:20px 0;">
+        {% csrf_token %}
+        <h3 style="margin-top:0;">Test only - no money will be paid</h3>
+        <label for="simulation_week_start">Week starting Monday</label><br>
+        <input id="simulation_week_start" name="week_start" type="date" value="{{ default_week_start }}" required>
+        <button type="submit" style="padding:10px 16px;margin:10px 0;cursor:pointer;background:#2563eb;color:white;border:0;border-radius:6px;">
+            Simulate Shop Payouts
+        </button>
+        <p style="margin-bottom:0;">This test only calculates eligible orders and totals. It does not create batches or change payment records.</p>
+    </form>
+    <form method="post" style="padding:18px;border:1px solid #ddd;border-radius:10px;margin:20px 0;">
+        {% csrf_token %}
+        <label for="week_start"><strong>Week starting Monday</strong></label><br>
+        <input id="week_start" name="week_start" type="date" value="{{ default_week_start }}" required>
+        <button type="submit" style="padding:10px 16px;margin-left:8px;cursor:pointer;">
+            Prepare Weekly Shop Batches
+        </button>
+    </form>
+
+    <h2>Shop batches</h2>
+    <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+            <thead>
+                <tr style="background:#f5f5f5;text-align:left;">
+                    <th style="padding:10px;border-bottom:1px solid #ddd;">Shop</th>
+                    <th style="padding:10px;border-bottom:1px solid #ddd;">Week</th>
+                    <th style="padding:10px;border-bottom:1px solid #ddd;">Food sales</th>
+                    <th style="padding:10px;border-bottom:1px solid #ddd;">15% commission</th>
+                    <th style="padding:10px;border-bottom:1px solid #ddd;">Shop receives</th>
+                    <th style="padding:10px;border-bottom:1px solid #ddd;">Status</th>
+                    <th style="padding:10px;border-bottom:1px solid #ddd;">Reference</th>
+                    <th style="padding:10px;border-bottom:1px solid #ddd;">Statement</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for batch in batches %}
+                <tr>
+                    <td style="padding:10px;border-bottom:1px solid #eee;">{{ batch.shop.name }}</td>
+                    <td style="padding:10px;border-bottom:1px solid #eee;">{{ batch.week_start }} to {{ batch.week_end }}</td>
+                    <td style="padding:10px;border-bottom:1px solid #eee;">R{{ batch.total_food_sales }}</td>
+                    <td style="padding:10px;border-bottom:1px solid #eee;">R{{ batch.total_commission }}</td>
+                    <td style="padding:10px;border-bottom:1px solid #eee;"><strong>R{{ batch.total_amount }}</strong></td>
+                    <td style="padding:10px;border-bottom:1px solid #eee;">{{ batch.get_status_display }}</td>
+                    <td style="padding:10px;border-bottom:1px solid #eee;">{{ batch.payment_reference|default:"Not paid" }}</td>
+                    <td style="padding:10px;border-bottom:1px solid #eee;"><a href="{% url 'download_shop_payout_batch_statement' batch.id %}">Download PDF</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" style="padding:14px;">No shop batches yet. Choose a Monday and prepare the weekly batches.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <p style="margin-top:24px;"><a href="{% url 'owner_dashboard' %}">Back to Owner Dashboard</a></p>
+</body>
+</html>

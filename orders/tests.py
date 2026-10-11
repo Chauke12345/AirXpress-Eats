@@ -148,3 +148,130 @@ class PayFastITNTests(TestCase):
         )
         self.assertEqual(self.order.payment_status, "pending")
         mock_validation.assert_called_once()
+
+
+from django.test import SimpleTestCase
+from unittest.mock import Mock
+from django.utils import timezone
+from datetime import timedelta
+
+from orders.views import (
+    _delivery_otp_hash,
+    _verify_delivery_otp,
+)
+
+
+class DeliveryOTPHelperTests(SimpleTestCase):
+    """Tests for delivery OTP verification without sending SMS."""
+
+    def setUp(self):
+        self.order = Mock()
+        self.order.id = 123
+        self.order.delivery_otp_hash = _delivery_otp_hash(
+            self.order.id, "123456"
+        )
+        self.order.delivery_otp_expires_at = (
+            timezone.now() + timedelta(minutes=10)
+        )
+        self.order.delivery_otp_attempts = 0
+        self.order.delivery_otp_verified_at = None
+
+    def test_correct_code_is_verified(self):
+        valid, message = _verify_delivery_otp(
+            self.order, "123456"
+        )
+
+        self.assertTrue(valid)
+        self.assertEqual(
+            message, "Customer delivery code verified."
+        )
+        self.assertIsNotNone(
+            self.order.delivery_otp_verified_at
+        )
+
+    def test_incorrect_code_is_rejected(self):
+        valid, message = _verify_delivery_otp(
+            self.order, "999999"
+        )
+
+        self.assertFalse(valid)
+        self.assertEqual(message, "Incorrect delivery code.")
+        self.assertEqual(self.order.delivery_otp_attempts, 1)
+
+    def test_expired_code_is_rejected(self):
+        self.order.delivery_otp_expires_at = (
+            timezone.now() - timedelta(minutes=1)
+        )
+
+        valid, message = _verify_delivery_otp(
+            self.order, "123456"
+        )
+
+        self.assertFalse(valid)
+        self.assertEqual(
+            message,
+            "The delivery code has expired. A new code is required.",
+        )
+
+    def test_five_attempt_limit_is_enforced(self):
+        self.order.delivery_otp_attempts = 5
+
+        valid, message = _verify_delivery_otp(
+            self.order, "123456"
+        )
+
+        self.assertFalse(valid)
+        self.assertEqual(
+            message,
+            "Too many incorrect attempts. A new code is required.",
+        )
+
+
+from django.test import override_settings
+from orders.services import send_delivery_otp_sms
+
+
+class DeliveryOTPSMSTests(SimpleTestCase):
+    """Verify SMS safety without contacting a real SMS provider."""
+
+    @override_settings(SMS_ENABLED=False, SMS_PROVIDER="console")
+    def test_disabled_sms_does_not_send_message(self):
+        result = send_delivery_otp_sms(
+            "27000000000", "123456", 999
+        )
+
+        self.assertEqual(
+            result,
+            (False, "SMS sending is disabled. No SMS was sent."),
+        )
+
+    @override_settings(SMS_ENABLED=True, SMS_PROVIDER="console")
+    def test_console_mode_does_not_send_real_sms(self):
+        result = send_delivery_otp_sms(
+            "27000000000", "123456", 999
+        )
+
+        self.assertEqual(
+            result,
+            (False, "Console mode does not send real SMS messages."),
+        )
+
+    @override_settings(SMS_ENABLED=True, SMS_PROVIDER="unconfigured")
+    def test_unconfigured_provider_does_not_send_message(self):
+        result = send_delivery_otp_sms(
+            "27000000000", "123456", 999
+        )
+
+        self.assertEqual(
+            result,
+            (False, "SMS provider integration has not been configured."),
+        )
+
+    @override_settings(SMS_ENABLED=True, SMS_PROVIDER="console")
+    def test_missing_phone_number_is_rejected(self):
+        result = send_delivery_otp_sms("", "123456", 999)
+
+        self.assertEqual(
+            result,
+            (False, "Customer phone number is missing."),
+        )

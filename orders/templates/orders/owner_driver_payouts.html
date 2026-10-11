@@ -1,4 +1,4 @@
-﻿<style>
+<style>
     .payout-page {
         max-width: 1200px;
         margin: 30px auto;
@@ -131,6 +131,19 @@
 
 <div class="payout-page">
 
+    {% if messages %}
+        <div style="margin-bottom:20px;">
+            {% for message in messages %}
+                <div role="alert"
+                     style="padding:14px 18px;margin-bottom:10px;border-radius:8px;
+                     border:1px solid #cbd5e1;background:#f1f5f9;color:#172b4d;">
+                    <strong>{{ message.tags|title }}:</strong> {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+
     <div class="payout-header">
         <h1>Driver Payouts</h1>
         <p>Manage weekly driver payments and payout history.</p>
@@ -152,6 +165,132 @@
             </div>
         </div>
 
+    </div>
+
+
+    <!-- =====================================================
+         WEEKLY DRIVER PAYOUT BATCHES
+         ===================================================== -->
+
+    <div class="section">
+        <h2>Weekly Driver Payouts</h2>
+        <p>Select the Monday starting date for the payout week.
+           Only eligible, unpaid payouts completed during that week will be assigned.</p>
+
+        <form method="post" action="{% url 'create_weekly_driver_payout_batches' %}"
+              style="padding:18px;border:1px solid #ddd;border-radius:12px;margin-bottom:22px;">
+            {% csrf_token %}
+            <label for="week-start"><strong>Payout week starts (Monday)</strong></label>
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px;">
+                <input id="week-start" type="date" name="week_start"
+                       value="{{ default_week_start }}" required
+                       style="padding:10px;border:1px solid #ccc;border-radius:8px;">
+                <button type="submit" class="pay-button"
+                        onclick="return confirm('Create or update pending weekly batches for this Monday-to-Sunday period? No payments will be marked as paid.');">
+                    Create Weekly Batches
+                </button>
+            </div>
+        </form>
+
+        <h3>Batch History</h3>
+
+        {% if weekly_batches %}
+        <div class="payout-table-wrapper">
+            <table class="payout-table">
+                <thead>
+                    <tr>
+                        <th>Driver</th>
+                        <th>Week</th>
+                        <th>Orders</th>
+                        <th>Batch Total</th>
+                        <th>Status</th>
+                        <th>Bank Reference</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for batch in weekly_batches %}
+                    <tr>
+                        <td>{{ batch.driver.name }}</td>
+                        <td>{{ batch.week_start|date:"d M Y" }} ? {{ batch.week_end|date:"d M Y" }}</td>
+                        <td>
+                            {% for payout in batch.payouts.all %}
+                                #{{ payout.order.id }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                -
+                            {% endfor %}
+                        </td>
+                        <td><strong>R{{ batch.total_amount|floatformat:2 }}</strong></td>
+                        <td>
+                            {% if batch.status == "paid" %}
+                                <span class="status status-paid">Paid</span>
+                            {% else %}
+                                <span class="status status-pending">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ batch.payment_reference|default:"-" }}</td>
+                        <td>
+                            {% if batch.status == "paid" %}
+                                <a href="{% url 'download_driver_payout_batch_statement' batch.id %}"
+                                   class="pay-button"
+                                   style="display:inline-block;text-decoration:none;">
+                                    Download Weekly PDF
+                                </a>
+                            {% else %}
+                                <form method="post"
+                                      action="{% url 'simulate_driver_payout_batch' batch.id %}"
+                                      style="margin-bottom:12px;">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="pay-button"
+                                            style="background:#2563eb;"
+                                            onclick="return confirm('Run a test only? No real payment will be made and no payout records will be changed.');">
+                                        Simulate Test Payment ? No Real Money
+                                    </button>
+                                </form>
+
+                                <form method="post"
+                                      action="{% url 'mark_driver_payout_batch_paid' batch.id %}"
+                                      style="min-width:220px;">
+                                    {% csrf_token %}
+
+                                    <label for="batch-reference-{{ batch.id }}">Bank reference *</label>
+                                    <input id="batch-reference-{{ batch.id }}"
+                                           type="text"
+                                           name="payment_reference"
+                                           maxlength="100"
+                                           required
+                                           placeholder="Bank transaction reference"
+                                           style="width:100%;padding:9px;margin:6px 0 10px;box-sizing:border-box;">
+
+                                    <label for="batch-notes-{{ batch.id }}">Payment notes</label>
+                                    <textarea id="batch-notes-{{ batch.id }}"
+                                              name="payment_notes"
+                                              rows="2"
+                                              placeholder="Optional notes"
+                                              style="width:100%;padding:9px;margin:6px 0 10px;box-sizing:border-box;"></textarea>
+
+                                    <label style="display:block;margin-bottom:10px;">
+                                        <input type="checkbox" name="transfer_confirmed" value="yes" required>
+                                        I confirm the bank transfer succeeded
+                                    </label>
+
+                                    <button type="submit"
+                                            class="pay-button"
+                                            onclick="return confirm('Have you confirmed that this bank transfer succeeded and the driver bank details are verified?');">
+                                        Confirm Batch Payment
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">No weekly payout batches have been created yet.</div>
+        {% endif %}
     </div>
 
 
@@ -210,21 +349,17 @@
 
                         <td>
 
-                            <form
-                                method="post"
-                                action="{% url 'mark_driver_payout_paid' payout.id %}"
-                            >
-
+                            <form method="post" action="{% url 'mark_driver_payout_paid' payout.id %}">
                                 {% csrf_token %}
+                                <label for="reference-{{ payout.id }}">Bank reference *</label>
+                                <input id="reference-{{ payout.id }}" type="text" name="payment_reference" maxlength="100" required placeholder="Bank transaction reference" style="width:100%;padding:9px;margin:6px 0 10px;box-sizing:border-box;">
 
-                                <button
-                                    type="submit"
-                                    class="pay-button"
-                                    onclick="return confirm('Mark this driver payout as paid?');"
-                                >
-                                    Mark as Paid
+                                <label for="notes-{{ payout.id }}">Payment notes (optional)</label>
+                                <textarea id="notes-{{ payout.id }}" name="payment_notes" rows="2" placeholder="Optional notes" style="width:100%;padding:9px;margin:6px 0 10px;box-sizing:border-box;"></textarea>
+
+                                <button type="submit" class="pay-button" onclick="return confirm('Have you confirmed that this bank transfer succeeded?');">
+                                    Confirm Payment
                                 </button>
-
                             </form>
 
                         </td>
@@ -271,7 +406,9 @@
                         <th>Shop</th>
                         <th>Amount</th>
                         <th>Paid Date</th>
+                        <th>Bank Reference</th>
                         <th>Status</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
 
@@ -307,7 +444,15 @@
                             {% endif %}
                         </td>
 
+                                                <td>
+                            {{ payout.payment_reference|default:"-" }}
+                        </td>
                         <td>
+                            <a href="{% url 'download_driver_payout_statement' payout.id %}" class="pay-button" style="display:inline-block;text-decoration:none;">
+                                Download PDF Statement
+                            </a>
+                        </td>
+<td>
                             <span class="status status-paid">
                                 Paid
                             </span>
@@ -334,4 +479,3 @@
     </div>
 
 </div>
-

@@ -360,6 +360,9 @@ if not MAPBOX_TOKEN:
                 MAPBOX_TOKEN = _line
                 break
 
+SMS_PROVIDER = os.environ.get("SMS_PROVIDER", "console").strip().lower()
+SMS_ENABLED = os.environ.get("SMS_ENABLED", "False").strip().lower() == "true"
+
 
 
 
