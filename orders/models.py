@@ -15,6 +15,12 @@ class Shop(models.Model):
         max_length=150
     )
 
+    logo = models.ImageField(
+        upload_to="shop_logos/",
+        blank=True,
+        null=True,
+    )
+
     # Unique tenant identifier used in URLs.
     # Example:
     # Example shop URL pattern

@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -329,6 +329,41 @@ textarea {
     transform: translateY(-1px);
 }
 
+.munchie-menu-poster {
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto 24px;
+}
+.munchie-menu-poster img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+}
+.munchie-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+}
+.munchie-menu-grid .cart-menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+.munchie-menu-grid .menu-item-image {
+    height: 190px;
+}
+@media (max-width: 900px) {
+    .munchie-menu-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+}
+@media (max-width: 520px) {
+    .munchie-menu-grid .menu-item-image {
+        height: 125px;
+    }
+}
 /* CATEGORY GRID */
 
 .category-grid {
@@ -336,6 +371,68 @@ textarea {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 20px;
 }
+
+
+/* VELE N'S CATERING FOOD CARD GRID */
+.vele-catering-grid {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.vele-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.vele-menu-grid .cart-menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid #e5e5e5;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 5px 18px rgba(0, 0, 0, .07);
+    overflow: hidden;
+}
+
+.vele-menu-grid .menu-item-image {
+    height: 210px;
+    margin-bottom: 0;
+    border-radius: 13px;
+}
+
+.vele-menu-grid .cart-menu-info {
+    flex: initial;
+}
+
+.vele-menu-grid .cart-menu-item:last-child {
+    padding-bottom: 14px;
+}
+
+@media (max-width: 900px) {
+    .vele-menu-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 520px) {
+    .vele-menu-grid {
+        gap: 12px;
+    }
+
+    .vele-menu-grid .cart-menu-item {
+        padding: 9px;
+        gap: 9px;
+    }
+
+    .vele-menu-grid .menu-item-image {
+        height: 135px;
+    }
+}
+
 
 .category-card {
     background: #fafafa;
@@ -588,6 +685,112 @@ textarea {
     }
 }
 
+
+/* MUNCHIE FELLAS RESPONSIVE MENU LAYOUT */
+.munchie-shop-grid {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.munchie-shop-grid > .category-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    padding: 16px !important;
+}
+
+.munchie-shop-grid .munchie-menu-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 20px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+.munchie-shop-grid .munchie-menu-grid .cart-menu-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    gap: 12px !important;
+    padding: 12px !important;
+    margin: 0 !important;
+    border: 1px solid #333333 !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+}
+
+.munchie-shop-grid .menu-item-image {
+    width: 100% !important;
+    height: 200px !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    border-radius: 10px !important;
+}
+
+.munchie-shop-grid .menu-item-image img {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+.munchie-shop-grid .cart-menu-info {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    overflow-wrap: anywhere !important;
+}
+
+.munchie-shop-grid .cart-menu-item form {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin-top: auto !important;
+}
+
+.munchie-shop-grid .cart-menu-item form button,
+.munchie-shop-grid .cart-menu-item form .add-cart-button {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+@media (max-width: 900px) {
+    .munchie-shop-grid .munchie-menu-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 14px !important;
+    }
+
+    .munchie-shop-grid .menu-item-image {
+        height: 170px !important;
+    }
+}
+
+@media (max-width: 520px) {
+    .munchie-shop-grid > .category-card {
+        padding: 10px !important;
+    }
+
+    .munchie-shop-grid .munchie-menu-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 14px !important;
+    }
+
+    .munchie-shop-grid .menu-item-image {
+        height: 210px !important;
+    }
+}
+/* END MUNCHIE FELLAS RESPONSIVE MENU LAYOUT */
+
 </style>
 
 
@@ -623,11 +826,19 @@ textarea {
 
     <div class="customer-header">
 
+        {% if shop.logo %}
+        <img
+            src="{{ shop.logo.url }}"
+            alt="{{ shop.name }} logo"
+            class="brand-logo"
+        >
+        {% else %}
         <img
             src="{% static 'orders/images/Airxpress-main-logo.png' %}"
             alt="AirXpress Eats"
             class="brand-logo"
         >
+        {% endif %}
 
         <div class="customer-header-text">
 
@@ -709,6 +920,8 @@ textarea {
         <div class="menu-header-row">
 
             <div>
+
+
                 <h2>Build Your Order</h2>
 
                 <p class="menu-intro">
@@ -727,8 +940,7 @@ textarea {
         </div>
 
         {% regroup menu_items by category as category_groups %}
-
-        <div class="category-grid">
+<div class="category-grid{% if shop.slug == "vele-ns-catering" %} vele-catering-grid{% endif %}{% if shop.slug == "munchie-fellas" %} munchie-shop-grid{% endif %}">
 
             {% for group in category_groups %}
 
@@ -742,21 +954,37 @@ textarea {
                         {% endif %}
                     </h3>
 
+                    {% if shop.slug == "vele-ns-catering" %}
+                    <div class="vele-menu-grid">
+                    {% elif shop.slug == "munchie-fellas" %}
+                    <div class="munchie-menu-grid">
+                    {% endif %}
+
                     {% for item in group.list %}
 
                         <div class="cart-menu-item">
 
                             <div class="menu-item-image">
                                 {% if item.image %}
-                                    <img
-                                        src="{{ item.image.url }}"
-                                        alt="{{ item.name }}"
-                                        loading="lazy"
-                                    >
+                                    <img src="{{ item.image.url }}" alt="{{ item.name }}" loading="lazy">
+                                {% elif shop.slug == "vele-ns-catering" and item.name == "Grilled Chicken" %}
+                                    <img src="{% static 'orders/images/vele-menu/grilled-chicken.jpg' %}" alt="{{ item.name }}" loading="lazy">
+                                {% elif shop.slug == "vele-ns-catering" and item.name == "Wings & Chips" %}
+                                    <img src="{% static 'orders/images/vele-menu/wings-chips.jpg' %}" alt="{{ item.name }}" loading="lazy">
+                                {% elif shop.slug == "vele-ns-catering" and item.name == "Mushroom Hake & Calamari" %}
+                                    <img src="{% static 'orders/images/vele-menu/mushroom-hake-calamari.jpg' %}" alt="{{ item.name }}" loading="lazy">
+                                {% elif shop.slug == "vele-ns-catering" and item.name == "Chicken Curry" %}
+                                    <img src="{% static 'orders/images/vele-menu/chicken-curry.jpg' %}" alt="{{ item.name }}" loading="lazy">
+                                {% elif shop.slug == "vele-ns-catering" and item.name == "Beef Stew" %}
+                                    <img src="{% static 'orders/images/vele-menu/beef-stew.jpg' %}" alt="{{ item.name }}" loading="lazy">
+                                {% elif shop.slug == "vele-ns-catering" and item.name == "Steak" %}
+                                    <img src="{% static 'orders/images/vele-menu/steak.jpg' %}" alt="{{ item.name }}" loading="lazy">
+                                {% elif shop.slug == "vele-ns-catering" and item.name == "Steak and Wors" %}
+                                    <img src="{% static 'orders/images/vele-menu/steak-wors.jpg' %}" alt="{{ item.name }}" loading="lazy">
+                                {% elif shop.slug == "vele-ns-catering" and item.name == "Ribs and Wings" %}
+                                    <img src="{% static 'orders/images/vele-menu/ribs-wings.jpg' %}" alt="{{ item.name }}" loading="lazy">
                                 {% else %}
-                                    <div class="menu-item-image-placeholder">
-                                        Ÿ½ï¸
-                                    </div>
+                                    <div class="menu-item-image-placeholder">&#127860;</div>
                                 {% endif %}
                             </div>
 
@@ -853,6 +1081,10 @@ textarea {
                         </p>
 
                     {% endfor %}
+
+                    {% if shop.slug == "vele-ns-catering" or shop.slug == "munchie-fellas" %}
+                    </div>
+                    {% endif %}
 
                 </div>
 

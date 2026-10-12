@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -1828,6 +1828,59 @@ section:not(.hero) {
     }
 }
 /* END AIRXPRESS HOMEPAGE SPACING REFINEMENT */
+
+/* AIRXPRESS PARTNER SECTION REFINEMENT */
+@media (min-width: 651px) {
+    .restaurants-section {
+        padding-top: 54px !important;
+        padding-bottom: 54px !important;
+    }
+
+    .restaurant-card {
+        min-height: 190px !important;
+        padding: 22px !important;
+    }
+
+    .restaurant-icon {
+        margin-bottom: 12px !important;
+    }
+
+    .restaurant-card h3 {
+        font-size: 19px !important;
+    }
+
+    .how-section {
+        padding-top: 34px !important;
+        padding-bottom: 34px !important;
+    }
+
+    .business-section {
+        padding-top: 28px !important;
+        padding-bottom: 28px !important;
+    }
+
+    .business-card {
+        padding: 28px !important;
+    }
+
+    .stats {
+        margin-top: 20px !important;
+        margin-bottom: 24px !important;
+    }
+}
+
+@media (max-width: 650px) {
+    .restaurants-section {
+        padding-top: 32px !important;
+        padding-bottom: 32px !important;
+    }
+
+    .restaurant-card {
+        min-height: 155px !important;
+    }
+}
+/* END AIRXPRESS PARTNER SECTION REFINEMENT */
+
 </style>
 </head>
 
@@ -2124,7 +2177,17 @@ section:not(.hero) {
                     data-search="{{ shop.name|lower }} {{ shop.location|lower }}"
                 >
 
-                    {% with featured_item=shop.menu_items.all|first %}<div class="restaurant-icon">{% if featured_item.image %}<img src="{{ featured_item.image.url }}" alt="{{ featured_item.name }}">{% endif %}</div>{% endwith %}
+                    <div class="restaurant-icon">
+                        {% if shop.logo %}
+                            <img src="{{ shop.logo.url }}" alt="{{ shop.name }} logo">
+                        {% else %}
+                            {% with featured_item=shop.menu_items.all|first %}
+                                {% if featured_item.image %}
+                                    <img src="{{ featured_item.image.url }}" alt="{{ featured_item.name }}">
+                                {% endif %}
+                            {% endwith %}
+                        {% endif %}
+                    </div>
 
                     <h3>
                         {{ shop.name }}

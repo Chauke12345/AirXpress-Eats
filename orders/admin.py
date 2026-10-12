@@ -49,6 +49,26 @@ class ShopAdmin(admin.ModelAdmin):
         "created_at",
     )
 
+    fields = (
+        "name",
+        "slug",
+        "logo",
+        "phone_number",
+        "whatsapp_number",
+        "address",
+        "location",
+        "latitude",
+        "longitude",
+        "is_active",
+        "created_at",
+        "bank_name",
+        "account_holder_name",
+        "account_number",
+        "account_type",
+        "branch_code",
+        "banking_status",
+    )
+
 
 # =========================================================
 # STAFF PROFILE ADMIN
