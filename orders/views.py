@@ -2,6 +2,9 @@ import math
 import secrets
 import hashlib
 import hmac
+import uuid
+import base64
+import qrcode
 from datetime import timedelta
 from pathlib import Path
 from decimal import Decimal, InvalidOperation
@@ -1681,6 +1684,34 @@ def order_review(request, order_id):
         {"order": order},
     )
 
+def _build_delivery_qr_data_uri(order):
+    """
+    Build the customer's delivery QR locally.
+    The QR contains only the order's random delivery token.
+    """
+    if (
+        order.status not in ("driver_assigned", "picked_up", "delivered")
+        or order.delivery_qr_verified_at is not None
+    ):
+        return ""
+
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=8,
+        border=4,
+    )
+    qr.add_data(str(order.delivery_qr_token))
+    qr.make(fit=True)
+
+    image = qr.make_image(fill_color="black", back_color="white")
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+
+    encoded = base64.b64encode(buffer.getvalue()).decode("ascii")
+    return f"data:image/png;base64,{encoded}"
+
+
 def track_order(request, tracking_token):
     order = get_object_or_404(
         Order.objects
@@ -1696,6 +1727,7 @@ def track_order(request, tracking_token):
             "order": order,
             "shop": order.shop,
             "mapbox_token": settings.MAPBOX_TOKEN,
+            "delivery_qr_data_uri": _build_delivery_qr_data_uri(order),
         },
     )
 
@@ -3336,6 +3368,13 @@ def driver_complete_delivery(request, order_id):
             )
             return redirect("driver_dashboard")
 
+        if order.delivery_qr_verified_at is None:
+            messages.warning(
+                request,
+                f"Scan the customer's QR code before completing Order #{order.id}."
+            )
+            return redirect("driver_dashboard")
+
         order.status = "collected"
 
         order.save(
@@ -3390,6 +3429,103 @@ def driver_complete_delivery(request, order_id):
 # =========================================================
 # STAFF DASHBOARD
 # =========================================================
+
+
+
+
+
+# =========================================================
+# CUSTOMER DELIVERY QR VERIFICATION
+# =========================================================
+
+@user_passes_test(
+    lambda user: user.is_authenticated and hasattr(user, "driver_profile"),
+    login_url="/driver/login/",
+)
+def driver_scan_delivery_qr(request, order_id):
+    driver = request.user.driver_profile
+    order = get_object_or_404(Order, id=order_id, driver=driver)
+
+    if order.status != "delivered":
+        messages.warning(request, "Mark this order as delivered before scanning its QR.")
+        return redirect("driver_dashboard")
+
+    if order.delivery_qr_verified_at is not None:
+        messages.warning(request, "This QR code has already been used.")
+        return redirect("driver_dashboard")
+
+    return render(request, "orders/driver_qr_scan.html", {"order": order})
+
+
+@user_passes_test(
+    lambda user: user.is_authenticated and hasattr(user, "driver_profile"),
+    login_url="/driver/login/",
+)
+def driver_verify_delivery_qr(request, order_id):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "POST is required."}, status=405)
+
+    driver = request.user.driver_profile
+    try:
+        token = uuid.UUID((request.POST.get("token") or "").strip())
+    except (ValueError, TypeError, AttributeError):
+        return JsonResponse({"success": False, "message": "Invalid QR code."}, status=400)
+
+    with transaction.atomic():
+        order = (
+            Order.objects.select_for_update()
+            .filter(id=order_id, driver=driver, delivery_qr_token=token)
+            .first()
+        )
+
+        if order is None:
+            return JsonResponse({
+                "success": False,
+                "message": "This QR does not belong to your assigned order.",
+            }, status=403)
+
+        if order.status != "delivered":
+            return JsonResponse({
+                "success": False,
+                "message": "The order must be marked delivered first.",
+            }, status=409)
+
+        if order.delivery_qr_verified_at is not None:
+            return JsonResponse({
+                "success": False,
+                "message": "This QR code has already been used.",
+            }, status=409)
+
+        order.delivery_qr_verified_at = timezone.now()
+        order.status = "collected"
+        order.save(update_fields=["delivery_qr_verified_at", "status", "updated_at"])
+
+        DriverPayout.objects.get_or_create(
+            order=order,
+            defaults={
+                "driver": driver,
+                "amount": order.driver_payout,
+                "status": "pending",
+            },
+        )
+
+        driver.is_available = True
+        driver.save(update_fields=["is_available"])
+
+        OrderStatusHistory.objects.create(
+            order=order,
+            status="collected",
+            notes=(
+                f"Driver {driver.name} completed Order #{order.id} "
+                "after customer QR verification."
+            ),
+        )
+
+    return JsonResponse({
+        "success": True,
+        "message": f"Order #{order.id} verified and completed.",
+        "redirect_url": reverse("driver_dashboard"),
+    })
 
 
 @user_passes_test(

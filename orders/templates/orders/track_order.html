@@ -938,6 +938,19 @@
     </div>
 
 
+    {% if delivery_qr_data_uri %}
+    <section id="delivery-qr-section" style="margin:24px auto;padding:20px;max-width:440px;text-align:center;background:#fff;border:1px solid #e5e7eb;border-radius:16px;">
+        <h2 style="margin-top:0;">Your Delivery QR Code</h2>
+        <p>Show this code to your assigned driver at handover to complete your delivery.</p>
+        <img
+            src="{{ delivery_qr_data_uri }}"
+            alt="Secure delivery QR code for Order #{{ order.id }}"
+            style="display:block;width:240px;max-width:100%;height:auto;margin:16px auto;"
+        >
+        <p style="font-size:13px;color:#555;">Keep this code private. It can only be used once.</p>
+    </section>
+    {% endif %}
+
     <div class="section-title">
         Order Progress
     </div>

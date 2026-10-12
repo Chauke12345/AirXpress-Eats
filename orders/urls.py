@@ -272,6 +272,17 @@ urlpatterns = [
         name="driver_complete_delivery",
     ),
 
+    path(
+        "driver/order/<int:order_id>/scan-qr/",
+        views.driver_scan_delivery_qr,
+        name="driver_scan_delivery_qr",
+    ),
+    path(
+        "driver/order/<int:order_id>/verify-qr/",
+        views.driver_verify_delivery_qr,
+        name="driver_verify_delivery_qr",
+    ),
+
 
     # =========================================================
     # STAFF LOGIN / LOGOUT

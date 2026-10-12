@@ -1,4 +1,4 @@
-﻿from decimal import Decimal
+from decimal import Decimal
 import uuid
 
 from django.contrib.auth.models import User
@@ -539,6 +539,12 @@ class Order(models.Model):
     )
 
     
+    # Secure delivery QR token; valid until used or the order is cancelled.
+    delivery_qr_token = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        db_index=True,
+    )
     tracking_token = models.UUIDField(
         default=uuid.uuid4,
         unique=True,
@@ -551,6 +557,12 @@ class Order(models.Model):
         blank=True
     )
 
+    # Timestamp for single-use customer QR verification.
+    delivery_qr_verified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        editable=False,
+    )
     # Customer delivery OTP verification.
     delivery_otp_hash = models.CharField(
         max_length=64,
