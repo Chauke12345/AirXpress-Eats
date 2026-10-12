@@ -1681,21 +1681,32 @@ function toggleDriverBanking() {
                           {% endif %}
                       {% endif %}
 
-                    <div class="detail">
-
-                    {% if order.shop.latitude and order.shop.longitude %}
-                        <a
-                            href="https://www.google.com/maps/dir/?api=1&destination={{ order.shop.latitude }},{{ order.shop.longitude }}"
-                            target="_blank"
-                            rel="noopener"
-                            style="display:inline-block;margin-top:10px;margin-bottom:10px;background:#111111;color:#ffffff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;"
-                        >
-                            Navigate to Pickup
-                        </a>
-                    {% endif %}
+                                        <div class="detail">
+                        {% if order.status == "driver_assigned" %}
+                            {% if order.shop.latitude and order.shop.longitude %}
+                                <a href="https://www.google.com/maps/dir/?api=1&amp;destination={{ order.shop.latitude }},{{ order.shop.longitude }}" target="_blank" rel="noopener" style="display:inline-block;margin:10px 8px 10px 0;background:#111;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Pickup — Google Maps</a>
+                                <a href="https://waze.com/ul?ll={{ order.shop.latitude }},{{ order.shop.longitude }}&amp;navigate=yes" target="_blank" rel="noopener" style="display:inline-block;margin:10px 0;background:#087eec;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Pickup — Waze</a>
+                            {% endif %}
+                        {% elif order.status == "picked_up" %}
+                            {% if order.customer_latitude and order.customer_longitude %}
+                                <a href="https://www.google.com/maps/dir/?api=1&amp;destination={{ order.customer_latitude }},{{ order.customer_longitude }}" target="_blank" rel="noopener" style="display:inline-block;margin:10px 8px 10px 0;background:#111;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Customer — Google Maps</a>
+                                <a href="https://waze.com/ul?ll={{ order.customer_latitude }},{{ order.customer_longitude }}&amp;navigate=yes" target="_blank" rel="noopener" style="display:inline-block;margin:10px 0;background:#087eec;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Customer — Waze</a>
+                            {% elif order.delivery_address %}
+                                <a href="https://www.google.com/maps/dir/?api=1&amp;destination={{ order.delivery_address|urlencode }}" target="_blank" rel="noopener" style="display:inline-block;margin:10px 8px 10px 0;background:#111;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Customer — Google Maps</a>
+                                <a href="https://waze.com/ul?q={{ order.delivery_address|urlencode }}&amp;navigate=yes" target="_blank" rel="noopener" style="display:inline-block;margin:10px 0;background:#087eec;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Customer — Waze</a>
+                            {% else %}
+                                <p style="margin-top:10px;color:#9a3412;font-weight:700;">Customer destination is missing. Contact the customer before proceeding.</p>
+                            {% endif %}
+                        {% endif %}
 
                         <span class="label">Delivery Address</span><br>
                         {{ order.delivery_address }}
+                        {% if order.notes %}
+                            <div style="margin-top:12px;padding:12px;border-radius:8px;background:#fff8df;border:1px solid #ead28a;color:#493b13;">
+                                <strong>Customer Entry / Delivery Instructions</strong>
+                                <div style="margin-top:6px;overflow-wrap:anywhere;">{{ order.notes|linebreaksbr }}</div>
+                            </div>
+                        {% endif %}
                     </div>
 
                     <div class="detail">
