@@ -1,4 +1,4 @@
-﻿"""
+"""
 Django settings for AirXpress Eats.
 """
 
@@ -266,7 +266,7 @@ STORAGES = {
 
 MEDIA_URL = "/media/"
 
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = Path(os.environ.get("RAILWAY_VOLUME_MOUNT_PATH", str(BASE_DIR / "media")))
 
 
 # =========================================================

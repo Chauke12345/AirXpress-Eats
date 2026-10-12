@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 {% load static %}
 <html lang="en">
 <head>
@@ -2276,9 +2276,8 @@ function toggleDriverBanking() {
 
         <section class="section">
 
-            <div class="section-title">
-                My Delivery History
-            </div>
+            <details class="history-collapse">
+            <summary class="section-title" style="cursor:pointer;">My Delivery History</summary>
 
             {% if driver_payouts %}
 
@@ -2341,11 +2340,13 @@ function toggleDriverBanking() {
 
             {% endif %}
 
+            </details>
         </section>
 
 <!-- DRIVER DELIVERY HISTORY -->
         <section class="section driver-history-section">
-            <div class="section-title">My Completed Delivery History</div>
+            <details class="history-collapse">
+            <summary class="section-title" style="cursor:pointer;">My Completed Delivery History</summary>
 
             <form method="get" class="history-filter-form">
                 <label for="history_range">Filter completed deliveries</label>
@@ -2406,6 +2407,7 @@ function toggleDriverBanking() {
                     No delivery earnings match the selected date range. Try another date range or reset the filter.
                 </div>
             {% endif %}
+            </details>
         </section>
 
     </main>
@@ -2903,14 +2905,7 @@ function toggleDriverBanking() {
                   )
                   .addTo(map);
 
-              const driverMarker = new mapboxgl.Marker({
-                  color: "#e53935"
-              })
-                  .setLngLat([customerLng, customerLat])
-                  .setPopup(
-                      new mapboxgl.Popup().setText("Your Location")
-                  )
-                  .addTo(map);
+              let driverMarker = null;
 
                               map.on("load", function() {
                     map.addSource("driver-route", {
@@ -2949,10 +2944,23 @@ function toggleDriverBanking() {
 
                   navigator.geolocation.getCurrentPosition(
                       function(position) {
-                          driverMarker.setLngLat([
-                                position.coords.longitude,
-                                position.coords.latitude
-                            ]);
+                          const driverPoint = [
+                              position.coords.longitude,
+                              position.coords.latitude
+                          ];
+
+                          if (!driverMarker) {
+                              driverMarker = new mapboxgl.Marker({
+                                  color: "#e53935"
+                              })
+                                  .setLngLat(driverPoint)
+                                  .setPopup(
+                                      new mapboxgl.Popup().setText("Your Location")
+                                  )
+                                  .addTo(map);
+                          } else {
+                              driverMarker.setLngLat(driverPoint);
+                          }
 
                             const routeSource = map.getSource("driver-route");
 
