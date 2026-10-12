@@ -923,6 +923,18 @@
           </div>
       </div>
 
+      <div id="review-prompt" class="order-update" style="display: none;">
+          <strong>Your order is complete!</strong>
+          <div class="order-update-message">
+              We would love to hear about your experience.
+          </div>
+          <a id="review-order-link"
+             class="done-button"
+             href="{% url 'order_review' order_id=order.id %}">
+              Rate Your Delivery
+          </a>
+      </div>
+
     </div>
 
 
@@ -1442,6 +1454,15 @@
           if (statusElement) {
               statusElement.textContent =
                   data.status_display;
+
+              const reviewPrompt = document.getElementById("review-prompt");
+              if (reviewPrompt) {
+                  const completedStatuses = ["delivered", "collected"];
+                  reviewPrompt.style.display =
+                      completedStatuses.includes(
+                          String(data.status || "").toLowerCase().trim()
+                      ) ? "block" : "none";
+              }
             const orderUpdateMessage =
                 document.querySelector(".order-update-message");
 
@@ -1713,7 +1734,7 @@
             console.log('AirXpress tracking update:', data.driver_location);
             renderTracking(data);
 
-            if (data.status === "delivered") {
+            if (["collected", "cancelled"].includes(String(data.status || "").toLowerCase().trim())) {
                 clearInterval(trackingInterval);
             }
 
