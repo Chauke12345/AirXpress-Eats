@@ -243,7 +243,7 @@ def home(request):
 
     # =========================================================
     context = {
-        "shops": shops[:6],
+        "shops": shops,
         "total_shops": shops.count(),
     }
 
