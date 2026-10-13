@@ -8,6 +8,11 @@ urlpatterns = [
     path('login/', views.login_gateway, name='login_gateway'),
 
     path(
+        "help/submit/",
+        views.submit_support_ticket,
+        name="submit_support_ticket",
+    ),
+    path(
         "help/",
         views.airxpress_help,
         name="airxpress_help",
@@ -65,6 +70,12 @@ urlpatterns = [
             next_page="home",
         ),
         name="customer_logout",
+    ),
+
+    path(
+        "customer/change-password/",
+        views.customer_change_password,
+        name="customer_change_password",
     ),
 
     path(
@@ -376,6 +387,17 @@ path(
     ),
 
     path(
+        "owner/support/",
+        views.owner_support_dashboard,
+        name="owner_support_dashboard",
+    ),
+
+    path(
+        "owner/support/<int:ticket_id>/update/",
+        views.owner_update_support_ticket,
+        name="owner_update_support_ticket",
+    ),
+    path(
         "owner/driver/<int:driver_id>/verify/",
         views.owner_verify_driver,
         name="owner_verify_driver",
@@ -399,6 +421,12 @@ path(
         name="mark_platform_fees_paid",
     ),
 
+
+    path(
+        "owner/customer/<int:customer_id>/reset-password/",
+        views.owner_reset_customer_password,
+        name="owner_reset_customer_password",
+    ),
 
     path(
         "owner/driver-payouts/create-weekly-batches/",

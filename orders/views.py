@@ -18,6 +18,7 @@ from django.contrib.auth import (
     authenticate,
     login,
     logout,
+    update_session_auth_hash,
 )
 
 from django.contrib.auth.decorators import (
@@ -42,6 +43,7 @@ from django.shortcuts import (
 )
 
 from django.utils import timezone
+from django.db import models
 from django.db import transaction
 from django.db.models import Sum, Count, Avg
 from django.urls import reverse
@@ -51,6 +53,7 @@ from .forms import (
 )
 
 from .models import (
+    CustomerProfile,
     Driver,
     DriverPayout,
     DriverPayoutBatch,
@@ -65,7 +68,8 @@ from .models import (
     OrderReview,
     Shop,
     StaffProfile,
-    ShopSubscriptionPayment
+    ShopSubscriptionPayment,
+    SupportTicket
 )
 
 from .mapbox import MapboxError, calculate_driving_distance, calculate_driver_route
@@ -1098,6 +1102,134 @@ def airxpress_help(request):
         },
     )
 
+def submit_support_ticket(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"success": False, "message": "POST is required."},
+            status=405,
+        )
+
+    description = request.POST.get("description", "").strip()
+    subject = request.POST.get("subject", "").strip()
+    category = request.POST.get("category", "general").strip().lower()
+    customer_name = request.POST.get("customer_name", "").strip()
+    customer_phone = request.POST.get("customer_phone", "").strip()
+
+    if not description or len(description) > 5000:
+        return JsonResponse(
+            {"success": False, "message": "Describe your issue in 1–5000 characters."},
+            status=400,
+        )
+
+    if category not in {"technical", "operations", "general"}:
+        category = "general"
+
+    if not subject:
+        subject = description[:200]
+
+    text = f"{subject} {description}".lower()
+
+    critical_terms = (
+        "whole site down", "entire site down", "website is down",
+        "site is down", "all orders blocked", "nobody can order",
+        "no one can order", "everyone cannot order", "system completely down",
+        "all checkout failing", "all users affected",
+    )
+    high_terms = (
+        "checkout failing", "checkout not working", "cannot checkout",
+        "can't checkout", "cannot place order", "can't place order",
+        "orders not going through", "shop cannot accept orders",
+        "shop can't accept orders", "delivery blocked", "driver cannot accept",
+        "payment failing", "payment not working", "multiple customers",
+    )
+
+    if any(term in text for term in critical_terms):
+        priority = "critical"
+        assigned_team = "both"
+    elif any(term in text for term in high_terms):
+        priority = "high"
+        assigned_team = (
+            "technical" if category == "technical"
+            else "operations" if category == "operations"
+            else "general"
+        )
+    else:
+        priority = "normal"
+        assigned_team = (
+            "technical" if category == "technical"
+            else "operations" if category == "operations"
+            else "general"
+        )
+
+    requires_escalation = (
+        priority == "critical"
+        or (priority == "high" and assigned_team in {"technical", "both"})
+    )
+
+    if priority == "critical":
+        escalation_notes = (
+            "Critical incident: flagged for both teams; prioritise during support hours. After-hours response is optional."
+        )
+    elif requires_escalation:
+        escalation_notes = (
+            "High-priority technical issue: review during support hours."
+        )
+    else:
+        escalation_notes = ""
+
+    ticket = SupportTicket.objects.create(
+        customer=request.user if request.user.is_authenticated else None,
+        customer_name=customer_name[:150],
+        customer_phone=customer_phone[:30],
+        category=category,
+        subject=subject[:200],
+        description=description,
+        priority=priority,
+        assigned_team=assigned_team,
+        requires_escalation=requires_escalation,
+        escalation_notes=escalation_notes,
+        status="open",
+    )
+
+    if priority == "critical":
+        reply = (
+            "Your report has been saved as a CRITICAL incident and flagged for "
+            "both technical and operations teams. If the service is completely "
+            "unavailable, contact Technical Support on 073 314 1222 and "
+            "Operations on 081 570 2241."
+        )
+    elif priority == "high":
+        reply = (
+            "Your report has been saved as a HIGH-priority ticket. The relevant "
+            "team will need to investigate. You can also contact Technical "
+            "Support on 073 314 1222 or Operations on 081 570 2241."
+        )
+    else:
+        if category == "general":
+            reply = (
+                "Your enquiry has been received and saved. The AirXpress team "
+                "will review it. Please keep your ticket reference for follow-up."
+            )
+        elif category == "operations":
+            reply = (
+                "Your request has been saved for the Operations team to review. "
+                "Please keep your ticket reference for follow-up."
+            )
+        else:
+            reply = (
+                "Your technical report has been saved for review. Please keep "
+                "your ticket reference for follow-up. If the service is completely "
+                "unavailable, contact Technical Support on 073 314 1222."
+            )
+
+    return JsonResponse({
+        "success": True,
+        "reference": str(ticket.reference)[:8].upper(),
+        "priority": ticket.priority,
+        "assigned_team": ticket.assigned_team,
+        "message": reply,
+    })
+
 def login_gateway(request):
     return render(request, "orders/login.html")
 
@@ -1121,11 +1253,59 @@ def customer_login(request):
                 request.session["airxpress_customer_whatsapp"] = user.customer_profile.whatsapp_number
                 request.session.modified = True
 
+            if hasattr(user, "customer_profile") and user.customer_profile.must_change_password:
+                return redirect("customer_change_password")
             return redirect("home")
 
         messages.error(request, "Invalid username or password.")
 
     return render(request, "orders/customer_login.html")
+
+@login_required(login_url="/customer/login/")
+def customer_change_password(request):
+    """Require a customer using a temporary password to choose a new one."""
+    if not hasattr(request.user, "customer_profile"):
+        messages.error(request, "This page is only for customer accounts.")
+        return redirect("home")
+
+    profile = request.user.customer_profile
+
+    if request.method == "POST":
+        new_password = request.POST.get("new_password", "")
+        confirm_password = request.POST.get("confirm_password", "")
+
+        if not new_password or new_password != confirm_password:
+            messages.error(request, "The passwords are empty or do not match.")
+            return render(
+                request,
+                "orders/customer_change_password.html",
+            )
+
+        try:
+            validate_password(new_password, user=request.user)
+        except ValidationError as exc:
+            for error in exc.messages:
+                messages.error(request, error)
+            return render(
+                request,
+                "orders/customer_change_password.html",
+            )
+
+        request.user.set_password(new_password)
+        request.user.save(update_fields=["password"])
+
+        profile.must_change_password = False
+        profile.save(update_fields=["must_change_password"])
+
+        update_session_auth_hash(request, request.user)
+        messages.success(request, "Your password has been changed successfully.")
+
+        return redirect("home")
+
+    return render(
+        request,
+        "orders/customer_change_password.html",
+    )
 
 def customer_register(request):
     from .forms import CustomerRegistrationForm
@@ -2214,6 +2394,84 @@ def is_owner(user):
 # =========================================================
 # DRIVER LOGIN
 # =========================================================
+
+
+@user_passes_test(is_owner, login_url="/owner/login/")
+def owner_update_support_ticket(request, ticket_id):
+    if request.method != "POST":
+        return redirect("owner_support_dashboard")
+
+    ticket = get_object_or_404(SupportTicket, id=ticket_id)
+    new_status = request.POST.get("status", "").strip()
+    staff_notes = request.POST.get("staff_notes", "").strip()
+
+    if new_status not in {"open", "in_progress", "resolved"}:
+        messages.error(request, "Invalid ticket status.")
+        return redirect("owner_support_dashboard")
+
+    if len(staff_notes) > 10000:
+        messages.error(request, "Internal notes must be 10,000 characters or fewer.")
+        return redirect("owner_support_dashboard")
+
+    ticket.status = new_status
+    ticket.staff_notes = staff_notes
+    ticket.save(update_fields=[
+        "status",
+        "staff_notes",
+        "resolved_at",
+        "updated_at",
+    ])
+
+    messages.success(
+        request,
+        f"Support ticket {str(ticket.reference)[:8].upper()} updated successfully.",
+    )
+    return redirect("owner_support_dashboard")
+@user_passes_test(is_owner, login_url="/owner/login/")
+def owner_support_dashboard(request):
+    tickets = SupportTicket.objects.all()
+
+    status_filter = request.GET.get("status", "").strip()
+    priority_filter = request.GET.get("priority", "").strip()
+
+    if status_filter in {"open", "in_progress", "resolved"}:
+        tickets = tickets.filter(status=status_filter)
+
+    if priority_filter in {"normal", "high", "critical"}:
+        tickets = tickets.filter(priority=priority_filter)
+
+    tickets = tickets.order_by(
+        models.Case(
+            models.When(priority="critical", then=0),
+            models.When(priority="high", then=1),
+            default=2,
+            output_field=models.IntegerField(),
+        ),
+        "-created_at",
+    )
+
+    context = {
+        "tickets": tickets,
+        "status_filter": status_filter,
+        "priority_filter": priority_filter,
+        "total_tickets": SupportTicket.objects.count(),
+        "open_tickets": SupportTicket.objects.filter(status="open").count(),
+        "in_progress_tickets": SupportTicket.objects.filter(
+            status="in_progress"
+        ).count(),
+        "escalation_tickets": SupportTicket.objects.filter(
+            requires_escalation=True
+        ).exclude(status="resolved").count(),
+        "critical_tickets": SupportTicket.objects.filter(
+            priority="critical"
+        ).exclude(status="resolved").count(),
+    }
+
+    return render(
+        request,
+        "orders/owner_support_dashboard.html",
+        context,
+    )
 
 def driver_login(request):
 
@@ -5410,6 +5668,13 @@ def owner_dashboard(request):
         .select_related("shop", "user")
         .order_by("shop__name", "user__username")
     )
+    # Active customer accounts available for owner password management.
+    customer_password_reset_list = (
+        CustomerProfile.objects
+        .filter(user__is_active=True)
+        .select_related("user")
+        .order_by("user__username")
+    )
     # SHOP SUBSCRIPTIONS
     # =========================================================
 
@@ -5525,6 +5790,7 @@ def owner_dashboard(request):
         "driver_verification_list": driver_verification_list,
         "driver_password_reset_list": driver_password_reset_list,
         "staff_password_reset_list": staff_password_reset_list,
+        "customer_password_reset_list": customer_password_reset_list,
 
         # Shop subscriptions
         "total_platform_fees": total_subscription_fees,
@@ -5643,6 +5909,52 @@ def owner_reset_staff_password(request, staff_id):
         f"Password reset successfully for shop staff {staff_user.username}.",
     )
     return redirect("owner_dashboard")
+@user_passes_test(
+    is_owner,
+    login_url="/owner/login/"
+)
+def owner_reset_customer_password(request, customer_id):
+    """Set a temporary password and require the customer to change it."""
+    if request.method != "POST":
+        return redirect("owner_dashboard")
+
+    profile = get_object_or_404(
+        CustomerProfile.objects.select_related("user"),
+        id=customer_id,
+        user__is_active=True,
+    )
+
+    customer = profile.user
+    password = request.POST.get("new_password", "")
+    confirm_password = request.POST.get("confirm_password", "")
+
+    if not password or password != confirm_password:
+        messages.error(
+            request,
+            "The temporary passwords are empty or do not match.",
+        )
+        return redirect("owner_dashboard")
+
+    try:
+        validate_password(password, user=customer)
+    except ValidationError as exc:
+        for error in exc.messages:
+            messages.error(request, error)
+        return redirect("owner_dashboard")
+
+    customer.set_password(password)
+    customer.save(update_fields=["password"])
+
+    profile.must_change_password = True
+    profile.save(update_fields=["must_change_password"])
+
+    messages.success(
+        request,
+        f"Temporary password set for customer {customer.username}. "
+        "Share it privately. The customer must change it at their next login.",
+    )
+    return redirect("owner_dashboard")
+
 # OWNER / AIRXPRESS DRIVER VERIFICATION
 # =========================================================
 

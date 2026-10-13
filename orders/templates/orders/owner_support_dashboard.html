@@ -1,0 +1,227 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Tickets | AirXpress Eats</title>
+    <link rel="icon" type="image/png" href="{% static 'orders/images/Airxpress-logo.png' %}">
+    <style>
+        :root {
+            --navy: #101b35;
+            --navy-light: #1d2b4b;
+            --blue: #2563eb;
+            --gold: #f1b24a;
+            --bg: #f3f6fb;
+            --text: #182338;
+            --muted: #64748b;
+            --border: #e2e8f0;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; font-family: Inter, "Segoe UI", Arial, sans-serif;
+            background: var(--bg); color: var(--text); line-height: 1.5;
+        }
+        .header {
+            background: linear-gradient(125deg, var(--navy), var(--navy-light));
+            color: white; padding: 26px 20px; border-bottom: 4px solid var(--gold);
+        }
+        .header-inner, main { max-width: 1400px; margin: auto; }
+        .header h1 { margin: 0; font-size: clamp(24px, 3vw, 34px); }
+        .header p { color: #f5c878; margin: 7px 0 0; }
+        .nav { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+        .nav a {
+            color: white; text-decoration: none; border: 1px solid #ffffff40;
+            border-radius: 8px; padding: 9px 13px;
+        }
+        .nav a:hover { background: #ffffff18; }
+        main { padding: 24px 18px 40px; }
+        .stats {
+            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px; margin-bottom: 22px;
+        }
+        .stat, .panel {
+            background: white; border: 1px solid var(--border); border-radius: 14px;
+            box-shadow: 0 5px 18px #0f172a08;
+        }
+        .stat { padding: 18px; border-top: 4px solid var(--blue); }
+        .stat.critical { border-top-color: #dc2626; }
+        .stat span { display: block; color: var(--muted); font-size: 13px; }
+        .stat strong { display: block; font-size: 30px; margin-top: 4px; }
+        .panel { padding: 20px; margin-bottom: 20px; }
+        h2 { margin: 0 0 14px; font-size: 21px; }
+        .filters { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+        label { display: block; font-weight: 650; font-size: 13px; margin-bottom: 5px; }
+        select, textarea, input {
+            width: 100%; padding: 10px 11px; border: 1px solid #cbd5e1;
+            border-radius: 8px; background: white; color: var(--text); font: inherit;
+        }
+        .filter-field { flex: 1 1 180px; }
+        button, .button {
+            display: inline-block; border: 0; border-radius: 8px; padding: 10px 14px;
+            font: inherit; font-weight: 700; cursor: pointer; text-decoration: none;
+        }
+        .primary { background: var(--blue); color: white; }
+        .secondary { background: #e8edf5; color: var(--navy); }
+        .ticket {
+            background: white; border: 1px solid var(--border); border-radius: 13px;
+            padding: 18px; margin-bottom: 14px; min-width: 0;
+        }
+        .ticket.critical { border: 2px solid #dc2626; }
+        .ticket.high { border-left: 5px solid #ea580c; }
+        .ticket-head {
+            display: flex; flex-wrap: wrap; justify-content: space-between;
+            gap: 10px; align-items: start;
+        }
+        .ticket h3 { margin: 0 0 6px; overflow-wrap: anywhere; }
+        .meta { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+        .badge {
+            display: inline-block; padding: 4px 9px; border-radius: 999px;
+            font-size: 12px; font-weight: 800; text-transform: uppercase;
+        }
+        .priority-critical { background: #fee2e2; color: #991b1b; }
+        .priority-high { background: #ffedd5; color: #9a3412; }
+        .priority-normal { background: #e2e8f0; color: #334155; }
+        .status-open { background: #dbeafe; color: #1d4ed8; }
+        .status-in_progress { background: #fef3c7; color: #92400e; }
+        .status-resolved { background: #dcfce7; color: #166534; }
+        .description {
+            white-space: pre-wrap; overflow-wrap: anywhere; margin: 15px 0;
+            background: #f8fafc; border-radius: 9px; padding: 13px;
+        }
+        .ticket-form {
+            display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 13px; border-top: 1px solid var(--border); padding-top: 15px;
+        }
+        .full { grid-column: 1 / -1; }
+        .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+        .message { padding: 12px; border-radius: 8px; margin-bottom: 14px; background: #e0f2fe; }
+        @media (max-width: 760px) {
+            .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .ticket-form { grid-template-columns: 1fr; }
+            .full { grid-column: auto; }
+        }
+        @media (max-width: 380px) {
+            .stats { grid-template-columns: 1fr; }
+            main { padding: 16px 10px 30px; }
+        }
+    </style>
+</head>
+<body>
+<header class="header">
+    <div class="header-inner">
+        <h1>AirXpress Eats Support Centre</h1>
+        <p>Review incidents, manage support requests and record resolutions.</p>
+        <nav class="nav" aria-label="Owner navigation">
+            <a href="{% url 'owner_dashboard' %}">← Owner Dashboard</a>
+            <a href="{% url 'owner_support_dashboard' %}">Support Tickets</a>
+            <a href="{% url 'airxpress_help' %}" target="_blank" rel="noopener">Open Help Centre ↗</a>
+        </nav>
+    </div>
+</header>
+
+<main>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="message">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <section class="stats" aria-label="Ticket summary">
+        <div class="stat"><span>All tickets</span><strong>{{ total_tickets }}</strong></div>
+        <div class="stat"><span>Open tickets</span><strong>{{ open_tickets }}</strong></div>
+        <div class="stat"><span>In progress</span><strong>{{ in_progress_tickets }}</strong></div>
+        <div class="stat critical"><span>Unresolved critical incidents</span><strong>{{ critical_tickets }}</strong></div>
+        <div class="stat critical"><span>Escalation required</span><strong>{{ escalation_tickets }}</strong></div>
+    </section>
+
+    <section class="panel">
+        <h2>Find tickets</h2>
+        <form method="get" class="filters">
+            <div class="filter-field">
+                <label for="status">Status</label>
+                <select name="status" id="status">
+                    <option value="">All statuses</option>
+                    <option value="open" {% if status_filter == "open" %}selected{% endif %}>Open</option>
+                    <option value="in_progress" {% if status_filter == "in_progress" %}selected{% endif %}>In Progress</option>
+                    <option value="resolved" {% if status_filter == "resolved" %}selected{% endif %}>Resolved</option>
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="priority">Priority</label>
+                <select name="priority" id="priority">
+                    <option value="">All priorities</option>
+                    <option value="critical" {% if priority_filter == "critical" %}selected{% endif %}>Critical</option>
+                    <option value="high" {% if priority_filter == "high" %}selected{% endif %}>High</option>
+                    <option value="normal" {% if priority_filter == "normal" %}selected{% endif %}>Normal</option>
+                </select>
+            </div>
+            <button class="primary" type="submit">Apply filters</button>
+            <a class="button secondary" href="{% url 'owner_support_dashboard' %}">Clear</a>
+        </form>
+    </section>
+
+    <section aria-label="Support tickets">
+        <h2>Support tickets ({{ tickets|length }})</h2>
+        {% for ticket in tickets %}
+            <article class="ticket {{ ticket.priority }}">
+                <div class="ticket-head">
+                    <div>
+                        <h3>{{ ticket.subject|default:"Support request" }}</h3>
+                        <div class="meta">
+                            Reference: {{ ticket.reference|slice:":8"|upper }} ·
+                            Received: {{ ticket.created_at|date:"d M Y, H:i" }}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="badge priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span>
+                        <span class="badge status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+                    </div>
+                </div>
+
+                <p class="meta">
+                    Customer: {{ ticket.customer_name|default:"Not provided" }} ·
+                    Phone: {{ ticket.customer_phone|default:"Not provided" }} ·
+                    Category: {{ ticket.get_category_display }} ·
+                    Assigned team: {{ ticket.get_assigned_team_display|default:ticket.assigned_team|title }}
+                </p>
+
+                {% if ticket.priority == "critical" and ticket.status != "resolved" %}
+                    <p><strong>CRITICAL INCIDENT — Prioritise during support hours. After-hours response is optional.</strong></p>
+                {% endif %}
+
+                <div class="description">{{ ticket.description }}</div>
+
+                {% if ticket.staff_notes %}
+                    <div>
+                        <strong>Internal notes</strong>
+                        <div class="description">{{ ticket.staff_notes }}</div>
+                    </div>
+                {% endif %}
+
+                <form method="post" action="{% url 'owner_update_support_ticket' ticket.id %}" class="ticket-form">
+                    {% csrf_token %}
+                    <div>
+                        <label for="status-{{ ticket.id }}">Update status</label>
+                        <select name="status" id="status-{{ ticket.id }}" required>
+                            <option value="open" {% if ticket.status == "open" %}selected{% endif %}>Open</option>
+                            <option value="in_progress" {% if ticket.status == "in_progress" %}selected{% endif %}>In Progress</option>
+                            <option value="resolved" {% if ticket.status == "resolved" %}selected{% endif %}>Resolved</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="notes-{{ ticket.id }}">Internal staff notes</label>
+                        <textarea name="staff_notes" id="notes-{{ ticket.id }}" rows="3" maxlength="10000" placeholder="Record investigation steps or resolution...">{{ ticket.staff_notes }}</textarea>
+                    </div>
+                    <div class="full">
+                        <button class="primary" type="submit">Save ticket update</button>
+                    </div>
+                </form>
+            </article>
+        {% empty %}
+            <div class="panel empty">No tickets match these filters.</div>
+        {% endfor %}
+    </section>
+</main>
+</body>
+</html>

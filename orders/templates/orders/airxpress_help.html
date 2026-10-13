@@ -55,6 +55,27 @@
             padding: 20px; border-radius: 12px;
             background: rgba(255,255,255,.05); line-height: 1.9; color: #dedede;
         }
+        .ticket-panel {
+            margin-top: 22px; padding: 22px; border-radius: 14px;
+            border: 1px solid rgba(255,255,255,.14); background: #101010;
+        }
+        .ticket-panel h2 { margin-top: 0; }
+        .ticket-form label { display: block; margin-top: 14px; color: #ddd; }
+        .ticket-form input, .ticket-form select, .ticket-form textarea {
+            display: block; width: 100%; margin-top: 7px; padding: 12px;
+            border-radius: 8px; border: 1px solid #555;
+            background: #090909; color: white; font: inherit;
+        }
+        .ticket-submit {
+            margin-top: 18px; padding: 14px; width: 100%; border: 0;
+            border-radius: 9px; background: #bdbdbd; color: #050505;
+            font-weight: 700; cursor: pointer;
+        }
+        .ticket-result {
+            display: none; margin-top: 16px; padding: 14px;
+            border-radius: 9px; background: rgba(255,255,255,.07);
+            line-height: 1.6; overflow-wrap: anywhere;
+        }
         .back-link { text-align: center; margin-top: 25px; }
         .back-link a { color: var(--silver); text-decoration: none; }
         .back-link a:hover { color: white; }
@@ -78,7 +99,7 @@
             <p class="subtitle">Choose the right support team so we can help you faster.</p>
         </header>
 
-        <div class="support-options">
+        <div class="support-options" id="whatsappSupportOptions" style="display:none">
             <section class="support-option">
                 <h2>Technical Support</h2>
                 <p>For website errors, login failures, password-reset problems, GPS or maps issues, driver verification-system errors, and payment-system bugs.</p>
@@ -102,7 +123,7 @@
             </section>
         </div>
 
-        <section class="topics">
+        <section class="topics" id="supportTopics" style="display:none">
             <label for="supportIssue"><strong>Describe your issue (optional)</strong></label>
             <textarea id="supportIssue" rows="3"
                 placeholder="Tell us briefly what happened..."
@@ -111,11 +132,362 @@
             <p><strong>Operations:</strong> orders, menus, deliveries and business enquiries.</p>
         </section>
 
-        <div class="back-link">
-            <a href="{% url 'home' %}">← Back to Home</a>
+<!-- AirXpress Eats Smart Support Chat -->
+<section class="ticket-panel" id="smartSupportChat">
+    <h2>💬 AirXpress Support Assistant</h2>
+    <p class="subtitle">
+        Tell us what is happening. We'll help you choose the right support option.
+    </p>
+
+    <div id="chatMessages" role="log" aria-live="polite"
+         style="padding:14px;background:#090909;border-radius:10px;line-height:1.6;margin-bottom:16px">
+        <p><strong>AirXpress Support:</strong> Hi! What do you need help with today?</p>
+    </div>
+
+    <div id="chatChoices" style="display:grid;gap:14px">
+    <label for="supportCategorySelect"><strong>1. What do you need help with?</strong></label>
+    <select id="supportCategorySelect" required style="width:100%;padding:12px;border-radius:8px;font:inherit">
+        <option value="">Choose a support category...</option>
+        <option value="technical">Website, login, payment or GPS</option>
+        <option value="operations">Order, shop or delivery</option>
+        <option value="general">General question</option>
+    </select>
+
+    <label for="supportProblemSelect"><strong>2. Select the specific problem</strong></label>
+    <select id="supportProblemSelect" required disabled style="width:100%;padding:12px;border-radius:8px;font:inherit">
+        <option value="">Choose a category first...</option>
+    </select>
+
+    <button type="button" id="supportContinueButton" class="ticket-submit" disabled>Continue</button>
+</div>
+ <div id="chatUrgency" style="display:none;margin-top:16px">
+        <p><strong>Is the problem urgent?</strong></p>
+        <p class="subtitle">
+            For example, the entire website is down, customers cannot place orders,
+            or an active delivery cannot be completed.
+        </p>
+        <div style="display:grid;gap:10px">
+            <button type="button" class="ticket-submit" data-urgency="urgent">
+                Yes — urgent, needs attention now
+            </button>
+            <button type="button" class="ticket-submit" data-urgency="routine">
+                No — it can wait
+            </button>
         </div>
-        <div class="footer">AIRXPRESS EATS · SUPPORT CENTRE</div>
-    </main>
+    </div>
+
+    <div id="chatResult" style="display:none;margin-top:16px;line-height:1.6"></div>
+
+    <button type="button" id="chatReset" class="ticket-submit"
+            style="display:none;margin-top:12px">
+        Start again
+    </button>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+(function () {
+    const messages = document.getElementById("chatMessages");
+    const choices = document.getElementById("chatChoices");
+    const urgency = document.getElementById("chatUrgency");
+    const result = document.getElementById("chatResult");
+    const reset = document.getElementById("chatReset");
+
+    const supportOptions = document.getElementById("whatsappSupportOptions");
+    const supportTopics = document.getElementById("supportTopics");
+    const ticketPanel = document.getElementById("ticket-panel");
+    const ticketCategory = document.getElementById("ticketCategory");
+
+    if (!messages || !choices || !urgency || !result || !reset ||
+        !supportOptions || !supportTopics || !ticketPanel || !ticketCategory) {
+        console.error("AirXpress Support: a required HTML element is missing.");
+        return;
+    }
+
+    let selectedIssue = "";
+
+    function addMessage(label, text) {
+        const p = document.createElement("p");
+        const strong = document.createElement("strong");
+        strong.textContent = label + ": ";
+        p.appendChild(strong);
+        p.appendChild(document.createTextNode(text));
+        messages.appendChild(p);
+    }
+
+    function showSection(section) {
+        const showWhatsApp = section === "whatsapp";
+        const showTicket = section === "ticket";
+
+        supportOptions.style.display = showWhatsApp ? "" : "none";
+        supportTopics.style.display = showWhatsApp ? "" : "none";
+        ticketPanel.style.display = showTicket ? "block" : "none";
+
+        const target = showWhatsApp ? supportOptions : ticketPanel;
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    const categorySelect = document.getElementById("supportCategorySelect");
+    const problemSelect = document.getElementById("supportProblemSelect");
+    const continueButton = document.getElementById("supportContinueButton");
+
+    const problemOptions = {
+        technical: [
+            { value: "website_down", label: "Website or system is down", urgent: true, team: "technical" },
+            { value: "payment_failure", label: "Customers cannot complete payment or checkout", urgent: true, team: "technical" },
+            { value: "login_outage", label: "Multiple users cannot log in", urgent: true, team: "technical" },
+            { value: "gps_delivery", label: "GPS or tracking has failed during an active delivery", urgent: true, team: "technical" },
+            { value: "login_help", label: "Individual login or password help", urgent: false, team: "technical" },
+            { value: "technical_question", label: "Other technical question", urgent: false, team: "technical" }
+        ],
+        operations: [
+            { value: "driver_stranded", label: "Driver stranded or active delivery blocked", urgent: true, team: "operations" },
+            { value: "delivery_safety", label: "Delivery safety emergency", urgent: true, team: "operations" },
+            { value: "order_problem", label: "Order problem or missing order", urgent: false, team: "operations" },
+            { value: "shop_problem", label: "Shop, menu or business support", urgent: false, team: "operations" },
+            { value: "operations_question", label: "Other operational question", urgent: false, team: "operations" }
+        ],
+        general: [
+            { value: "payment_question", label: "General payment question", urgent: false, team: "general" },
+            { value: "order_question", label: "General order question", urgent: false, team: "general" },
+            { value: "general_question", label: "Other general enquiry", urgent: false, team: "general" }
+        ]
+    };
+
+    if (!categorySelect || !problemSelect || !continueButton) {
+        console.error("AirXpress Support dropdown controls are missing.");
+        return;
+    }
+
+    function updateProblemOptions() {
+        const options = problemOptions[categorySelect.value] || [];
+        problemSelect.replaceChildren();
+
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = options.length
+            ? "Choose the specific problem..."
+            : "Choose a category first...";
+        problemSelect.appendChild(placeholder);
+
+        options.forEach(function (problem) {
+            const option = document.createElement("option");
+            option.value = problem.value;
+            option.textContent = problem.label;
+            problemSelect.appendChild(option);
+        });
+
+        problemSelect.disabled = options.length === 0;
+        continueButton.disabled = true;
+    }
+
+    categorySelect.addEventListener("change", function () {
+        updateProblemOptions();
+    });
+
+    problemSelect.addEventListener("change", function () {
+        continueButton.disabled = !problemSelect.value;
+    });
+
+    continueButton.addEventListener("click", function () {
+        const options = problemOptions[categorySelect.value] || [];
+        const problem = options.find(function (item) {
+            return item.value === problemSelect.value;
+        });
+
+        if (!problem) {
+            problemSelect.focus();
+            return;
+        }
+
+        selectedIssue = categorySelect.value;
+        choices.style.display = "none";
+        addMessage("You", problem.label);
+
+        const issueField = document.getElementById("supportIssue");
+        if (issueField) {
+            issueField.value = problem.label;
+        }
+
+        result.style.display = "block";
+        result.textContent = "";
+
+        if (problem.urgent) {
+            result.textContent =
+                "This issue is marked for urgent support. Contact the appropriate team below.";
+
+            supportOptions.querySelectorAll(".support-option").forEach(function (card, index) {
+                const technicalCard = index === 0;
+                card.style.display =
+                    (problem.team === "technical" && technicalCard) ||
+                    (problem.team === "operations" && !technicalCard)
+                        ? ""
+                        : "none";
+            });
+
+            reset.style.display = "block";
+            showSection("whatsapp");
+            return;
+        }
+
+        result.textContent =
+            "Your selection will be sent to the support team as a ticket.";
+
+        ticketCategory.value = categorySelect.value;
+
+        const descriptionField = document.getElementById("ticketDescription");
+        if (descriptionField) {
+            descriptionField.value = problem.label;
+        }
+
+        const subjectField = document.getElementById("ticketSubject");
+        if (subjectField) {
+            subjectField.value = problem.label;
+        }
+
+        reset.style.display = "block";
+        showSection("ticket");
+    });
+    reset.addEventListener("click", function () {
+        selectedIssue = "";
+
+        messages.innerHTML =
+            "<p><strong>AirXpress Support:</strong> " +
+            "Hi! What do you need help with today?</p>";
+
+        categorySelect.value = "";
+        updateProblemOptions();
+        problemSelect.selectedIndex = 0;
+        problemSelect.disabled = true;
+        continueButton.disabled = true;
+
+        choices.style.display = "grid";
+        urgency.style.display = "none";
+        result.style.display = "none";
+        result.textContent = "";
+        reset.style.display = "none";
+
+        const issueField = document.getElementById("supportIssue");
+        if (issueField) {
+            issueField.value = "";
+        }
+
+        supportOptions.querySelectorAll(".support-option").forEach(function (card) {
+            card.style.display = "";
+        });
+
+        supportOptions.style.display = "none";
+        supportTopics.style.display = "none";
+        ticketPanel.style.display = "none";
+
+        ticketCategory.value = "technical";
+
+        const subjectField = document.getElementById("ticketSubject");
+        if (subjectField) {
+            subjectField.value = "";
+        }
+
+        const descriptionField = document.getElementById("ticketDescription");
+        if (descriptionField) {
+            descriptionField.value = "";
+        }
+
+        document.getElementById("smartSupportChat")
+            .scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+})();
+});
+</script>
+    <section class="ticket-panel" id="ticket-panel" style="display:none">
+    <h2>Chat with AirXpress Support</h2>
+    <p class="subtitle">Submit a report anytime. Your ticket is stored for the support team to review, even when they are offline.</p>
+
+    <form id="supportTicketForm" class="ticket-form"
+          method="post" action="{% url 'submit_support_ticket' %}">
+        {% csrf_token %}
+
+        <label for="ticketName">Your name</label>
+        <input id="ticketName" name="customer_name" maxlength="150"
+               autocomplete="name" placeholder="Your name">
+
+        <label for="ticketPhone">Phone number (optional)</label>
+        <input id="ticketPhone" name="customer_phone" maxlength="30"
+               autocomplete="tel" placeholder="e.g. 073 000 0000">
+
+        <label for="ticketCategory">What do you need help with?</label>
+        <select id="ticketCategory" name="category" required>
+            <option value="technical">Technical issue — website, login, maps or payment</option>
+            <option value="operations">Operations — orders, menus or deliveries</option>
+            <option value="general">General enquiry</option>
+        </select>
+
+        <label for="ticketSubject">Short subject</label>
+        <input id="ticketSubject" name="subject" maxlength="200"
+               placeholder="e.g. Checkout is not working">
+
+        <label for="ticketDescription">Describe what happened</label>
+        <textarea id="ticketDescription" name="description" rows="5"
+                  maxlength="5000" required
+                  placeholder="Include what you were trying to do and any error message."></textarea>
+
+        <button class="ticket-submit" type="submit">Submit Support Ticket</button>
+        <div id="ticketResult" class="ticket-result" role="status" aria-live="polite"></div>
+    </form>
+</section>
+
+<script>
+(function () {
+    const form = document.getElementById("supportTicketForm");
+    const result = document.getElementById("ticketResult");
+    const button = form.querySelector('button[type="submit"]');
+
+    form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        if (!form.reportValidity()) return;
+
+        button.disabled = true;
+        button.textContent = "Submitting...";
+        result.style.display = "block";
+        result.textContent = "Saving your report...";
+
+        try {
+            const response = await fetch(form.action, {
+                method: "POST",
+                body: new FormData(form),
+                headers: {"X-Requested-With": "XMLHttpRequest"},
+                credentials: "same-origin"
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || "Your report could not be saved.");
+            }
+
+            result.textContent =
+                "Ticket reference: " + data.reference +
+                " | Priority: " + data.priority.toUpperCase() +
+                " | Team: " + data.assigned_team +
+                " — " + data.message;
+            form.reset();
+        } catch (error) {
+            result.textContent =
+                error.message +
+                " Please try again. If the problem continues, contact support using the WhatsApp options above.";
+        } finally {
+            button.disabled = false;
+            button.textContent = "Submit Support Ticket";
+        }
+    });
+})();
+</script>
+<div class="back-link">
+    <a href="{% url 'home' %}">&larr; Back to AirXpress Eats</a>
+</div>
+<footer class="footer">
+    AirXpress Eats Help Centre
+</footer>
+</main>
 </div>
 </body>
 </html>

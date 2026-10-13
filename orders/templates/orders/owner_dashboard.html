@@ -556,6 +556,14 @@
                 Driver Payouts
             </a>
 
+            <a
+                href="{% url 'owner_support_dashboard' %}"
+                class="owner-nav-link"
+            >
+                <span class="owner-nav-icon" aria-hidden="true">🎧</span>
+                Support Tickets
+            </a>
+
         </nav>
 
             </p>
@@ -1025,6 +1033,92 @@
     {% empty %}
         <div class="summary-card">
             No active shop staff accounts found.
+        </div>
+    {% endfor %}
+</div>
+<h2 id="owner-customer-password-reset" class="section-title">
+    Customer Password Reset
+</h2>
+
+<p style="color:#64748b;margin:0 0 16px;">
+    Set a temporary password for a customer who cannot reset their password.
+    Give the temporary password to the customer privately. They must choose a new
+    password before continuing to use AirXpress Eats.
+</p>
+
+<div class="summary-grid">
+    {% for profile in customer_password_reset_list %}
+        <div class="summary-card" style="text-align:left;">
+            <div style="font-size:18px;font-weight:700;margin-bottom:8px;">
+                {{ profile.user.username }}
+            </div>
+
+            <div style="margin-bottom:12px;">
+                <strong>Name:</strong>
+                {{ profile.user.get_full_name|default:profile.user.username }}
+            </div>
+
+            <div style="margin-bottom:12px;">
+                <strong>Email:</strong>
+                {% if profile.user.email %}
+                    {{ profile.user.email }}
+                {% else %}
+                    Not configured
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom:12px;">
+                <strong>WhatsApp:</strong>
+                {% if profile.whatsapp_number %}
+                    {{ profile.whatsapp_number }}
+                {% else %}
+                    Not configured
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom:12px;">
+                <strong>Password change required:</strong>
+                {% if profile.must_change_password %}
+                    Yes
+                {% else %}
+                    No
+                {% endif %}
+            </div>
+
+            <form method="post" action="{% url 'owner_reset_customer_password' profile.id %}">
+                {% csrf_token %}
+
+                <label for="customer-new-password-{{ profile.id }}">Temporary password</label>
+                <input
+                    id="customer-new-password-{{ profile.id }}"
+                    type="password"
+                    name="new_password"
+                    required
+                    autocomplete="new-password"
+                    style="width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;border:1px solid #cbd5e1;border-radius:8px;"
+                >
+
+                <label for="customer-confirm-password-{{ profile.id }}">Confirm temporary password</label>
+                <input
+                    id="customer-confirm-password-{{ profile.id }}"
+                    type="password"
+                    name="confirm_password"
+                    required
+                    autocomplete="new-password"
+                    style="width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;border:1px solid #cbd5e1;border-radius:8px;"
+                >
+
+                <button
+                    type="submit"
+                    style="width:100%;padding:11px;border:0;border-radius:8px;background:#198754;color:#fff;font-weight:700;cursor:pointer;"
+                >
+                    Set Temporary Password
+                </button>
+            </form>
+        </div>
+    {% empty %}
+        <div class="summary-card">
+            No active customer accounts found.
         </div>
     {% endfor %}
 </div>

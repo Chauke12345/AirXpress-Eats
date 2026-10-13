@@ -34,7 +34,6 @@ class Shop(models.Model):
     phone_number = models.CharField(
         max_length=20
     )
-
     whatsapp_number = models.CharField(
         max_length=20
     )
@@ -275,6 +274,10 @@ class CustomerProfile(models.Model):
         related_name="customer_profile",
     )
 
+    must_change_password = models.BooleanField(
+        default=False,
+        help_text="Require the customer to change their temporary password at next login.",
+    )
     whatsapp_number = models.CharField(
         max_length=20,
         blank=True,
@@ -557,7 +560,6 @@ class Order(models.Model):
         editable=False,
         db_index=True,
     )
-
     whatsapp_number = models.CharField(
         max_length=20,
         blank=True
@@ -1327,3 +1329,76 @@ class ShopPayout(models.Model):
 
     def __str__(self):
         return f"{self.shop.name} - Order #{self.order_id} - R{self.amount}"
+from django.utils import timezone
+
+
+class SupportTicket(models.Model):
+    CATEGORY_CHOICES = [
+        ("technical", "Technical Support"),
+        ("operations", "Operations Support"),
+        ("general", "General Enquiry"),
+    ]
+
+    PRIORITY_CHOICES = [
+        ("normal", "Normal"),
+        ("high", "High"),
+        ("critical", "Critical"),
+    ]
+
+    STATUS_CHOICES = [
+        ("open", "Open"),
+        ("in_progress", "In Progress"),
+        ("resolved", "Resolved"),
+    ]
+
+    reference = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+    )
+    customer = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="airxpress_support_tickets",
+    )
+    customer_name = models.CharField(max_length=150, blank=True)
+    customer_phone = models.CharField(max_length=30, blank=True)
+    category = models.CharField(
+        max_length=20,
+        choices=CATEGORY_CHOICES,
+        default="general",
+    )
+    subject = models.CharField(max_length=200)
+    description = models.TextField()
+    priority = models.CharField(
+        max_length=10,
+        choices=PRIORITY_CHOICES,
+        default="normal",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="open",
+    )
+    assigned_team = models.CharField(max_length=30, default="operations")
+    requires_escalation = models.BooleanField(default=False)
+    escalation_notes = models.TextField(blank=True)
+    staff_notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        if self.status == "resolved" and self.resolved_at is None:
+            self.resolved_at = timezone.now()
+        elif self.status != "resolved":
+            self.resolved_at = None
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Support #{str(self.reference)[:8]} - {self.subject}"
