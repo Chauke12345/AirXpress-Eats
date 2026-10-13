@@ -386,6 +386,33 @@ class MenuItem(models.Model):
         related_name="menu_items"
     )
 
+    HOMEPAGE_CATEGORY_CHOICES = [
+        ("popular", "Popular Picks"),
+        ("main_meals", "Main Meals"),
+        ("burgers", "Burgers"),
+        ("chicken", "Chicken"),
+        ("meat_braai", "Meat & Braai"),
+        ("sides", "Sides"),
+        ("drinks", "Drinks"),
+        ("desserts", "Desserts"),
+        ("groceries", "Groceries"),
+    ]
+
+    is_homepage_featured = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Show this item in the Popular Picks section on the public homepage.",
+    )
+
+    homepage_category = models.CharField(
+        max_length=30,
+        choices=HOMEPAGE_CATEGORY_CHOICES,
+        blank=True,
+        default="",
+        db_index=True,
+        help_text="Optional shared category used to group this item on the public homepage.",
+    )
+
     name = models.CharField(
         max_length=150
     )

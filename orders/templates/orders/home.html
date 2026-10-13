@@ -2137,6 +2137,214 @@ section:not(.hero) {
      RESTAURANTS
 ============================== -->
 
+
+<style id="airxpress-netflix-discovery">
+/* AirXpress Eats ? horizontal discovery rows */
+.ax-discovery {
+    background: #090909;
+    color: #f8f8f8;
+    padding: 20px 0 30px;
+    overflow: hidden;
+}
+.ax-discovery-inner {
+    width: min(1400px, 94%);
+    margin: 0 auto;
+}
+.ax-discovery h2 {
+    color: #fff;
+    font-size: clamp(1.15rem, 2.4vw, 1.65rem);
+    font-weight: 800;
+    margin: 25px 0 13px;
+}
+.ax-discovery-intro {
+    color: #b8b8b8;
+    margin: 0 0 16px;
+}
+.ax-category-row,
+.ax-product-row {
+    display: flex;
+    gap: 13px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 2px 15px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    scrollbar-color: #555 #181818;
+    -webkit-overflow-scrolling: touch;
+}
+.ax-category-row::-webkit-scrollbar,
+.ax-product-row::-webkit-scrollbar {
+    height: 6px;
+}
+.ax-category-row::-webkit-scrollbar-thumb,
+.ax-product-row::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 10px;
+}
+.ax-category-chip {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 18px;
+    border: 1px solid #393939;
+    border-radius: 999px;
+    background: #191919;
+    color: #f5f5f5;
+    font-size: .9rem;
+    font-weight: 700;
+    text-decoration: none;
+    scroll-snap-align: start;
+    transition: background .2s, border-color .2s, transform .2s;
+}
+.ax-category-chip:hover {
+    background: #303030;
+    border-color: #aaa;
+    transform: translateY(-2px);
+}
+.ax-product-card {
+    flex: 0 0 205px;
+    width: 205px;
+    overflow: hidden;
+    background: #171717;
+    border: 1px solid #2b2b2b;
+    border-radius: 13px;
+    color: #fff;
+    text-decoration: none;
+    scroll-snap-align: start;
+    transition: transform .2s, border-color .2s;
+}
+.ax-product-card:hover {
+    transform: translateY(-3px);
+    border-color: #777;
+}
+.ax-product-image {
+    width: 100%;
+    height: 135px;
+    display: block;
+    object-fit: cover;
+    background: #252525;
+}
+.ax-product-placeholder {
+    height: 135px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #292929, #111);
+    color: #aaa;
+    font-size: 2rem;
+}
+.ax-product-info {
+    padding: 12px;
+}
+.ax-product-name {
+    margin: 0 0 6px;
+    font-size: .98rem;
+    font-weight: 800;
+    line-height: 1.35;
+}
+.ax-product-shop {
+    color: #b8b8b8;
+    font-size: .8rem;
+    margin-bottom: 8px;
+}
+.ax-product-price {
+    color: #fff;
+    font-weight: 800;
+}
+.ax-product-action {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 7px 11px;
+    border-radius: 7px;
+    background: #f2f2f2;
+    color: #111;
+    font-size: .8rem;
+    font-weight: 800;
+}
+.ax-empty {
+    color: #b8b8b8;
+    padding: 12px 0;
+}
+@media (max-width: 650px) {
+    .ax-discovery-inner { width: 94%; }
+    .ax-discovery { padding-top: 12px; }
+    .ax-category-row, .ax-product-row { gap: 10px; }
+    .ax-product-card { flex-basis: 158px; width: 158px; }
+    .ax-product-image, .ax-product-placeholder { height: 112px; }
+    .ax-product-info { padding: 10px; }
+}
+</style>
+
+
+<section class="ax-discovery" id="airxpress-netflix-discovery">
+  <div class="ax-discovery-inner">
+    <h2>Explore by category</h2>
+    <p class="ax-discovery-intro">Find something delicious for your next order.</p>
+
+    <div class="ax-category-row" aria-label="Homepage categories">
+      {% for key, label in homepage_categories %}
+        <a class="ax-category-chip" href="#category-{{ key }}">
+          {{ label }}
+        </a>
+      {% endfor %}
+    </div>
+
+    {% if popular_items %}
+      <h2>Popular Picks</h2>
+      <div class="ax-product-row" aria-label="Popular menu items">
+        {% for item in popular_items %}
+          <a class="ax-product-card"
+             href="{% url 'customer_order' shop_slug=item.shop.slug %}"
+             aria-label="View {{ item.name }} from {{ item.shop.name }}">
+            {% if item.image %}
+              <img class="ax-product-image"
+                   src="{{ item.image.url }}"
+                   alt="{{ item.name }}"
+                   loading="lazy">
+            {% else %}
+              <div class="ax-product-image ax-product-placeholder">{{ item.name|first }}</div>
+            {% endif %}
+            <div class="ax-product-info">
+              <span class="ax-product-name">{{ item.name }}</span>
+              <span class="ax-product-shop">{{ item.shop.name }}</span>
+              <span class="ax-product-price">R{{ item.price|floatformat:2 }}</span>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% for row in category_rows %}
+      <div class="ax-home-category" id="category-{{ row.key }}">
+        <h2>{{ row.label }}</h2>
+        <div class="ax-product-row" aria-label="{{ row.label }}">
+          {% for item in row.items %}
+            <a class="ax-product-card"
+               href="{% url 'customer_order' shop_slug=item.shop.slug %}"
+               aria-label="View {{ item.name }} from {{ item.shop.name }}">
+              {% if item.image %}
+                <img class="ax-product-image"
+                     src="{{ item.image.url }}"
+                     alt="{{ item.name }}"
+                     loading="lazy">
+              {% else %}
+                <div class="ax-product-image ax-product-placeholder">{{ item.name|first }}</div>
+              {% endif %}
+              <div class="ax-product-info">
+                <span class="ax-product-name">{{ item.name }}</span>
+                <span class="ax-product-shop">{{ item.shop.name }}</span>
+                <span class="ax-product-price">R{{ item.price|floatformat:2 }}</span>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
 <section class="restaurants-section"
          id="restaurants">
 

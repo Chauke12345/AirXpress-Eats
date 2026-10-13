@@ -53,6 +53,7 @@ from .forms import (
 )
 
 from .models import (
+    Category,
     CustomerProfile,
     Driver,
     DriverPayout,
@@ -239,16 +240,97 @@ def address_suggestions(request):
 def home(request):
     """
     Public AirXpress Eats marketplace homepage.
-    Customers can discover active businesses without logging in.
     """
     shops = Shop.objects.filter(
         is_active=True
     ).order_by("name")
 
-    # =========================================================
+    available_items = MenuItem.objects.filter(
+        shop__is_active=True,
+        is_available=True,
+        price__gt=0,
+    ).select_related(
+        "shop",
+        "category",
+    )
+
+    homepage_categories = [
+        ("main_meals", "Main Meals"),
+        ("burgers", "Burgers"),
+        ("chicken", "Chicken"),
+        ("meat_braai", "Meat & Braai"),
+        ("sides", "Sides"),
+        ("drinks", "Drinks"),
+        ("desserts", "Desserts"),
+        ("groceries", "Groceries"),
+    ]
+
+    category_rows = []
+    for key, label in homepage_categories:
+        items = available_items.filter(
+            homepage_category=key
+        ).order_by("name")
+
+        if items.exists():
+            category_rows.append({
+                "key": key,
+                "label": label,
+                "items": items,
+            })
+
+    # Fair-share Popular Picks: rotate shops weekly, then select
+    # one eligible product per shop before filling remaining slots.
+    from datetime import date
+
+    eligible_items = list(
+        available_items.filter(
+            homepage_category__gt="",
+        ).order_by("shop_id", "pk")
+    )
+
+    shop_items = {}
+    for item in eligible_items:
+        shop_items.setdefault(item.shop_id, []).append(item)
+
+    shop_ids = sorted(shop_items)
+    popular_items = []
+
+    if shop_ids:
+        rotation_anchor = date(2024, 1, 1)
+        week_index = (date.today() - rotation_anchor).days // 7
+        shop_start = week_index % len(shop_ids)
+        rotated_shop_ids = shop_ids[shop_start:] + shop_ids[:shop_start]
+
+        # Give each of five shops one slot where possible.
+        selected_shop_ids = rotated_shop_ids[:5]
+        for shop_id in selected_shop_ids:
+            products = shop_items[shop_id]
+            product_index = week_index % len(products)
+            popular_items.append(products[product_index])
+
+        # If fewer than five shops qualify, fill remaining slots
+        # with other products without duplicating a product.
+        if len(popular_items) < 5:
+            selected_ids = {item.pk for item in popular_items}
+            remaining = [
+                item for shop_id in rotated_shop_ids
+                for item in shop_items[shop_id]
+                if item.pk not in selected_ids
+            ]
+            offset = week_index % len(remaining) if remaining else 0
+            remaining = remaining[offset:] + remaining[:offset]
+            popular_items.extend(remaining[:5 - len(popular_items)])
+
     context = {
         "shops": shops,
         "total_shops": shops.count(),
+        "categories": Category.objects.filter(
+            menu_items__shop__is_active=True
+        ).distinct().order_by("name"),
+        "featured_items": popular_items,
+        "homepage_categories": homepage_categories,
+        "category_rows": category_rows,
+        "popular_items": popular_items,
     }
 
     return render(
@@ -256,7 +338,6 @@ def home(request):
         "orders/home.html",
         context,
     )
-
 
 
 def refund_policy(request):

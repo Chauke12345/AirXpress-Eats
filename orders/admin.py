@@ -1,4 +1,4 @@
-﻿from django.contrib import admin
+from django.contrib import admin
 
 from .models import (
     Shop,
@@ -153,6 +153,8 @@ class MenuItemAdmin(admin.ModelAdmin):
         "name",
         "shop",
         "category",
+        "homepage_category",
+        "is_homepage_featured",
         "pricing_type",
         "price",
         "display_order",
@@ -162,8 +164,10 @@ class MenuItemAdmin(admin.ModelAdmin):
     list_filter = (
         "shop",
         "category",
+        "homepage_category",
         "pricing_type",
         "is_available",
+        "is_homepage_featured",
     )
 
     search_fields = (
