@@ -300,6 +300,25 @@
         .secondary-button:hover {
             background: rgba(255,255,255,0.09);
         }
+        .customer-login-hero-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 27px;
+            border-radius: 8px;
+            border: 1px solid #ff6800;
+            color: #fff;
+            background: rgba(255,104,0,0.12);
+            font-size: 14px;
+            font-weight: 800;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .customer-login-hero-button:hover {
+            background: rgba(255,104,0,0.24);
+            transform: translateY(-2px);
+        }
 
         /* ==============================
            HERO BRAND LOGO
@@ -2079,6 +2098,15 @@ section:not(.hero) {
                     How It Works
 
                 </a>
+
+                {% if not user.is_authenticated or not user.customer_profile %}
+                <a href="{% url 'customer_login' %}"
+                   class="customer-login-hero-button">
+
+                    Customer Login
+
+                </a>
+                {% endif %}
 
             </div>
 
