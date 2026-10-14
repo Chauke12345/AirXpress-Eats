@@ -1993,9 +1993,14 @@ section:not(.hero) {
 </nav>
 <div class="mobile-menu-panel" id="mobileMenuPanel" hidden>
     {% if user.is_authenticated and user.customer_profile %}
-    <a href="{% url 'customer_my_orders' %}">Track My Order</a>
+        <a href="{% url 'customer_my_orders' %}">Track My Order</a>
+        <form method="post" action="{% url 'customer_logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="mobile-menu-auth-button">Log Out</button>
+        </form>
+    {% else %}
+        <a href="{% url 'customer_login' %}">Customer Login</a>
     {% endif %}
-    <a href="{% url 'customer_login' %}">Customer Login</a>
     <a href="{% url 'driver_login' %}">Driver Portal</a>
     <a href="{% url 'staff_login' %}">Merchant Portal</a>
     <a href="{% url 'owner_login' %}">Admin Portal</a>
@@ -3137,5 +3142,35 @@ section:not(.hero) {
         max-width: 145px;
     }
 }
+}
+</style>
+
+<style>
+/* AIRXPRESS EATS - MOBILE MENU AUTH BUTTON */
+@media (max-width: 650px) {
+    .mobile-menu-panel form {
+        display: block;
+        width: 100%;
+        margin: 0;
+    }
+
+    .mobile-menu-panel .mobile-menu-auth-button {
+        display: block;
+        width: 100%;
+        padding: 12px 16px;
+        border: none;
+        border-radius: 8px;
+        background: #ff6800;
+        color: #fff;
+        font-family: inherit;
+        font-size: 16px;
+        font-weight: 700;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .mobile-menu-panel .mobile-menu-auth-button:hover {
+        background: #e65f00;
+    }
 }
 </style>
