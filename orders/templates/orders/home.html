@@ -2374,64 +2374,68 @@ section:not(.hero) {
 
     {% if shops %}
 
-        <div class="restaurant-grid"
-             id="restaurantGrid">
+        <div id="restaurantGrid" class="restaurant-area-list">
 
-            {% for shop in shops %}
+            {% for area in restaurant_groups %}
+                <section class="restaurant-area-group">
+                    <h3 class="restaurant-area-title">{{ area.location }}</h3>
 
-                <a
-                    href="{% url 'customer_order' shop_slug=shop.slug %}"
-                    class="restaurant-card"
-                    data-search="{{ shop.name|lower }} {{ shop.location|lower }}"
-                >
+                    <div class="restaurant-grid">
+                        {% for shop in area.shops %}
+                        <a
+                            href="{% url 'customer_order' shop_slug=shop.slug %}"
+                            class="restaurant-card"
+                            data-search="{{ shop.name|lower }} {{ shop.location|lower }}"
+                        >
 
-                    <div class="restaurant-icon">
-                        {% if shop.logo %}
-                            <img src="{{ shop.logo.url }}" alt="{{ shop.name }} logo">
-                        {% else %}
-                            {% with featured_item=shop.menu_items.all|first %}
-                                {% if featured_item.image %}
-                                    <img src="{{ featured_item.image.url }}" alt="{{ featured_item.name }}">
+                            <div class="restaurant-icon">
+                                {% if shop.logo %}
+                                    <img src="{{ shop.logo.url }}" alt="{{ shop.name }} logo">
+                                {% else %}
+                                    {% with featured_item=shop.menu_items.all|first %}
+                                        {% if featured_item.image %}
+                                            <img src="{{ featured_item.image.url }}" alt="{{ featured_item.name }}">
+                                        {% endif %}
+                                    {% endwith %}
                                 {% endif %}
-                            {% endwith %}
-                        {% endif %}
-                    </div>
+                            </div>
 
-                    <h3>
-                        {{ shop.name }}
-                    </h3>
+                            <h3>
+                                {{ shop.name }}
+                            </h3>
 
-                    {% if shop.location %}
+                            {% if shop.location %}
 
-                        <div class="restaurant-location">
+                                <div class="restaurant-location">
 
-                            {{ shop.location }}
+                                    {{ shop.location }}
 
-                        </div>
+                                </div>
 
-                    {% else %}
+                            {% else %}
 
-                        <div class="restaurant-location">
+                                <div class="restaurant-location">
 
-                            Location available
+                                    Location available
 
-                        </div>
+                                </div>
 
-                    {% endif %}
+                            {% endif %}
 
-                    <div class="order-link">
+                            <div class="order-link">
     <span>
         View Menu &amp; Order &rarr;
     </span>
 
 </div>
 
-                </a>
-
+                        </a>
+                        {% endfor %}
+                    </div>
+                </section>
             {% endfor %}
 
         </div>
-
 
         <div id="noResults"
              class="empty-state"
@@ -2813,98 +2817,272 @@ section:not(.hero) {
 ============================== -->
 
 <script>
+    const searchInput = document.getElementById("shopSearch");
+    const restaurantCards = document.querySelectorAll(".restaurant-card");
+    const restaurantGroups = document.querySelectorAll(".restaurant-area-group");
+    const noResults = document.getElementById("noResults");
 
-    const searchInput =
-        document.getElementById("shopSearch");
+    function filterRestaurants() {
+        const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : "";
+        let visibleCount = 0;
 
-    const restaurantCards =
-        document.querySelectorAll(".restaurant-card");
+        restaurantCards.forEach(function(card) {
+            const searchableText = card.getAttribute("data-search") || "";
+            const matches = searchableText.includes(searchTerm);
 
-    const noResults =
-        document.getElementById("noResults");
+            card.style.display = matches ? "flex" : "none";
+            if (matches) visibleCount++;
+        });
 
+        restaurantGroups.forEach(function(group) {
+            const visibleCards = group.querySelectorAll(
+                '.restaurant-card:not([style*="display: none"])'
+            );
+            group.style.display = visibleCards.length ? "" : "none";
+        });
 
-    if (searchInput) {
-
-        searchInput.addEventListener(
-            "input",
-            function () {
-
-                const searchTerm =
-                    this.value.trim().toLowerCase();
-
-                let visibleCount = 0;
-
-
-                restaurantCards.forEach(
-                    function(card) {
-
-                        const searchableText =
-                            card.getAttribute(
-                                "data-search"
-                            ) || "";
-
-
-                        if (
-                            searchableText.includes(
-                                searchTerm
-                            )
-                        ) {
-
-                            card.style.display =
-                                "flex";
-
-                            visibleCount++;
-
-                        } else {
-
-                            card.style.display =
-                                "none";
-
-                        }
-
-                    }
-                );
-
-
-                if (noResults) {
-
-                    noResults.style.display =
-                        visibleCount === 0 &&
-                        searchTerm !== ""
-                            ? "block"
-                            : "none";
-
-                }
-
-            }
-        );
-
+        if (noResults) {
+            noResults.style.display =
+                visibleCount === 0 && searchTerm !== "" ? "block" : "none";
+        }
     }
 
-    const mobileMenuToggle = document.getElementById("mobileMenuToggle");
-    const mobileMenuPanel = document.getElementById("mobileMenuPanel");
-
-    if (mobileMenuToggle && mobileMenuPanel) {
-        mobileMenuToggle.addEventListener("click", function () {
-            const isOpen = !mobileMenuPanel.hidden;
-            mobileMenuPanel.hidden = isOpen;
-            mobileMenuToggle.setAttribute("aria-expanded", String(!isOpen));
-            mobileMenuToggle.setAttribute(
-                "aria-label",
-                isOpen ? "Open navigation menu" : "Close navigation menu"
-            );
-        });
-
-        mobileMenuPanel.querySelectorAll("a").forEach(function (link) {
-            link.addEventListener("click", function () {
-                mobileMenuPanel.hidden = true;
-                mobileMenuToggle.setAttribute("aria-expanded", "false");
-                mobileMenuToggle.setAttribute("aria-label", "Open navigation menu");
-            });
-        });
+    if (searchInput) {
+        searchInput.addEventListener("input", filterRestaurants);
     }
 </script>
 
 </body>
 </html>
+
+<style>
+/* AIRXPRESS MOBILE DISCOVERY POLISH 2026 */
+@media (max-width: 650px) {
+    .ax-discovery {
+        padding: 10px 0 22px !important;
+    }
+
+    .ax-discovery-inner {
+        width: auto !important;
+        margin-left: 14px !important;
+        margin-right: 0 !important;
+    }
+
+    .ax-discovery h2 {
+        font-size: 1.25rem !important;
+        line-height: 1.3 !important;
+        margin: 22px 14px 12px 0 !important;
+    }
+
+    .ax-discovery-intro {
+        font-size: .9rem !important;
+        line-height: 1.5 !important;
+        margin-right: 14px !important;
+    }
+
+    .ax-category-row,
+    .ax-product-row {
+        gap: 11px !important;
+        padding: 4px 14px 14px 2px !important;
+        scroll-padding-left: 2px;
+        overscroll-behavior-x: contain;
+        scroll-snap-type: x mandatory;
+    }
+
+    .ax-category-chip {
+        min-height: 42px !important;
+        padding: 10px 14px !important;
+        font-size: .84rem !important;
+        white-space: nowrap;
+    }
+
+    .ax-product-card {
+        flex: 0 0 174px !important;
+        width: 174px !important;
+        max-width: 174px !important;
+        border-radius: 12px !important;
+    }
+
+    .ax-product-image,
+    .ax-product-placeholder {
+        height: 122px !important;
+    }
+
+    .ax-product-info {
+        padding: 10px !important;
+    }
+
+    .ax-product-name {
+        font-size: .91rem !important;
+        line-height: 1.35 !important;
+        overflow-wrap: anywhere;
+    }
+
+    .ax-product-shop {
+        font-size: .76rem !important;
+        line-height: 1.4 !important;
+    }
+
+    .ax-product-price {
+        font-size: .96rem !important;
+    }
+
+    .ax-product-action {
+        min-height: 36px;
+        padding: 9px 11px !important;
+    }
+}
+
+@media (max-width: 380px) {
+    .ax-discovery-inner {
+        margin-left: 11px !important;
+    }
+
+    .ax-product-card {
+        flex-basis: 158px !important;
+        width: 158px !important;
+        max-width: 158px !important;
+    }
+
+    .ax-product-image,
+    .ax-product-placeholder {
+        height: 108px !important;
+    }
+}
+</style>
+<style>
+/* AIRXPRESS RESTAURANT MOBILE REFINEMENT 2026 */
+@media (max-width: 650px) {
+    .restaurants-section {
+        padding: 28px 14px !important;
+    }
+
+    .section-title {
+        font-size: clamp(25px, 7vw, 30px) !important;
+        line-height: 1.15 !important;
+        letter-spacing: -0.7px !important;
+    }
+
+    .section-description {
+        display: block !important;
+        font-size: 13px !important;
+        line-height: 1.5 !important;
+        margin-top: 8px !important;
+    }
+
+    .restaurant-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 12px !important;
+    }
+
+    .restaurant-card {
+        min-width: 0 !important;
+        min-height: 175px !important;
+        height: auto !important;
+        padding: 14px !important;
+        border-radius: 14px !important;
+        overflow-wrap: anywhere;
+    }
+
+    .restaurant-card h3 {
+        font-size: 16px !important;
+        line-height: 1.3 !important;
+        margin: 10px 0 6px !important;
+    }
+
+    .restaurant-location {
+        font-size: 11px !important;
+        line-height: 1.45 !important;
+    }
+
+    .restaurant-card .order-link {
+        margin: auto 0 0 !important;
+        padding-top: 12px !important;
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+    }
+}
+
+@media (max-width: 360px) {
+    .restaurant-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .restaurant-card {
+        min-height: 155px !important;
+    }
+}
+</style>
+
+<style>
+/* AIRXPRESS RESTAURANT HORIZONTAL ROWS 2026 */
+.restaurant-area-list {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    width: 100%;
+}
+
+.restaurant-area-group {
+    width: 100%;
+    min-width: 0;
+}
+
+.restaurant-area-title {
+    margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.22);
+    font-size: clamp(18px, 2vw, 23px);
+    font-weight: 750;
+    line-height: 1.3;
+}
+
+.restaurant-area-group .restaurant-grid {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    align-items: stretch;
+    gap: 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 2px 14px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.restaurant-area-group .restaurant-card {
+    display: flex;
+    flex: 0 0 220px;
+    width: 220px;
+    max-width: 220px;
+    min-width: 0;
+    box-sizing: border-box;
+    scroll-snap-align: start;
+}
+
+@media (max-width: 600px) {
+    .restaurant-area-list {
+        gap: 22px;
+    }
+
+    .restaurant-area-group .restaurant-grid {
+        gap: 12px;
+    }
+
+    .restaurant-area-group .restaurant-card {
+        flex: 0 0 165px;
+        width: 165px;
+        max-width: 165px;
+    }
+}
+
+@media (max-width: 360px) {
+    .restaurant-area-group .restaurant-card {
+        flex-basis: 145px;
+        width: 145px;
+        max-width: 145px;
+    }
+}
+}
+</style>

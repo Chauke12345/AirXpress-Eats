@@ -245,6 +245,26 @@ def home(request):
         is_active=True
     ).order_by("name")
 
+    # AIRXPRESS RESTAURANT AREA GROUPING 2026
+    sorted_shops = sorted(
+        shops,
+        key=lambda shop: (
+            (shop.location or "").strip().casefold() or "other locations",
+            shop.name.casefold(),
+        ),
+    )
+    restaurant_groups = []
+    for shop in sorted_shops:
+        location = (shop.location or "").strip()
+        group_key = location.casefold() or "other locations"
+        if not restaurant_groups or restaurant_groups[-1]["key"] != group_key:
+            restaurant_groups.append({
+                "key": group_key,
+                "location": location or "Other locations",
+                "shops": [],
+            })
+        restaurant_groups[-1]["shops"].append(shop)
+
     available_items = MenuItem.objects.filter(
         shop__is_active=True,
         is_available=True,
@@ -323,6 +343,7 @@ def home(request):
 
     context = {
         "shops": shops,
+        "restaurant_groups": restaurant_groups,
         "total_shops": shops.count(),
         "categories": Category.objects.filter(
             menu_items__shop__is_active=True
