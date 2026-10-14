@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refund Enquiry | AirXpress Eats</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 24px 16px;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #20252b;
+        }
+        main {
+            max-width: 680px;
+            margin: 25px auto;
+            padding: 28px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0,0,0,.07);
+        }
+        h1 { margin-top: 0; color: #172b4d; }
+        label { display: block; margin: 22px 0 8px; font-weight: bold; }
+        select, button {
+            width: 100%;
+            padding: 13px;
+            border-radius: 8px;
+            font: inherit;
+        }
+        select { border: 1px solid #cbd2d9; background: white; }
+        button {
+            margin-top: 18px;
+            border: 0;
+            background: #172b4d;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:disabled { background: #aab2bd; cursor: not-allowed; }
+        .note { padding: 14px; background: #f4f6f8; border-radius: 8px; line-height: 1.6; }
+        .messages { padding: 0; list-style: none; }
+        .messages li { padding: 12px; margin-bottom: 10px; background: #fff1d6; border-radius: 6px; }
+        a { display: inline-block; margin-top: 20px; color: #254574; }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Refund Enquiry</h1>
+    <p>Choose the paid order you need help with. Your enquiry will be reviewed by the AirXpress Eats team.</p>
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <div class="note">
+        Submitting an enquiry does not guarantee a refund. Every request is reviewed by our team, and refunds are not issued automatically.
+    </div>
+
+    {% if orders %}
+        <form method="get" action="{% url 'customer_refund_enquiry' %}">
+            <label for="order_id">Select the order you are enquiring about</label>
+            <select id="order_id" name="order_id" required>
+                <option value="">Choose an order</option>
+                {% for order in orders %}
+                    <option value="{{ order.id }}"
+                        {% if order.refund_enquiry_exists %}disabled{% endif %}>
+                        Order #{{ order.id }} ? {{ order.shop.name }} ? R{{ order.final_total|floatformat:2 }}{% if order.refund_enquiry_exists %} (Enquiry already active){% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+            {% if can_select_order %}
+                <button type="submit">Continue to Enquiry</button>
+            {% else %}
+                <button type="button" disabled>No eligible orders available</button>
+                <p>All your eligible paid orders already have active refund enquiries.</p>
+            {% endif %}
+        </form>
+    {% else %}
+        <p>You have no eligible paid orders available for a refund enquiry.</p>
+    {% endif %}
+
+    <a href="{% url 'customer_my_orders' %}">Back to My Orders</a>
+</main>
+</body>
+</html>

@@ -67,6 +67,8 @@ from .models import (
     OrderItem,
     OrderStatusHistory,
     OrderReview,
+    RefundRequest,
+    RefundAuditLog,
     Shop,
     StaffProfile,
     ShopSubscriptionPayment,
@@ -1858,7 +1860,153 @@ def customer_my_orders(request):
         },
     )
 
-@login_required
+
+@login_required(login_url='/customer/login/')
+def customer_refund_enquiry(request):
+    """Let a customer select one paid order for a refund enquiry."""
+    if not hasattr(request.user, "customer_profile"):
+        messages.error(request, "Your customer profile could not be found.")
+        return redirect("customer_login")
+
+    customer_name = request.user.first_name.strip()
+    whatsapp_number = request.user.customer_profile.whatsapp_number.strip()
+
+    orders = list(
+        Order.objects.filter(
+            customer_name__iexact=customer_name,
+            whatsapp_number=whatsapp_number,
+            payment_status="paid",
+            final_total__gt=Decimal("0.00"),
+        )
+        .select_related("shop")
+        .order_by("-created_at")
+    )
+
+    active_statuses = ["pending", "under_review", "approved", "paid"]
+    can_select_order = False
+
+    for order in orders:
+        order.refund_enquiry_exists = RefundRequest.objects.filter(
+            order=order,
+            status__in=active_statuses,
+        ).exists()
+        if not order.refund_enquiry_exists:
+            can_select_order = True
+
+    selected_id = request.GET.get("order_id", "").strip()
+
+    if selected_id:
+        if not selected_id.isdigit():
+            messages.error(request, "Please select a valid order.")
+            return redirect("customer_refund_enquiry")
+
+        order = get_object_or_404(
+            Order.objects.select_related("shop"),
+            id=int(selected_id),
+            customer_name__iexact=customer_name,
+            whatsapp_number=whatsapp_number,
+            payment_status="paid",
+            final_total__gt=Decimal("0.00"),
+        )
+
+        if RefundRequest.objects.filter(
+            order=order,
+            status__in=active_statuses,
+        ).exists():
+            messages.info(
+                request,
+                "An active refund request already exists for that order.",
+            )
+            return redirect("customer_refund_enquiry")
+
+        return redirect("customer_refund_request", order_id=order.id)
+
+    return render(
+        request,
+        "orders/customer_refund_enquiry.html",
+        {
+            "orders": orders,
+            "can_select_order": can_select_order,
+        },
+    )
+
+
+@login_required(login_url='/customer/login/')
+def customer_refund_request(request, order_id):
+    if not hasattr(request.user, 'customer_profile'):
+        messages.error(request, 'Your customer profile could not be found.')
+        return redirect('customer_login')
+
+    customer_name = request.user.first_name.strip()
+    whatsapp_number = request.user.customer_profile.whatsapp_number.strip()
+
+    order = get_object_or_404(
+        Order.objects.select_related('shop'),
+        id=order_id,
+        customer_name__iexact=customer_name,
+        whatsapp_number=whatsapp_number,
+    )
+
+    if order.payment_status != 'paid':
+        messages.error(request, 'Only orders with confirmed payment can be submitted for a refund.')
+        return redirect('customer_my_orders')
+
+    amount = order.final_total
+    if amount is None or amount <= Decimal('0.00'):
+        messages.error(request, 'This order does not have a valid confirmed payment amount.')
+        return redirect('customer_my_orders')
+
+    active_statuses = ['pending', 'under_review', 'approved', 'paid']
+
+    if RefundRequest.objects.filter(
+        order=order,
+        status__in=active_statuses,
+    ).exists():
+        messages.info(request, 'A refund request already exists for this order.')
+        return redirect('customer_my_orders')
+
+    if request.method == 'POST':
+        reason = request.POST.get('reason', '').strip()
+        raw_amount = request.POST.get('requested_amount', '').strip()
+
+        if not reason:
+            messages.error(request, 'Please provide a reason for the refund request.')
+        elif len(reason) > 5000:
+            messages.error(request, 'Your reason must be 5,000 characters or fewer.')
+        else:
+            try:
+                requested_amount = Decimal(raw_amount)
+            except (InvalidOperation, ValueError):
+                requested_amount = Decimal('0.00')
+
+            if not requested_amount.is_finite() or requested_amount <= Decimal('0.00'):
+                messages.error(request, 'Enter a valid refund amount greater than zero.')
+            elif requested_amount > amount:
+                messages.error(request, 'The requested refund cannot exceed the confirmed order total.')
+            else:
+                with transaction.atomic():
+                    existing = RefundRequest.objects.filter(
+                        order=order,
+                        status__in=active_statuses,
+                    ).exists()
+
+                    if existing:
+                        messages.info(request, 'A refund request already exists for this order.')
+                    else:
+                        RefundRequest.objects.create(
+                            order=order,
+                            customer=request.user,
+                            reason=reason,
+                            requested_amount=requested_amount.quantize(Decimal('0.01')),
+                        )
+                        messages.success(request, 'Your refund request has been submitted for staff review.')
+                        return redirect('customer_my_orders')
+
+    return render(request, 'orders/customer_refund_request.html', {
+        'order': order,
+        'maximum_refund_amount': amount,
+    })
+
 def order_review(request, order_id):
     """
     Allow the logged-in customer to review a completed order.
@@ -2574,6 +2722,337 @@ def owner_support_dashboard(request):
         "orders/owner_support_dashboard.html",
         context,
     )
+
+@user_passes_test(is_owner, login_url="/owner/login/")
+def owner_refund_enquiries(request):
+    """Platform management queue for customer refund enquiries."""
+
+    refunds = (
+        RefundRequest.objects
+        .select_related("order", "customer", "reviewed_by")
+        .order_by("-created_at")
+    )
+
+    status_filter = request.GET.get("status", "").strip()
+
+    valid_statuses = {
+        value for value, label in RefundRequest.STATUS_CHOICES
+    }
+
+    if status_filter in valid_statuses:
+        refunds = refunds.filter(status=status_filter)
+
+    for refund in refunds:
+        refund.whatsapp_message = ""
+        refund.whatsapp_url = ""
+
+        phone = "".join(
+            character
+            for character in (refund.order.whatsapp_number or "")
+            if character.isdigit()
+        )
+
+        if phone.startswith("0"):
+            phone = "27" + phone[1:]
+        elif phone.startswith("27"):
+            pass
+        elif phone:
+            phone = ""
+
+        if phone and refund.status in {"approved", "rejected"}:
+            if refund.status == "rejected":
+                message = (
+                    f"Hello {refund.order.customer_name}, regarding your "
+                    f"refund enquiry for Order #{refund.order_id} "
+                    f"(Reference {refund.reference}), we regret to inform "
+                    f"you that your refund request of "
+                    f"R{refund.requested_amount:.2f} has been declined "
+                    f"following our review. Please contact AirXpress Eats "
+                    f"if you would like further clarification. Thank you."
+                )
+            else:
+                message = (
+                    f"Hello {refund.order.customer_name}, your refund request "
+                    f"for Order #{refund.order_id} (Reference {refund.reference}) "
+                    f"has been approved for R{refund.requested_amount:.2f}. "
+                    f"We will update you once the refund payment has been "
+                    f"completed. Thank you, AirXpress Eats."
+                )
+
+            from urllib.parse import quote
+            refund.whatsapp_message = message
+            refund.whatsapp_url = (
+                f"https://wa.me/{phone}?text={quote(message)}"
+            )
+
+    context = {
+        "refunds": refunds,
+        "status_filter": status_filter,
+        "status_choices": RefundRequest.STATUS_CHOICES,
+        "total_refunds": RefundRequest.objects.count(),
+        "pending_refunds": RefundRequest.objects.filter(
+            status="pending"
+        ).count(),
+        "under_review_refunds": RefundRequest.objects.filter(
+            status="under_review"
+        ).count(),
+        "approved_refunds": RefundRequest.objects.filter(
+            status="approved"
+        ).count(),
+        "paid_refunds": RefundRequest.objects.filter(
+            status="paid"
+        ).count(),
+    }
+
+    return render(
+        request,
+        "orders/owner_refund_enquiries.html",
+        context,
+    )
+
+def _get_refund_audit_events(request):
+    """Return filtered refund audit events for history and CSV export."""
+
+    events = RefundAuditLog.objects.select_related(
+        "refund",
+        "refund__order",
+        "refund__customer",
+        "performed_by",
+    ).order_by("-created_at", "-id")
+
+    status_filter = request.GET.get("status", "").strip()
+    search_query = request.GET.get("q", "").strip()
+
+    valid_statuses = {
+        value for value, label in RefundRequest.STATUS_CHOICES
+    }
+
+    if status_filter in valid_statuses:
+        events = events.filter(new_status=status_filter)
+    else:
+        status_filter = ""
+
+    if search_query:
+        from django.db.models import Q
+
+        events = events.filter(
+            Q(refund__reference__icontains=search_query)
+            | Q(refund__order__customer_name__icontains=search_query)
+            | Q(refund__order__whatsapp_number__icontains=search_query)
+            | Q(refund__order_id__icontains=search_query)
+            | Q(performed_by__username__icontains=search_query)
+            | Q(performed_by__first_name__icontains=search_query)
+            | Q(performed_by__last_name__icontains=search_query)
+            | Q(notes__icontains=search_query)
+            | Q(previous_status__icontains=search_query)
+            | Q(new_status__icontains=search_query)
+            | Q(event_type__icontains=search_query)
+        )
+
+    return events, status_filter, search_query
+
+
+@user_passes_test(is_owner, login_url="/owner/login/")
+def owner_refund_audit_history(request):
+    """Show individual refund audit events to the owner."""
+
+    events, status_filter, search_query = _get_refund_audit_events(request)
+
+    context = {
+        "audit_events": events,
+        "status_filter": status_filter,
+        "search_query": search_query,
+        "status_choices": RefundRequest.STATUS_CHOICES,
+        "total_audit_events": events.count(),
+    }
+
+    return render(
+        request,
+        "orders/owner_refund_audit_history.html",
+        context,
+    )
+
+
+@user_passes_test(is_owner, login_url="/owner/login/")
+def owner_export_refund_audit_csv(request):
+    """Export filtered refund audit events as CSV."""
+
+    import csv
+
+    events, status_filter, search_query = _get_refund_audit_events(request)
+
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = (
+        'attachment; filename="airxpress_refund_audit_history.csv"'
+    )
+    response.write("\ufeff")
+
+    writer = csv.writer(response)
+    writer.writerow([
+        "Timestamp",
+        "Refund Reference",
+        "Order ID",
+        "Customer",
+        "WhatsApp Number",
+        "Refund Amount",
+        "Event Type",
+        "Previous Status",
+        "New Status",
+        "Performed By",
+        "Notes",
+    ])
+
+    for event in events.iterator():
+        refund = event.refund
+        order = refund.order
+        actor = event.performed_by
+
+        if actor:
+            performed_by = actor.get_full_name().strip() or actor.username
+        else:
+            performed_by = "Unknown"
+
+        writer.writerow([
+            event.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            str(refund.reference),
+            refund.order_id,
+            order.customer_name,
+            order.whatsapp_number,
+            f"{refund.requested_amount:.2f}",
+            event.get_event_type_display(),
+            event.previous_status,
+            event.new_status,
+            performed_by,
+            event.notes,
+        ])
+
+    return response
+
+def owner_update_refund_enquiry(request, refund_id):
+    """Update a refund enquiry using an authorised POST request."""
+
+    if request.method != "POST":
+        return redirect("owner_refund_enquiries")
+
+    with transaction.atomic():
+        refund = get_object_or_404(
+            RefundRequest.objects.select_for_update(),
+            id=refund_id,
+        )
+
+        previous_status = refund.status
+        action = request.POST.get("action", "").strip()
+        staff_notes = request.POST.get("staff_notes", "").strip()
+
+        if len(staff_notes) > 5000:
+            messages.error(request, "Internal notes must be 5,000 characters or fewer.")
+            return redirect("owner_refund_enquiries")
+
+        if action == "under_review":
+            if refund.status != "pending":
+                messages.error(request, "Only pending enquiries can be moved into review.")
+                return redirect("owner_refund_enquiries")
+
+            refund.status = "under_review"
+            refund.reviewed_by = request.user
+            refund.reviewed_at = timezone.now()
+
+        elif action in {"approved", "rejected"}:
+            if refund.status not in {"pending", "under_review"}:
+                messages.error(request, "This enquiry has already received a decision.")
+                return redirect("owner_refund_enquiries")
+
+            if action == "rejected" and not staff_notes:
+                messages.error(request, "Provide an internal reason before rejecting a refund.")
+                return redirect("owner_refund_enquiries")
+
+            refund.status = action
+            refund.reviewed_by = request.user
+            refund.reviewed_at = timezone.now()
+
+        elif action == "paid":
+            if refund.status != "approved":
+                messages.error(request, "Only approved refunds can be marked as paid.")
+                return redirect("owner_refund_enquiries")
+
+            refund.status = "paid"
+            refund.paid_at = timezone.now()
+
+        else:
+            messages.error(request, "Invalid refund action.")
+            return redirect("owner_refund_enquiries")
+
+        if staff_notes:
+            refund.staff_notes = staff_notes
+
+        refund.save()
+
+        RefundAuditLog.objects.create(
+            refund=refund,
+            event_type="status_changed",
+            previous_status=previous_status,
+            new_status=refund.status,
+            performed_by=request.user,
+            notes=staff_notes or refund.staff_notes,
+        )
+
+    messages.success(
+        request,
+        f"Refund enquiry {str(refund.reference)[:8].upper()} updated successfully.",
+    )
+    return redirect("owner_refund_enquiries")
+
+@user_passes_test(is_owner, login_url="/owner/login/")
+def owner_mark_refund_notification_sent(request, refund_id):
+    """Record that an owner has confirmed sending a refund notification."""
+
+    if request.method != "POST":
+        return redirect("owner_refund_enquiries")
+
+    with transaction.atomic():
+        refund = get_object_or_404(
+            RefundRequest.objects.select_for_update(),
+            id=refund_id,
+        )
+
+        if refund.status not in {"approved", "rejected"}:
+            messages.error(
+                request,
+                "Only approved or rejected enquiries can have a notification recorded.",
+            )
+            return redirect("owner_refund_enquiries")
+
+        if refund.notification_sent_at:
+            messages.warning(
+                request,
+                "A notification has already been recorded for this enquiry.",
+            )
+            return redirect("owner_refund_enquiries")
+
+        refund.notification_sent_at = timezone.now()
+        refund.notification_sent_by = request.user
+        refund.save(
+            update_fields=[
+                "notification_sent_at",
+                "notification_sent_by",
+                "updated_at",
+            ]
+        )
+
+        RefundAuditLog.objects.create(
+            refund=refund,
+            event_type="notification_recorded",
+            previous_status=refund.status,
+            new_status=refund.status,
+            performed_by=request.user,
+            notes="Staff confirmed that the WhatsApp notification was sent.",
+        )
+
+    messages.success(
+        request,
+        f"WhatsApp notification recorded for refund {str(refund.reference)[:8].upper()}.",
+    )
+    return redirect("owner_refund_enquiries")
 
 def driver_login(request):
 

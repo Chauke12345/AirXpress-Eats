@@ -132,6 +132,7 @@
 
     <div class="customer-header-actions">
         <a href="{% url 'airxpress_help' %}" class="customer-header-button">Help Centre</a>
+        <a href="{% url 'customer_refund_enquiry' %}" class="customer-header-button">Refund Enquiry</a>
         <form method="post" action="{% url 'customer_logout' %}">
             {% csrf_token %}
             <button type="submit" class="customer-header-button logout-button">Log out</button>

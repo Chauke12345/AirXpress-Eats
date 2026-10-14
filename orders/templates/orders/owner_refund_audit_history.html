@@ -1,0 +1,199 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AirXpress Eats - Refund Audit History</title>
+    <style>
+        :root {
+            --bg: #101216;
+            --panel: #1b1e24;
+            --text: #f4f4f5;
+            --muted: #b3b7c0;
+            --gold: #d4af37;
+            --border: #343842;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 24px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Arial, sans-serif;
+        }
+        main { max-width: 1600px; margin: auto; }
+        a { color: var(--gold); }
+        .top-links {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 18px 0;
+        }
+        .muted { color: var(--muted); }
+        .filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        input, select, button {
+            padding: 10px 12px;
+            border-radius: 7px;
+            border: 1px solid var(--border);
+        }
+        input, select {
+            background: #101216;
+            color: var(--text);
+        }
+        input { min-width: 240px; }
+        button {
+            background: var(--gold);
+            color: #171717;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .export-button {
+            display: inline-block;
+            padding: 10px 12px;
+            background: #d4af37;
+            color: #171717;
+            border-radius: 7px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .table-wrap { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1250px;
+        }
+        th, td {
+            padding: 13px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            vertical-align: top;
+        }
+        th { color: var(--gold); }
+        .notes { white-space: pre-wrap; overflow-wrap: anywhere; }
+        .event { font-weight: bold; }
+        .status { overflow-wrap: anywhere; }
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            input { min-width: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <div class="top-links">
+        <a href="{% url 'owner_dashboard' %}">← Owner Dashboard</a>
+        <a href="{% url 'owner_refund_enquiries' %}">Refund Management Queue</a>
+    </div>
+
+    <h1>Refund Audit History</h1>
+    <p class="muted">
+        This page records refund status changes and staff-confirmed notification events.
+        A notification record confirms staff reporting; it does not independently prove WhatsApp delivery.
+    </p>
+
+    <section class="panel">
+        <h2>Search Audit Events</h2>
+        <p>Total matching events: <strong>{{ total_audit_events }}</strong></p>
+
+        <form method="get" action="{% url 'owner_refund_audit_history' %}" class="filters">
+            <label for="q">Search</label>
+            <input
+                id="q"
+                type="search"
+                name="q"
+                value="{{ search_query }}"
+                placeholder="Reference, order, customer, staff, notes..."
+            >
+
+            <label for="status">New status</label>
+            <select id="status" name="status">
+                <option value="">All statuses</option>
+                {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Search / Filter</button>
+            <a href="{% url 'owner_refund_audit_history' %}">Clear</a>
+        </form>
+
+        <div style="margin-top: 18px;">
+            <form method="get" action="{% url 'owner_export_refund_audit_csv' %}">
+                <input type="hidden" name="q" value="{{ search_query }}">
+                <input type="hidden" name="status" value="{{ status_filter }}">
+                <button type="submit">Export Matching Events to CSV</button>
+            </form>
+        </div>
+    </section>
+
+    <section class="panel table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Refund / Order</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Event</th>
+                    <th>Status Change</th>
+                    <th>Performed By</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in audit_events %}
+                    <tr>
+                        <td>{{ event.created_at|date:"d M Y, H:i:s" }}</td>
+                        <td>
+                            <strong>{{ event.refund.reference }}</strong><br>
+                            Order #{{ event.refund.order_id }}
+                        </td>
+                        <td>
+                            {{ event.refund.order.customer_name }}<br>
+                            <span class="muted">
+                                {{ event.refund.order.whatsapp_number|default:"No WhatsApp number" }}
+                            </span>
+                        </td>
+                        <td>R{{ event.refund.requested_amount|floatformat:2 }}</td>
+                        <td class="event">{{ event.get_event_type_display }}</td>
+                        <td class="status">
+                            {{ event.previous_status|default:"—" }}
+                            &rarr;
+                            {{ event.new_status|default:"—" }}
+                        </td>
+                        <td>
+                            {% if event.performed_by %}
+                                {{ event.performed_by.get_full_name|default:event.performed_by.username }}
+                            {% else %}
+                                <span class="muted">Unknown</span>
+                            {% endif %}
+                        </td>
+                        <td class="notes">{{ event.notes|default:"—" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8">
+                            No audit events found for these search and filter settings.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

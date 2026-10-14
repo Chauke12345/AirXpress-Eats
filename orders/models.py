@@ -570,6 +570,14 @@ class Order(models.Model):
         blank=True,
     )
 
+    customer_account = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="airxpress_orders",
+    )
+
     customer_name = models.CharField(
         max_length=150
     )
@@ -1429,3 +1437,152 @@ class SupportTicket(models.Model):
 
     def __str__(self):
         return f"Support #{str(self.reference)[:8]} - {self.subject}"
+
+# =========================================================
+# CUSTOMER REFUND REQUEST
+# =========================================================
+
+class RefundRequest(models.Model):
+
+    STATUS_CHOICES = [
+        ("pending", "Pending Review"),
+        ("under_review", "Under Review"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+        ("paid", "Refund Paid"),
+    ]
+
+    reference = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        db_index=True,
+    )
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.PROTECT,
+        related_name="refund_requests",
+    )
+
+    customer = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="airxpress_refund_requests",
+    )
+
+    reason = models.TextField()
+
+    requested_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending",
+        db_index=True,
+    )
+
+    staff_notes = models.TextField(blank=True)
+
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_airxpress_refunds",
+    )
+
+    reviewed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    paid_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    notification_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    notification_sent_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sent_airxpress_refund_notifications",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Refund {str(self.reference)[:8]} - Order #{self.order_id}"
+
+
+
+# =========================================================
+# REFUND AUDIT LOG
+# =========================================================
+
+class RefundAuditLog(models.Model):
+    EVENT_CHOICES = [
+        ("status_changed", "Status Changed"),
+        ("notification_recorded", "Notification Recorded"),
+        ("note_updated", "Internal Notes Updated"),
+    ]
+
+    refund = models.ForeignKey(
+        RefundRequest,
+        on_delete=models.PROTECT,
+        related_name="audit_logs",
+    )
+
+    event_type = models.CharField(
+        max_length=40,
+        choices=EVENT_CHOICES,
+        default="status_changed",
+        db_index=True,
+    )
+
+    previous_status = models.CharField(
+        max_length=30,
+        blank=True,
+    )
+
+    new_status = models.CharField(
+        max_length=30,
+        blank=True,
+    )
+
+    performed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="airxpress_refund_audit_events",
+    )
+
+    notes = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+    )
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        return (
+            f"Refund audit {self.refund_id}: "
+            f"{self.event_type} at {self.created_at}"
+        )

@@ -164,9 +164,19 @@ urlpatterns = [
         name="customer_my_orders",
     ),
     path(
+        "customer/refund-enquiry/",
+        views.customer_refund_enquiry,
+        name="customer_refund_enquiry",
+    ),
+    path(
         "customer/orders/<int:order_id>/review/",
         views.order_review,
         name="order_review",
+    ),
+    path(
+        "customer/orders/<int:order_id>/refund/",
+        views.customer_refund_request,
+        name="customer_refund_request",
     ),
     path(
         "track/<uuid:tracking_token>/",
@@ -385,7 +395,31 @@ path(
         views.owner_dashboard,
         name="owner_dashboard",
     ),
-
+    path(
+        "owner/refund-enquiries/<int:refund_id>/update/",
+        views.owner_update_refund_enquiry,
+        name="owner_update_refund_enquiry",
+    ),
+    path(
+        "owner/refund-enquiries/<int:refund_id>/notification-sent/",
+        views.owner_mark_refund_notification_sent,
+        name="owner_mark_refund_notification_sent",
+    ),
+    path(
+        "owner/refund-enquiries/",
+        views.owner_refund_enquiries,
+        name="owner_refund_enquiries",
+    ),
+    path(
+        "owner/refund-audit-history/",
+        views.owner_refund_audit_history,
+        name="owner_refund_audit_history",
+    ),
+    path(
+        "owner/refund-audit-history/export.csv",
+        views.owner_export_refund_audit_csv,
+        name="owner_export_refund_audit_csv",
+    ),
     path(
         "owner/support/",
         views.owner_support_dashboard,

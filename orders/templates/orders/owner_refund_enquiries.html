@@ -1,0 +1,229 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refund Enquiries | AirXpress Eats</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #101114;
+            --panel: #1b1d22;
+            --border: #343740;
+            --text: #f5f5f5;
+            --muted: #b8bbc4;
+            --accent: #f0b429;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Arial, sans-serif;
+        }
+        header {
+            padding: 22px 5%;
+            background: #050505;
+            border-bottom: 3px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        header h1 { margin: 0; font-size: 23px; }
+        a { color: var(--accent); }
+        .back {
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-decoration: none;
+        }
+        main { max-width: 1400px; margin: 28px auto; padding: 0 18px 40px; }
+        .intro { color: var(--muted); line-height: 1.6; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 14px;
+            margin: 22px 0;
+        }
+        .stat, .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+        }
+        .stat span { display: block; color: var(--muted); font-size: 13px; }
+        .stat strong { display: block; font-size: 27px; margin-top: 8px; }
+        .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+        select, button {
+            padding: 11px 14px;
+            border-radius: 7px;
+            border: 1px solid var(--border);
+            background: #101114;
+            color: var(--text);
+        }
+        button { cursor: pointer; background: var(--accent); color: #171717; font-weight: bold; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 850px; }
+        th, td { padding: 13px 11px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+        th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
+        td { font-size: 14px; line-height: 1.5; }
+        .status { display: inline-block; padding: 5px 9px; border-radius: 20px; background: #343740; }
+        .empty { text-align: center; padding: 35px; color: var(--muted); }
+        .notice { color: var(--muted); font-size: 13px; margin-top: 18px; }
+        @media (max-width: 600px) {
+            header h1 { font-size: 19px; }
+            main { padding: 0 12px 30px; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>AirXpress Eats — Refund Enquiries</h1>
+    <a class="back" href="{% url 'owner_dashboard' %}">← Owner Dashboard</a>
+</header>
+
+<main>
+    <h2>Refund Management Queue</h2>
+    <p class="intro">
+        Review customer refund enquiries and monitor their progress.
+        Approval does not mean payment has been completed.
+    </p>
+
+    {% if messages %}
+        <section aria-live="polite" style="margin:16px 0;">
+            {% for message in messages %}
+                <div style="padding:12px 16px;margin-bottom:8px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </section>
+    {% endif %}
+
+    <section class="stats">
+        <div class="stat"><span>Total enquiries</span><strong>{{ total_refunds }}</strong></div>
+        <div class="stat"><span>Pending review</span><strong>{{ pending_refunds }}</strong></div>
+        <div class="stat"><span>Under review</span><strong>{{ under_review_refunds }}</strong></div>
+        <div class="stat"><span>Approved</span><strong>{{ approved_refunds }}</strong></div>
+        <div class="stat"><span>Refunds paid</span><strong>{{ paid_refunds }}</strong></div>
+    </section>
+
+    <section class="panel">
+        <form method="get" class="filters">
+            <select name="status" aria-label="Filter by status">
+                <option value="">All statuses</option>
+                {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit">Apply Filter</button>
+            <a href="{% url 'owner_refund_enquiries' %}">Clear filter</a>
+        </form>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Order</th>
+                        <th>Customer</th>
+                        <th>Requested</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                        <th>Management Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for refund in refunds %}
+                    <tr>
+                        <td>{{ refund.reference|slice:":8"|upper }}</td>
+                        <td>#{{ refund.order_id }}</td>
+                        <td>
+                            {{ refund.order.customer_name }}<br>
+                            <span style="color:var(--muted)">
+                                {{ refund.order.whatsapp_number }}
+                            </span>
+                        </td>
+                        <td>R{{ refund.requested_amount|floatformat:2 }}</td>
+                        <td>{{ refund.reason|truncatechars:180 }}</td>
+                        <td><span class="status">{{ refund.get_status_display }}</span></td>
+                        <td>{{ refund.created_at|date:"d M Y, H:i" }}</td>
+                        <td style="min-width:240px">
+                            {% if refund.status == "pending" or refund.status == "under_review" or refund.status == "approved" %}
+                                <form method="post" action="{% url 'owner_update_refund_enquiry' refund.id %}">
+                                    {% csrf_token %}
+                                    <label for="notes-{{ refund.id }}">Internal notes</label>
+                                    <textarea id="notes-{{ refund.id }}" name="staff_notes" rows="3" maxlength="5000" placeholder="Add notes; a reason is required when rejecting.">{{ refund.staff_notes }}</textarea>
+                                    <select name="action" required>
+                                        {% if refund.status == "pending" %}
+                                            <option value="under_review">Start Review</option>
+                                            <option value="approved">Approve Refund</option>
+                                            <option value="rejected">Reject Refund</option>
+                                        {% elif refund.status == "under_review" %}
+                                            <option value="approved">Approve Refund</option>
+                                            <option value="rejected">Reject Refund</option>
+                                        {% elif refund.status == "approved" %}
+                                            <option value="paid">Mark Refund Paid</option>
+                                        {% endif %}
+                                    </select>
+                                    <button type="submit" onclick="return confirm('Confirm this refund status update?');">Save Decision</button>
+                                </form>
+                                {% if refund.status == "approved" %}
+                                    <small>Only mark as paid after the refund has actually been paid to the customer.</small>
+                                {% endif %}
+                            {% else %}
+                                <span style="color:var(--muted)">No further actions available.</span>
+                                {% if refund.staff_notes %}
+                                    <p><strong>Internal notes:</strong> {{ refund.staff_notes }}</p>
+                                {% endif %}
+                            {% endif %}
+                            {% if refund.whatsapp_url %}
+                                <p style="margin-top:12px;">
+                                    <a
+                                        href="{{ refund.whatsapp_url }}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style="display:inline-block;padding:10px 12px;border-radius:7px;background:#25D366;color:#102014;text-decoration:none;font-weight:bold;"
+                                    >Notify on WhatsApp</a>
+                                </p>
+                            {% elif refund.status == "approved" or refund.status == "rejected" %}
+                                <small>No valid customer WhatsApp number is available.</small>
+                            {% endif %}
+
+                            {% if refund.status == "approved" or refund.status == "rejected" %}
+                                {% if refund.notification_sent_at %}
+                                    <p style="margin-top:12px;color:#16803c;font-weight:bold;">Notification recorded</p>
+                                    <p><strong>Sent:</strong> {{ refund.notification_sent_at|date:"d M Y, H:i" }}</p>
+                                    <p><strong>Recorded by:</strong>
+                                        {% if refund.notification_sent_by %}
+                                            {{ refund.notification_sent_by.get_full_name|default:refund.notification_sent_by.username }}
+                                        {% else %}
+                                            Unknown
+                                        {% endif %}
+                                    </p>
+                                {% elif refund.whatsapp_url %}
+                                    <form method="post" action="{% url 'owner_mark_refund_notification_sent' refund.id %}" style="margin-top:10px;">
+                                        {% csrf_token %}
+                                        <button type="submit" style="padding:9px 12px;border:0;border-radius:7px;background:#d4af37;color:#171717;font-weight:bold;cursor:pointer;">Mark WhatsApp Sent</button>
+                                    </form>
+                                    <small>Only click after you have actually sent the message in WhatsApp.</small>
+                                {% endif %}
+                            {% endif %}
+                            </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="8" class="empty">No refund enquiries found.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+</main>
+</body>
+</html>
