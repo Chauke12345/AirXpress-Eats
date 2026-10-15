@@ -784,6 +784,83 @@
      AIRXPRESS OWNER DRIVER VERIFICATION
 ========================================================= -->
 
+<h2 class="section-title">Add New Driver</h2>
+
+<div class="summary-card" style="text-align:left; margin-bottom:24px;">
+    <p>Create a driver login and record the vehicle details. The driver will remain unverified until their licence has been reviewed.</p>
+
+    <form method="post" action="{% url 'owner_add_driver' %}">
+        {% csrf_token %}
+
+        <div class="summary-grid">
+            <div>
+                <label for="new-driver-name">Full name *</label>
+                <input id="new-driver-name" name="name" type="text" maxlength="150" required autocomplete="name" style="width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;">
+            </div>
+            <div>
+                <label for="new-driver-username">Username *</label>
+                <input id="new-driver-username" name="username" type="text" required autocomplete="username" style="width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;">
+            </div>
+            <div>
+                <label for="new-driver-password">Password *</label>
+                <input id="new-driver-password" name="password" type="password" required autocomplete="new-password" style="width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;">
+            </div>
+            <div>
+                <label for="new-driver-confirm-password">Confirm password *</label>
+                <input id="new-driver-confirm-password" name="confirm_password" type="password" required autocomplete="new-password" style="width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;">
+            </div>
+            <div>
+                <label for="new-driver-vehicle">Vehicle make and model</label>
+                <input id="new-driver-vehicle" name="vehicle_make_model" type="text" maxlength="100" placeholder="e.g. Honda motorcycle" style="width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;">
+            </div>
+            <div>
+                <label for="new-driver-colour">Vehicle colour</label>
+                <input id="new-driver-colour" name="vehicle_colour" type="text" maxlength="50" style="width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;">
+            </div>
+            <div>
+                <label for="new-driver-registration">Vehicle registration</label>
+                <input id="new-driver-registration" name="vehicle_registration" type="text" maxlength="30" style="width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;">
+            </div>
+        </div>
+
+        <button type="submit" style="padding:12px 18px;border:0;border-radius:8px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;">
+            Create Driver Account
+        </button>
+    </form>
+</div>
+<h2 class="section-title">
+    All Registered Drivers
+</h2>
+
+<div class="summary-grid">
+    {% for driver in driver_password_reset_list %}
+        <div class="summary-card" style="text-align:left;">
+            <div style="font-size:18px; font-weight:700; margin-bottom:12px;">
+                {{ driver.name }}
+            </div>
+            <div><strong>Username:</strong> {{ driver.user.username|default:"Not linked" }}</div>
+            <div><strong>AirXpress verification:</strong>
+                {% if driver.airxpress_verified %}
+                    <span style="color:#16a34a; font-weight:700;">Verified</span>
+                {% else %}
+                    <span style="color:#b45309; font-weight:700;">Not verified</span>
+                {% endif %}
+            </div>
+            <div><strong>Licence status:</strong> {{ driver.license_verification_status|default:"Not provided"|title }}</div>
+            <div><strong>Licence uploaded:</strong>
+                {% if driver.driver_license %}
+                    Yes — <a href="{{ driver.driver_license.url }}" target="_blank" rel="noopener">View licence</a>
+                {% else %}
+                    No
+                {% endif %}
+            </div>
+            <div><strong>Vehicle:</strong> {{ driver.vehicle_make_model|default:"Not provided" }}</div>
+            <div><strong>Registration:</strong> {{ driver.vehicle_registration|default:"Not provided" }}</div>
+        </div>
+    {% empty %}
+        <div class="summary-card" style="grid-column:1/-1;">No registered drivers found.</div>
+    {% endfor %}
+</div>
 <h2 class="section-title">
     Driver Verification
 </h2>
@@ -1197,6 +1274,116 @@
 
 
 </div>
+
+
+<style id="airxpress-collapsible-sections">
+    .owner-collapsible-section {
+        margin: 0 0 18px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .owner-collapsible-section > summary {
+        cursor: pointer;
+        padding: 16px 18px;
+        font-weight: 700;
+        color: #0f172a;
+        background: #f8fafc;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .owner-collapsible-section > summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .owner-collapsible-section > summary::after {
+        content: "+";
+        font-size: 22px;
+        line-height: 1;
+    }
+
+    .owner-collapsible-section[open] > summary::after {
+        content: "\2212";
+    }
+
+    .owner-collapsible-content {
+        padding: 16px;
+    }
+
+    .owner-collapsible-content > .section-title:first-child {
+        margin-top: 0;
+    }
+</style>
+
+<script id="airxpress-collapsible-sections-script">
+document.addEventListener("DOMContentLoaded", function () {
+    const headings = Array.from(
+        document.querySelectorAll("h2.section-title")
+    );
+
+    headings.forEach(function (heading, index) {
+        if (heading.closest("details.owner-collapsible-section")) return;
+
+        const section = document.createElement("details");
+        section.className = "owner-collapsible-section";
+
+        // Keep the first overview visible; collapse the longer sections.
+        if (index === 0) section.open = true;
+
+        // Preserve existing navigation targets on the section container.
+        if (heading.id) {
+            section.id = heading.id;
+            heading.removeAttribute("id");
+        }
+
+        const summary = document.createElement("summary");
+        summary.textContent = heading.textContent.trim();
+        section.appendChild(summary);
+
+        const content = document.createElement("div");
+        content.className = "owner-collapsible-content";
+
+        heading.parentNode.insertBefore(section, heading);
+        section.appendChild(heading);
+        section.appendChild(content);
+
+        let node = section.nextSibling;
+        while (node && !(node.nodeType === 1 &&
+                         node.matches("h2.section-title"))) {
+            const next = node.nextSibling;
+            content.appendChild(node);
+            node = next;
+        }
+    });
+
+    function openSectionForHash() {
+        const id = decodeURIComponent(window.location.hash.slice(1));
+        if (!id) return;
+
+        const target = document.getElementById(id);
+        const section = target && target.matches("details.owner-collapsible-section")
+            ? target
+            : target && target.closest("details.owner-collapsible-section");
+
+        if (section) section.open = true;
+    }
+
+    document.querySelectorAll('a[href*="#owner-"]').forEach(function (link) {
+        link.addEventListener("click", function () {
+            window.setTimeout(openSectionForHash, 0);
+        });
+    });
+
+    window.addEventListener("hashchange", openSectionForHash);
+    openSectionForHash();
+});
+</script>
 
 </body>
 </html>

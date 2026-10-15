@@ -1956,32 +1956,27 @@ section:not(.hero) {
                 Partner With Us
             </a>
 
-            <a href="{% url 'customer_login' %}"
-               class="nav-button">
-                Login
-            </a>
+{% if user.is_authenticated %}
+    <a href="{% url 'customer_my_orders' %}" class="nav-button customer-nav-item">
+        Track My Order
+    </a>
 
-            <a href="{% url 'customer_register' %}"
-               class="nav-button">
-                Create Account
-            </a>
-              {% if user.is_authenticated and user.customer_profile %}
-                <a href="{% url 'customer_my_orders' %}"
-   class="nav-button customer-nav-item">
+    <form method="post" action="{% url 'customer_logout' %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="nav-button" style="border:none;cursor:pointer;">
+            Log Out
+        </button>
+    </form>
+{% else %}
+    <a href="{% url 'customer_login' %}" class="nav-button">
+        Login
+    </a>
+    <a href="{% url 'customer_register' %}" class="nav-button">
+        Create Account
+    </a>
+{% endif %}
 
-    <span>Track My Order</span>
-</a>
-
-                <a href="{% url 'customer_banking_details' %}" class="nav-button">                    Banking Details                </a>              <form method="post" action="{% url 'customer_logout' %}" style="display:inline;">
-                  {% csrf_token %}
-                  <button type="submit" class="nav-button" style="border:none;cursor:pointer;">
-                      Logout
-                  </button>
-              </form>
-              {% endif %}
-
-
-            <a href="#restaurants"
+<a href="#restaurants"
    class="nav-button customer-nav-item">
     <span>Order Food</span>
 </a>

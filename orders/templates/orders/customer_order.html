@@ -791,7 +791,122 @@ textarea {
 }
 /* END MUNCHIE FELLAS RESPONSIVE MENU LAYOUT */
 
-</style>
+
+/* MOZEKА PREVIEW CARD LAYOUT */
+.category-grid.mozeka-preview-grid {
+    display: block !important;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.mozeka-preview-grid .category-card {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 22px;
+    width: 100%;
+    padding: 22px;
+    border-radius: 18px;
+    background: #ffffff;
+    border: 1px solid #e8e8e8;
+    box-sizing: border-box;
+}
+
+.mozeka-preview-grid .category-title {
+    grid-column: 1 / -1;
+    margin: 0 0 4px;
+    color: #222222;
+}
+
+.mozeka-preview-grid .cart-menu-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start;
+    min-width: 0;
+    padding: 12px;
+    gap: 12px;
+    background: #ffffff !important;
+    color: #222222 !important;
+    border: 1px solid #e6e6e6 !important;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.mozeka-preview-grid .menu-item-image {
+    width: 100%;
+    height: 220px;
+    flex: 0 0 auto;
+    margin: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f4f4f4;
+}
+
+.mozeka-preview-grid .menu-item-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mozeka-preview-grid .cart-menu-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+}
+
+.mozeka-preview-grid .cart-menu-info strong {
+    color: #222222 !important;
+    overflow-wrap: anywhere;
+}
+
+.mozeka-preview-grid .cart-menu-info .menu-price {
+    color: #9a5b12 !important;
+    font-size: 1rem;
+}
+
+.mozeka-preview-grid .cart-menu-item > p {
+    margin: auto 0 0;
+    padding: 10px;
+    border-radius: 8px;
+    background: #fff4d8;
+    color: #805400 !important;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+    .mozeka-preview-grid .category-card {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .mozeka-preview-grid .menu-item-image {
+        height: 190px;
+    }
+}
+
+@media (max-width: 520px) {
+    .mozeka-preview-grid .category-card {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+        padding: 12px;
+    }
+
+    .mozeka-preview-grid .menu-item-image {
+        height: 230px;
+    }
+
+    .mozeka-preview-grid .cart-menu-item {
+        padding: 10px;
+    }
+}
+/* END MOZEKА PREVIEW CARD LAYOUT */</style>
 
 
 
@@ -939,8 +1054,14 @@ textarea {
 
         </div>
 
+        {% if preview_mode %}
+        <div style="background:#fff7df;border:1px solid #e5c46b;border-radius:12px;padding:14px 16px;margin:16px 0;color:#674d00;">
+            <strong>Menu Preview</strong>
+            <p style="margin:6px 0 0;">You are previewing Mozeka &amp; Sons Catering Services. Prices have not been set, and ordering is disabled in this preview.</p>
+        </div>
+        {% endif %}
         {% regroup menu_items by category as category_groups %}
-<div class="category-grid{% if shop.slug == "vele-ns-catering" %} vele-catering-grid{% endif %}{% if shop.slug == "munchie-fellas" %} munchie-shop-grid{% endif %}">
+<div class="category-grid{% if shop.slug == "vele-ns-catering" %} vele-catering-grid{% endif %}{% if shop.slug == "munchie-fellas" %} munchie-shop-grid{% endif %}{% if preview_mode %} mozeka-preview-grid{% endif %}">
 
             {% for group in category_groups %}
 
@@ -1021,6 +1142,7 @@ textarea {
 
                             </div>
 
+                            {% if not preview_mode %}
                             <form
                                 method="POST"
                                 action="{% url 'add_to_cart' shop.slug item.pk %}"
@@ -1071,6 +1193,9 @@ textarea {
                                 </button>
 
                             </form>
+                            {% else %}
+                            <p style="color:#8a5a00;font-weight:600;margin-top:10px;">Preview only — ordering disabled</p>
+                            {% endif %}
 
                         </div>
 
@@ -1586,10 +1711,3 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 </script>
-
-
-
-
-
-
-

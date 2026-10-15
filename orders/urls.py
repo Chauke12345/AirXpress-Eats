@@ -454,6 +454,11 @@ path(
         name="owner_update_support_ticket",
     ),
     path(
+        "owner/driver/add/",
+        views.owner_add_driver,
+        name="owner_add_driver",
+    ),
+    path(
         "owner/driver/<int:driver_id>/verify/",
         views.owner_verify_driver,
         name="owner_verify_driver",

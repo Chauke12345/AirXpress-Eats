@@ -1224,7 +1224,7 @@ def submit_support_ticket(request):
 
     if not description or len(description) > 5000:
         return JsonResponse(
-            {"success": False, "message": "Describe your issue in 1–5000 characters."},
+            {"success": False, "message": "Describe your issue in 1-5000 characters."},
             status=400,
         )
 
@@ -1469,13 +1469,18 @@ def customer_order(request, shop_slug):
         is_active=True,
     )
 
+    preview_mode = (
+        request.GET.get("preview") == "1"
+        and shop.pk == 20
+        and shop.name == "Mozeka & Sons Catering Services"
+    )
+
+    menu_queryset = MenuItem.objects.filter(shop=shop)
+    if not preview_mode:
+        menu_queryset = menu_queryset.filter(is_available=True)
+
     menu_items = (
-        MenuItem.objects
-        .filter(
-            shop=shop,
-            is_available=True,
-        )
-        .select_related(
+        menu_queryset        .select_related(
             "category"
         )
         .order_by(
@@ -1725,6 +1730,7 @@ def customer_order(request, shop_slug):
         "shop": shop,
         "form": form,
         "menu_items": menu_items,
+        "preview_mode": preview_mode,
     }
 
     return render(
@@ -6576,6 +6582,73 @@ def owner_reset_customer_password(request, customer_id):
     is_owner,
     login_url="/owner/login/"
 )
+
+@user_passes_test(is_owner, login_url="/owner/login/")
+def owner_add_driver(request):
+    if request.method != "POST":
+        return redirect("owner_dashboard")
+
+    from django.contrib.auth import get_user_model
+    from django.db import transaction
+
+    UserModel = get_user_model()
+    name = request.POST.get("name", "").strip()
+    username = request.POST.get("username", "").strip()
+    password = request.POST.get("password", "")
+    confirm_password = request.POST.get("confirm_password", "")
+    vehicle_make_model = request.POST.get("vehicle_make_model", "").strip()
+    vehicle_colour = request.POST.get("vehicle_colour", "").strip()
+    vehicle_registration = request.POST.get("vehicle_registration", "").strip().upper()
+
+    if not all([name, username, password, confirm_password]):
+        messages.error(request, "Name, username and both password fields are required.")
+        return redirect("owner_dashboard")
+
+    if password != confirm_password:
+        messages.error(request, "The passwords do not match.")
+        return redirect("owner_dashboard")
+
+    if UserModel.objects.filter(username__iexact=username).exists():
+        messages.error(request, "That username is already in use.")
+        return redirect("owner_dashboard")
+
+    if Driver.objects.filter(name__iexact=name).exists():
+        messages.error(request, "A driver with that name already exists.")
+        return redirect("owner_dashboard")
+
+    try:
+        user = UserModel(username=username, first_name=name.split()[0])
+        validate_password(password, user=user)
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+        return redirect("owner_dashboard")
+
+    try:
+        with transaction.atomic():
+            user = UserModel.objects.create_user(
+                username=username,
+                password=password,
+                first_name=name.split()[0],
+            )
+            Driver.objects.create(
+                user=user,
+                name=name,
+                vehicle_make_model=vehicle_make_model,
+                vehicle_colour=vehicle_colour,
+                vehicle_registration=vehicle_registration,
+                license_verification_status="pending",
+                airxpress_verified=False,
+            )
+    except Exception:
+        messages.error(request, "Driver registration failed. No account was created; check the server log.")
+        raise
+
+    messages.success(
+        request,
+        f"Driver account created for {name}. Licence verification is still pending. Share the login details privately.",
+    )
+    return redirect("owner_dashboard")
+
 def owner_verify_driver(request, driver_id):
 
     if request.method != "POST":
