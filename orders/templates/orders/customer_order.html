@@ -1061,7 +1061,7 @@ textarea {
         </div>
         {% endif %}
         {% regroup menu_items by category as category_groups %}
-<div class="category-grid{% if shop.slug == "vele-ns-catering" %} vele-catering-grid{% endif %}{% if shop.slug == "munchie-fellas" %} munchie-shop-grid{% endif %}{% if preview_mode %} mozeka-preview-grid{% endif %}">
+<div class="category-grid{% if shop.slug == "vele-ns-catering" %} vele-catering-grid{% endif %}{% if shop.slug == "munchie-fellas" %} munchie-shop-grid{% endif %}{% if shop.pk == 20 and shop.name == "Mozeka & Sons Catering Services" %} mozeka-preview-grid{% endif %}">
 
             {% for group in category_groups %}
 
