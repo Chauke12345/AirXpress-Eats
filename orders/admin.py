@@ -327,26 +327,26 @@ class DriverAdmin(admin.ModelAdmin):
 
     list_display = (
         "name",
-        "shop",
         "is_available",
+        "airxpress_verified",
+        "license_verification_status",
         "created_at",
     )
 
     list_filter = (
-        "shop",
         "is_available",
+        "airxpress_verified",
+        "license_verification_status",
     )
 
     search_fields = (
         "name",
-        "shop__name",
+        "user__username",
     )
 
     readonly_fields = (
         "created_at",
     )
-
-
 # =========================================================
 
 

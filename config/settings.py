@@ -374,3 +374,17 @@ SMS_ENABLED = os.environ.get("SMS_ENABLED", "False").strip().lower() == "true"
 
 
 
+
+
+# =========================================================
+# DRIVER WEB PUSH NOTIFICATIONS
+# =========================================================
+WEBPUSH_VAPID_PUBLIC_KEY = os.environ.get(
+    "WEBPUSH_VAPID_PUBLIC_KEY", ""
+).strip()
+WEBPUSH_VAPID_PRIVATE_KEY = os.environ.get(
+    "WEBPUSH_VAPID_PRIVATE_KEY", ""
+).strip()
+WEBPUSH_VAPID_SUBJECT = os.environ.get(
+    "WEBPUSH_VAPID_SUBJECT", ""
+).strip()

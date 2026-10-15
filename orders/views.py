@@ -1,3 +1,4 @@
+import json
 import math
 import secrets
 import hashlib
@@ -28,6 +29,7 @@ from django.contrib.auth.decorators import (
 )
 
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
 from django.http import JsonResponse
 from django.http import HttpResponse
@@ -56,6 +58,7 @@ from .models import (
     Category,
     CustomerProfile,
     Driver,
+    DriverPushSubscription,
     DriverPayout,
     DriverPayoutBatch,
     ShopPayout,
@@ -3799,6 +3802,33 @@ def driver_accept_request(
 
     with transaction.atomic():
 
+        driver = Driver.objects.select_for_update().get(
+            pk=driver.pk
+        )
+
+        if not driver.is_available:
+            messages.warning(
+                request,
+                "You are currently unavailable for deliveries. Complete your active delivery before accepting another request.",
+            )
+            return redirect("driver_dashboard")
+
+        has_active_order = Order.objects.filter(
+            driver=driver,
+            status__in=[
+                "driver_assigned",
+                "picked_up",
+                "delivered",
+            ],
+        ).exists()
+
+        if has_active_order:
+            messages.warning(
+                request,
+                "You already have an active delivery. Complete it before accepting another request.",
+            )
+            return redirect("driver_dashboard")
+
         delivery_request = get_object_or_404(
             DeliveryRequest.objects.select_for_update(),
             id=request_id,
@@ -4118,6 +4148,13 @@ def driver_pickup_order(request, order_id):
     return redirect("driver_dashboard")
 
 
+@user_passes_test(
+    lambda user: (
+        user.is_authenticated
+        and hasattr(user, "driver_profile")
+    ),
+    login_url="/driver/login/",
+)
 def driver_deliver_order(request, order_id):
 
     if request.method != "POST":
@@ -4404,28 +4441,13 @@ def staff_dashboard(request):
     drivers = (
         Driver.objects
         .filter(
-            shop=shop,
             is_available=True,
+            airxpress_verified=True,
+            license_verification_status="verified",
         )
-        .order_by(
-            "name",
-        )
+        .order_by("name")
     )
 
-    # =========================================================
-    # DRIVER VERIFICATION
-    # All drivers belonging to this shop, regardless of availability.
-    # =========================================================
-
-    driver_verification_list = (
-        Driver.objects
-        .filter(
-            shop=shop,
-        )
-        .order_by(
-            "name",
-        )
-    )
     # SHOP DASHBOARD STATUS COUNTS
     # =========================================================
 
@@ -4485,7 +4507,6 @@ def staff_dashboard(request):
         "shop": shop,
         "orders": orders,
         "drivers": drivers,
-          "driver_verification_list": driver_verification_list,
 
         "new_orders": new_orders,
         "preparing_orders": preparing_orders,
@@ -4590,7 +4611,7 @@ def dispatch_order_to_available_drivers(order):
         return 0
 
     available_drivers = (
-        Driver.objects.filter(is_available=True)
+        Driver.objects.filter(is_available=True, airxpress_verified=True, license_verification_status="verified")
         .order_by(
             "name"
         )
@@ -4613,10 +4634,28 @@ def dispatch_order_to_available_drivers(order):
         if existing_request:
             continue
 
-        DeliveryRequest.objects.create(
+        delivery_request = DeliveryRequest.objects.create(
             order=order,
             driver=driver,
             status="pending",
+        )
+
+        # Notify the driver only after the request is committed.
+        def send_push_safely(driver_id, request_id):
+            try:
+                from .push_notifications import send_driver_push_notification
+                send_driver_push_notification(driver_id, request_id)
+            except Exception:
+                # Push failures must never interrupt order dispatch.
+                import logging
+                logging.getLogger(__name__).exception(
+                    "Driver push notification failed for request %s.",
+                    request_id,
+                )
+
+        transaction.on_commit(
+            lambda driver_id=driver.pk, request_id=delivery_request.pk:
+                send_push_safely(driver_id, request_id)
         )
 
         created_count += 1
@@ -6198,9 +6237,7 @@ def owner_dashboard(request):
     # DRIVER MONITORING
     # =========================================================
 
-    all_drivers = Driver.objects.filter(
-        shop__is_active=True
-    )
+    all_drivers = Driver.objects.all()
 
     total_drivers = all_drivers.count()
 
@@ -6222,9 +6259,6 @@ def owner_dashboard(request):
         .filter(
             license_verification_status="pending"
         )
-        .select_related(
-            "shop"
-        )
         .order_by(
             "name"
         )
@@ -6234,7 +6268,7 @@ def owner_dashboard(request):
     # All active-shop drivers for owner password management.
     driver_password_reset_list = (
         all_drivers
-        .select_related("shop", "user")
+        .select_related("user")
         .order_by("name")
     )
 
@@ -6411,7 +6445,6 @@ def owner_reset_driver_password(request, driver_id):
     driver = get_object_or_404(
         Driver,
         id=driver_id,
-        shop__is_active=True,
     )
 
     if not driver.user:
@@ -6551,7 +6584,6 @@ def owner_verify_driver(request, driver_id):
     driver = get_object_or_404(
         Driver,
         id=driver_id,
-        shop__is_active=True,
     )
 
     action = request.POST.get(
@@ -7032,8 +7064,9 @@ def staff_dashboard_updates(request):
     drivers = (
         Driver.objects
         .filter(
-            shop=shop,
             is_available=True,
+            airxpress_verified=True,
+            license_verification_status="verified",
         )
         .order_by("name")
     )
@@ -7565,3 +7598,118 @@ def owner_shop_payouts(request):
             "selected_week_start": selected_start.isoformat(),
         },
     )
+
+
+# =========================================================
+# DRIVER WEB PUSH SUBSCRIPTIONS
+# =========================================================
+
+@user_passes_test(
+    lambda user: user.is_authenticated and hasattr(user, "driver_profile"),
+    login_url="/driver/login/",
+)
+def driver_push_vapid_public_key(request):
+    """Return only the public VAPID key to an authenticated driver."""
+    public_key = getattr(settings, "WEBPUSH_VAPID_PUBLIC_KEY", "").strip()
+    if not public_key:
+        return JsonResponse(
+            {"error": "Push notifications are not configured yet."},
+            status=503,
+        )
+    return JsonResponse({"publicKey": public_key})
+
+
+@user_passes_test(
+    lambda user: user.is_authenticated and hasattr(user, "driver_profile"),
+    login_url="/driver/login/",
+)
+@require_POST
+def driver_push_subscribe(request):
+    """Save or refresh the signed-in driver's browser push subscription."""
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({"error": "Invalid JSON payload."}, status=400)
+
+    endpoint = data.get("endpoint")
+    keys = data.get("keys")
+    if not isinstance(endpoint, str) or not endpoint.startswith("https://"):
+        return JsonResponse({"error": "Invalid push endpoint."}, status=400)
+    if len(endpoint) > 4000 or not isinstance(keys, dict):
+        return JsonResponse({"error": "Invalid subscription data."}, status=400)
+
+    p256dh = keys.get("p256dh")
+    auth_key = keys.get("auth")
+    if not all(isinstance(value, str) and value for value in (p256dh, auth_key)):
+        return JsonResponse({"error": "Subscription keys are missing."}, status=400)
+    if len(p256dh) > 500 or len(auth_key) > 500:
+        return JsonResponse({"error": "Subscription keys are too long."}, status=400)
+
+    try:
+        subscription, created = DriverPushSubscription.objects.update_or_create(
+            endpoint=endpoint,
+            defaults={
+                "driver": request.user.driver_profile,
+                "p256dh": p256dh,
+                "auth": auth_key,
+                "user_agent": request.META.get("HTTP_USER_AGENT", "")[:500],
+            },
+        )
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception(
+            "Could not save driver push subscription."
+        )
+        return JsonResponse(
+            {"error": "Could not save notification settings."},
+            status=500,
+        )
+
+    return JsonResponse({"ok": True, "created": created})
+
+
+@user_passes_test(
+    lambda user: user.is_authenticated and hasattr(user, "driver_profile"),
+    login_url="/driver/login/",
+)
+@require_POST
+def driver_push_unsubscribe(request):
+    """Remove only a push endpoint belonging to the signed-in driver."""
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({"error": "Invalid JSON payload."}, status=400)
+
+    endpoint = data.get("endpoint")
+    if not isinstance(endpoint, str) or not endpoint.startswith("https://"):
+        return JsonResponse({"error": "Invalid push endpoint."}, status=400)
+
+    deleted, _ = DriverPushSubscription.objects.filter(
+        driver=request.user.driver_profile,
+        endpoint=endpoint,
+    ).delete()
+
+    return JsonResponse({"ok": True, "removed": bool(deleted)})
+
+
+# =========================================================
+# ROOT-SCOPED DRIVER PUSH SERVICE WORKER
+# =========================================================
+
+def driver_push_service_worker(request):
+    """Serve the driver service worker at the site root."""
+    from pathlib import Path
+
+    worker_path = Path(settings.BASE_DIR) / "static" / "driver-push-sw.js"
+    try:
+        worker_code = worker_path.read_text(encoding="utf-8")
+    except OSError:
+        return HttpResponse("Service worker unavailable.", status=404)
+
+    response = HttpResponse(
+        worker_code,
+        content_type="application/javascript; charset=utf-8",
+    )
+    response["Service-Worker-Allowed"] = "/"
+    response["Cache-Control"] = "no-cache"
+    return response

@@ -5,6 +5,12 @@ from . import views
 
 
 urlpatterns = [
+    path(
+        "driver-push-sw.js",
+        views.driver_push_service_worker,
+        name="driver_push_service_worker",
+    ),
+
     path('login/', views.login_gateway, name='login_gateway'),
 
     path(
@@ -244,6 +250,22 @@ urlpatterns = [
         "driver/dashboard/",
         views.driver_dashboard,
         name="driver_dashboard",
+    ),
+
+    path(
+        "driver/push/vapid-public-key/",
+        views.driver_push_vapid_public_key,
+        name="driver_push_vapid_public_key",
+    ),
+    path(
+        "driver/push/subscribe/",
+        views.driver_push_subscribe,
+        name="driver_push_subscribe",
+    ),
+    path(
+        "driver/push/unsubscribe/",
+        views.driver_push_unsubscribe,
+        name="driver_push_unsubscribe",
     ),
 
     path(

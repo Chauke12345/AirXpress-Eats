@@ -153,12 +153,6 @@ class StaffProfile(models.Model):
 
 class Driver(models.Model):
 
-    shop = models.ForeignKey(
-        Shop,
-        on_delete=models.CASCADE,
-        related_name="drivers"
-    )
-
     user = models.OneToOneField(
         User,
         on_delete=models.SET_NULL,
@@ -259,7 +253,7 @@ class Driver(models.Model):
     )
 
     def __str__(self):
-        return f"{self.name} - {self.shop.name}"
+        return self.name
 
 
 # =========================================================
@@ -1192,6 +1186,27 @@ class DeliveryRequest(models.Model):
 
 
 
+
+
+# =========================================================
+# DRIVER WEB PUSH SUBSCRIPTIONS
+# =========================================================
+
+class DriverPushSubscription(models.Model):
+    driver = models.ForeignKey(
+        Driver,
+        on_delete=models.CASCADE,
+        related_name="push_subscriptions",
+    )
+    endpoint = models.TextField(unique=True)
+    p256dh = models.TextField()
+    auth = models.TextField()
+    user_agent = models.CharField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Push subscription - {self.driver.name}"
 
 
 # =========================================================
