@@ -1,0 +1,178 @@
+{
+  "shops": [
+    {
+      "name": "Munchie Fellas",
+      "slug": "munchie-fellas",
+      "phone_number": "0813696568",
+      "whatsapp_number": "0813696568",
+      "address": "Lemon Street, Alexandra, Johannesburg, 2090",
+      "location": "Alexandra, Johannesburg",
+      "is_active": true
+    },
+    {
+      "name": "Vele N'S Catering",
+      "slug": "vele-ns-catering",
+      "phone_number": "0683437079",
+      "whatsapp_number": "0683437079",
+      "address": "2014-6003 12th Avenue, Alexandra, 2014",
+      "location": "Alexandra, Johannesburg",
+      "is_active": true
+    }
+  ],
+  "categories": [
+    {
+      "shop_slug": "munchie-fellas",
+      "name": "Munchie Fellas Menu",
+      "display_order": 1,
+      "is_active": true
+    },
+    {
+      "shop_slug": "vele-ns-catering",
+      "name": "Main Meals",
+      "display_order": 1,
+      "is_active": true
+    }
+  ],
+  "menu_items": [
+    {
+      "shop_slug": "munchie-fellas",
+      "category_name": "Munchie Fellas Menu",
+      "name": "Americano",
+      "description": "",
+      "pricing_type": "fixed",
+      "price": "80.00",
+      "display_order": 1,
+      "is_available": true
+    },
+    {
+      "shop_slug": "munchie-fellas",
+      "category_name": "Munchie Fellas Menu",
+      "name": "Weekend Special",
+      "description": "",
+      "pricing_type": "fixed",
+      "price": "75.00",
+      "display_order": 2,
+      "is_available": true
+    },
+    {
+      "shop_slug": "munchie-fellas",
+      "category_name": "Munchie Fellas Menu",
+      "name": "Mushroom Tower",
+      "description": "",
+      "pricing_type": "fixed",
+      "price": "75.00",
+      "display_order": 3,
+      "is_available": true
+    },
+    {
+      "shop_slug": "munchie-fellas",
+      "category_name": "Munchie Fellas Menu",
+      "name": "Kota Begar",
+      "description": "",
+      "pricing_type": "fixed",
+      "price": "50.00",
+      "display_order": 4,
+      "is_available": true
+    },
+    {
+      "shop_slug": "munchie-fellas",
+      "category_name": "Munchie Fellas Menu",
+      "name": "Chilli Cheese Kota",
+      "description": "",
+      "pricing_type": "fixed",
+      "price": "50.00",
+      "display_order": 5,
+      "is_available": true
+    },
+    {
+      "shop_slug": "munchie-fellas",
+      "category_name": "Munchie Fellas Menu",
+      "name": "Ghost Chilli Cheese Fries",
+      "description": "",
+      "pricing_type": "fixed",
+      "price": "45.00",
+      "display_order": 6,
+      "is_available": true
+    },
+    {
+      "shop_slug": "vele-ns-catering",
+      "category_name": "Main Meals",
+      "name": "Grilled Chicken",
+      "description": "Served with 3 salads and a choice of chips, pap or dumpling.",
+      "pricing_type": "fixed",
+      "price": "95.00",
+      "display_order": 1,
+      "is_available": true
+    },
+    {
+      "shop_slug": "vele-ns-catering",
+      "category_name": "Main Meals",
+      "name": "Wings & Chips",
+      "description": "Served with 3 salads and a choice of chips, pap or dumpling.",
+      "pricing_type": "fixed",
+      "price": "80.00",
+      "display_order": 2,
+      "is_available": true
+    },
+    {
+      "shop_slug": "vele-ns-catering",
+      "category_name": "Main Meals",
+      "name": "Mushroom Hake & Calamari",
+      "description": "Served with 3 salads and a choice of chips, pap or dumpling.",
+      "pricing_type": "fixed",
+      "price": "140.00",
+      "display_order": 3,
+      "is_available": true
+    },
+    {
+      "shop_slug": "vele-ns-catering",
+      "category_name": "Main Meals",
+      "name": "Chicken Curry",
+      "description": "Served with 3 salads and a choice of chips, pap or dumpling.",
+      "pricing_type": "fixed",
+      "price": "110.00",
+      "display_order": 4,
+      "is_available": true
+    },
+    {
+      "shop_slug": "vele-ns-catering",
+      "category_name": "Main Meals",
+      "name": "Beef Stew",
+      "description": "Served with 3 salads and a choice of chips, pap or dumpling.",
+      "pricing_type": "fixed",
+      "price": "90.00",
+      "display_order": 5,
+      "is_available": true
+    },
+    {
+      "shop_slug": "vele-ns-catering",
+      "category_name": "Main Meals",
+      "name": "Steak",
+      "description": "Served with 3 salads and a choice of chips, pap or dumpling.",
+      "pricing_type": "fixed",
+      "price": "100.00",
+      "display_order": 6,
+      "is_available": true
+    },
+    {
+      "shop_slug": "vele-ns-catering",
+      "category_name": "Main Meals",
+      "name": "Steak and Wors",
+      "description": "Served with 3 salads and a choice of chips, pap or dumpling.",
+      "pricing_type": "fixed",
+      "price": "130.00",
+      "display_order": 7,
+      "is_available": true
+    },
+    {
+      "shop_slug": "vele-ns-catering",
+      "category_name": "Main Meals",
+      "name": "Ribs and Wings",
+      "description": "Served with 3 salads and a choice of chips, pap or dumpling.",
+      "pricing_type": "fixed",
+      "price": "110.00",
+      "display_order": 8,
+      "is_available": true
+    }
+  ]
+}

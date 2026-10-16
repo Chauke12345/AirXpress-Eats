@@ -457,6 +457,246 @@ textarea {
     color: #111111;
 }
 
+
+
+/* THE LOVE OF ALEX - independent menu cards */
+.love-alex-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.love-alex-menu-grid .cart-menu-item,
+.mozeka-menu-grid .cart-menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 12px;
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid #e5e5e5;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 5px 18px rgba(0, 0, 0, .07);
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.love-alex-menu-grid .menu-item-image,
+.mozeka-menu-grid .menu-item-image {
+    width: 100%;
+    height: 210px;
+    margin-bottom: 0;
+    border-radius: 13px;
+    overflow: hidden;
+}
+
+.love-alex-menu-grid .menu-item-image img,
+.mozeka-menu-grid .menu-item-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.love-alex-menu-grid .cart-menu-info,
+.mozeka-menu-grid .cart-menu-info {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.love-alex-menu-grid .add-cart-form,
+.mozeka-menu-grid .add-cart-form {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+}
+
+.love-alex-menu-grid .quantity-control,
+.mozeka-menu-grid .quantity-control {
+    justify-content: space-between;
+    width: 100%;
+    min-width: 0;
+}
+
+.love-alex-menu-grid .quantity-control input,
+.mozeka-menu-grid .quantity-control input {
+    width: 76px;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.love-alex-menu-grid .add-cart-button,
+.mozeka-menu-grid .add-cart-button {
+    width: 100%;
+    white-space: normal;
+    box-sizing: border-box;
+}
+
+/* MOZeka - independent responsive menu layout */
+.mozeka-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 24px;
+}
+
+.mozeka-menu-grid .cart-menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid #e8e8e8;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, .07);
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.mozeka-menu-grid .menu-item-image {
+    width: 100%;
+    height: 220px;
+    margin: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.mozeka-menu-grid .menu-item-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mozeka-menu-grid .cart-menu-info {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.mozeka-menu-grid .cart-menu-info h3 {
+    margin: 0 0 10px;
+    line-height: 1.4;
+}
+
+.mozeka-menu-grid .cart-menu-info p {
+    margin: 0 0 12px;
+    line-height: 1.6;
+}
+
+.mozeka-menu-grid .add-cart-form {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    margin-top: auto;
+}
+
+.mozeka-menu-grid .amount-cart-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d8d8d8;
+    border-radius: 10px;
+    background: #fafafa;
+    box-sizing: border-box;
+}
+
+.mozeka-menu-grid .amount-cart-control span {
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.mozeka-menu-grid .amount-cart-control input {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+    border: none;
+    outline: none;
+    background: transparent;
+    text-align: left;
+    box-sizing: border-box;
+}
+
+.mozeka-menu-grid .add-cart-button {
+    width: 100%;
+    min-height: 46px;
+    border-radius: 10px;
+    white-space: normal;
+    box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+    .mozeka-menu-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .mozeka-menu-grid .menu-item-image {
+        height: 190px;
+    }
+}
+
+@media (max-width: 520px) {
+    .mozeka-menu-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .mozeka-menu-grid .cart-menu-item {
+        padding: 9px;
+        gap: 10px;
+        border-radius: 13px;
+    }
+
+    .mozeka-menu-grid .menu-item-image {
+        height: 125px;
+    }
+
+    .mozeka-menu-grid .cart-menu-info h3 {
+        font-size: 14px;
+        line-height: 1.35;
+    }
+
+    .mozeka-menu-grid .cart-menu-info p {
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    .mozeka-menu-grid .add-cart-form {
+        gap: 8px;
+    }
+
+    .mozeka-menu-grid .amount-cart-control {
+        padding: 4px 8px;
+        gap: 6px;
+    }
+
+    .mozeka-menu-grid .amount-cart-control input {
+        height: 38px;
+        font-size: 14px;
+    }
+
+    .mozeka-menu-grid .add-cart-button {
+        min-height: 42px;
+        padding: 9px 6px;
+        font-size: 12px;
+    }
+}
 /* FOOD ITEMS */
 
 .cart-menu-item {
@@ -906,7 +1146,286 @@ textarea {
         padding: 10px;
     }
 }
-/* END MOZEKА PREVIEW CARD LAYOUT */</style>
+/* END MOZEKА PREVIEW CARD LAYOUT */
+/* MOZEKA_FINAL_LAYOUT_FIX_V1 */
+.category-grid:has(.mozeka-menu-grid) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+}
+
+.category-grid:has(.mozeka-menu-grid) > * {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+}
+
+.mozeka-menu-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: stretch;
+    gap: 24px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.mozeka-menu-grid .cart-menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
+    padding: 18px;
+    gap: 14px;
+    border: 1px solid #343434;
+    border-radius: 16px;
+    background: #171717;
+    box-shadow: 0 5px 18px rgba(0, 0, 0, .18);
+    box-sizing: border-box;
+}
+
+.mozeka-menu-grid .menu-item-image {
+    width: 100%;
+    height: auto !important;
+    aspect-ratio: 4 / 3;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.mozeka-menu-grid .menu-item-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mozeka-menu-grid .cart-menu-info {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.mozeka-menu-grid .cart-menu-info h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    line-height: 1.4;
+}
+
+.mozeka-menu-grid .cart-menu-info p {
+    margin: 0 0 12px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.mozeka-menu-grid .add-cart-form {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+    margin-top: auto;
+}
+
+.mozeka-menu-grid .amount-cart-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    padding: 5px 12px;
+    border: 1px solid #d0d0d0;
+    border-radius: 10px;
+    background: #fff;
+    box-sizing: border-box;
+}
+
+.mozeka-menu-grid .amount-cart-control span {
+    color: #222;
+    font-weight: 800;
+}
+
+.mozeka-menu-grid .amount-cart-control input {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+    padding: 8px;
+    border: 0;
+    border-radius: 6px;
+    background: #fff;
+    color: #171717;
+    box-sizing: border-box;
+}
+
+.mozeka-menu-grid .add-cart-button {
+    width: 100%;
+    min-height: 46px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: #f2f2f2;
+    color: #111;
+    font-size: 15px;
+    font-weight: 700;
+    white-space: normal;
+    box-sizing: border-box;
+}
+
+@media (max-width: 700px) {
+    .mozeka-menu-grid {
+        gap: 12px;
+    }
+
+    .mozeka-menu-grid .cart-menu-item {
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .mozeka-menu-grid .cart-menu-info h3 {
+        font-size: 15px;
+    }
+
+    .mozeka-menu-grid .cart-menu-info p {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mozeka-menu-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 16px;
+    }
+
+    .mozeka-menu-grid .cart-menu-item {
+        padding: 12px;
+    }
+
+    .mozeka-menu-grid .menu-item-image {
+        aspect-ratio: 16 / 10;
+    }
+
+    .mozeka-menu-grid .cart-menu-info h3 {
+        font-size: 17px;
+    }
+
+    .mozeka-menu-grid .cart-menu-info p {
+        font-size: 14px;
+    }
+}
+/* END MOZEKA_FINAL_LAYOUT_FIX_V1 */
+
+/* LOVE_ALEX_LAYOUT_OVERRIDE_V1 */
+.category-grid:has(.love-alex-menu-grid) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+}
+
+.category-grid:has(.love-alex-menu-grid) > * {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+}
+
+.love-alex-menu-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: stretch;
+    gap: 24px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.love-alex-menu-grid .cart-menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
+    padding: 18px;
+    gap: 14px;
+    border-radius: 16px;
+    box-sizing: border-box;
+}
+
+.love-alex-menu-grid .menu-item-image {
+    width: 100%;
+    height: auto !important;
+    aspect-ratio: 4 / 3;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.love-alex-menu-grid .menu-item-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.love-alex-menu-grid .cart-menu-info {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.love-alex-menu-grid .add-cart-form {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    margin-top: auto;
+}
+
+.love-alex-menu-grid .quantity-control {
+    justify-content: space-between;
+    width: 100%;
+    min-width: 0;
+}
+
+.love-alex-menu-grid .add-cart-button {
+    width: 100%;
+    min-height: 46px;
+    white-space: normal;
+    box-sizing: border-box;
+}
+
+@media (max-width: 700px) {
+    .love-alex-menu-grid {
+        gap: 12px;
+    }
+
+    .love-alex-menu-grid .cart-menu-item {
+        padding: 10px;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .love-alex-menu-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 16px;
+    }
+
+    .love-alex-menu-grid .cart-menu-item {
+        padding: 12px;
+    }
+
+    .love-alex-menu-grid .menu-item-image {
+        aspect-ratio: 16 / 10;
+    }
+}
+/* END LOVE_ALEX_LAYOUT_OVERRIDE_V1 */
+</style>
 
 
 
@@ -1061,7 +1580,7 @@ textarea {
         </div>
         {% endif %}
         {% regroup menu_items by category as category_groups %}
-<div class="category-grid{% if shop.slug == "vele-ns-catering" %} vele-catering-grid{% endif %}{% if shop.slug == "munchie-fellas" %} munchie-shop-grid{% endif %}{% if shop.pk == 20 and shop.name == "Mozeka & Sons Catering Services" %} mozeka-preview-grid{% endif %}">
+<div class="category-grid{% if shop.slug == "vele-ns-catering" %} vele-catering-grid{% endif %}{% if shop.slug == "munchie-fellas" %} munchie-shop-grid{% endif %}{% if preview_mode and shop.pk == 20 and shop.name == "Mozeka & Sons Catering Services" %} mozeka-preview-grid{% endif %}">
 
             {% for group in category_groups %}
 
@@ -1075,8 +1594,12 @@ textarea {
                         {% endif %}
                     </h3>
 
-                    {% if shop.slug == "vele-ns-catering" or shop.pk == 5 or shop.pk == 20 %}
+                    {% if shop.slug == "vele-ns-catering" %}
                     <div class="vele-menu-grid">
+                    {% elif shop.pk == 5 %}
+                    <div class="love-alex-menu-grid">
+                    {% elif shop.pk == 20 %}
+                    <div class="mozeka-menu-grid">
                     {% elif shop.slug == "munchie-fellas" %}
                     <div class="munchie-menu-grid">
                     {% endif %}
