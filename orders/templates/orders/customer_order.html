@@ -1075,7 +1075,7 @@ textarea {
                         {% endif %}
                     </h3>
 
-                    {% if shop.slug == "vele-ns-catering" %}
+                    {% if shop.slug == "vele-ns-catering" or shop.pk == 5 or shop.pk == 20 %}
                     <div class="vele-menu-grid">
                     {% elif shop.slug == "munchie-fellas" %}
                     <div class="munchie-menu-grid">
@@ -1207,7 +1207,7 @@ textarea {
 
                     {% endfor %}
 
-                    {% if shop.slug == "vele-ns-catering" or shop.slug == "munchie-fellas" %}
+                    {% if shop.slug == "vele-ns-catering" or shop.slug == "munchie-fellas" or shop.pk == 5 or shop.pk == 20 %}
                     </div>
                     {% endif %}
 
