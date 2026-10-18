@@ -1,0 +1,124 @@
+{% if user.is_authenticated and not user.is_staff and not user.is_superuser and user.customer_profile %}
+<div id="customer-idle-warning"
+     data-endpoint="{% url 'customer_keep_alive' %}"
+     data-inactive-seconds="{{ request.inactivity_seconds|default:0 }}"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="customer-idle-title"
+     style="display:none; position:fixed; inset:0; z-index:999999; background:rgba(5,15,35,.72); align-items:center; justify-content:center; padding:20px;">
+  <div style="width:100%; max-width:420px; padding:28px 24px; border-radius:20px; background:#fff; color:#17233b; text-align:center; box-shadow:0 20px 70px rgba(0,0,0,.3);">
+    <div style="font-size:32px; margin-bottom:10px;">&#9201;</div>
+    <h2 id="customer-idle-title" style="margin:0 0 12px; font-size:23px;">Are you still there?</h2>
+    <p id="customer-idle-message" style="margin:0 0 20px; line-height:1.6;">You've been inactive for a while. For your security, you'll be signed out soon.</p>
+    <button id="customer-idle-stay" type="button" style="border:0; border-radius:10px; padding:13px 22px; background:#123b70; color:#fff; font-weight:700; cursor:pointer; width:100%;">Stay signed in</button>
+    <p style="font-size:12px; color:#68758a; margin:14px 0 0;">Your orders will not be deleted if your session expires.</p>
+  </div>
+</div>
+<form id="customer-idle-csrf-form" style="display:none;">{% csrf_token %}</form>
+<script>
+(function () {
+  const panel = document.getElementById("customer-idle-warning");
+  if (!panel) return;
+
+  const endpoint = panel.dataset.endpoint;
+  const stayButton = document.getElementById("customer-idle-stay");
+  const message = document.getElementById("customer-idle-message");
+  const csrfInput = document.querySelector("#customer-idle-csrf-form [name=csrfmiddlewaretoken]");
+  const csrfToken = csrfInput ? csrfInput.value : "";
+  const timeoutMs = 10 * 60 * 1000;
+  const warningMs = 8 * 60 * 1000;
+
+  let lastActivity = Date.now() -
+      (Math.max(0, Number(panel.dataset.inactiveSeconds) || 0) * 1000);
+  let warningShown = false;
+  let sending = false;
+  let activityTimer = null;
+
+  function showWarning() {
+    if (warningShown) return;
+    warningShown = true;
+    panel.style.display = "flex";
+    stayButton.focus();
+  }
+
+  function hideWarning() {
+    warningShown = false;
+    panel.style.display = "none";
+  }
+
+  async function keepAlive() {
+    if (sending) return false;
+    sending = true;
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "X-CSRFToken": csrfToken,
+          "X-Requested-With": "XMLHttpRequest"
+        }
+      });
+
+      if (!response.ok) {
+        message.textContent = "Your session may have expired. Please sign in again.";
+        stayButton.textContent = "Go to sign in";
+        stayButton.onclick = function () {
+          window.location.href = "/customer/login/";
+        };
+        showWarning();
+        return false;
+      }
+
+      const result = await response.json();
+      if (!result.ok) return false;
+
+      lastActivity = Date.now();
+      hideWarning();
+      return true;
+    } catch (error) {
+      message.textContent = "We couldn't confirm your session. Please try again.";
+      showWarning();
+      return false;
+    } finally {
+      sending = false;
+    }
+  }
+
+  function genuineActivity() {
+    lastActivity = Date.now();
+
+    if (activityTimer) window.clearTimeout(activityTimer);
+    activityTimer = window.setTimeout(function () {
+      keepAlive();
+    }, 1000);
+  }
+
+  ["pointerdown", "keydown", "touchstart", "scroll", "input"].forEach(function (eventName) {
+    document.addEventListener(eventName, genuineActivity, { passive: true });
+  });
+
+  stayButton.addEventListener("click", function () {
+    keepAlive();
+  });
+
+  function checkInactivity() {
+    const inactiveFor = Date.now() - lastActivity;
+
+    if (inactiveFor >= timeoutMs) {
+      message.textContent = "Your session has expired for security. Your orders have not been deleted. Please sign in again.";
+      stayButton.textContent = "Go to sign in";
+      stayButton.onclick = function () {
+        window.location.href = "/customer/login/";
+      };
+      showWarning();
+    } else if (inactiveFor >= warningMs) {
+      showWarning();
+    }
+  }
+
+  window.setInterval(checkInactivity, 5000);
+  document.addEventListener("visibilitychange", checkInactivity);
+  window.addEventListener("pageshow", checkInactivity);
+})();
+</script>
+{% endif %}

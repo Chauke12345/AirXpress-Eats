@@ -773,6 +773,15 @@ class OrderItem(models.Model):
         on_delete=models.PROTECT
     )
 
+    # Original food amount belonging to the shop,
+    # excluding the AirXpress markup.
+    shop_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
     # Amount the customer wants to spend
     # on this specific product.
     requested_amount = models.DecimalField(

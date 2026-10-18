@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -1905,6 +1905,315 @@ section:not(.hero) {
 
 <body>
 
+<!-- AIRXPRESS_EDVANCE_SPLASH_V1 -->
+<div id="edvanceSplash" aria-label="Welcome to AirXpress Eats" role="status">
+    <div class="splash-inner">
+        <img class="splash-edvance-logo"
+             src="{% static 'orders/images/edvance-tech-logo.png' %}"
+             alt="EdVance Tech">
+        <p class="splash-powered">SOFTWARE POWERED BY</p>
+        <h1 class="splash-edvance-title">EdVance Tech</h1>
+        <p class="splash-tagline">Technology for a Brighter Tomorrow</p>
+        <div class="splash-divider"></div>
+        <img class="splash-airxpress-logo"
+             src="{% static 'orders/images/Airxpress-logo.png' %}"
+             alt="AirXpress Eats">
+        <h2 class="splash-airxpress-title">AirXpress Eats</h2>
+        <p class="splash-loading">Food. Delivered. Simply.</p>
+        <div class="splash-progress"><span></span></div>
+    </div>
+</div>
+
+<style>
+#edvanceSplash {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: radial-gradient(ellipse at top, #183354 0%, #0b1422 45%, #05080e 100%);
+    color: #fff;
+    text-align: center;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity .55s ease, visibility .55s ease;
+}
+#edvanceSplash.splash-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+#edvanceSplash .splash-inner {
+    width: min(100%, 420px);
+    animation: edvanceSplashRise .7s ease both;
+}
+#edvanceSplash .splash-edvance-logo {
+    display: block;
+    width: min(190px, 55vw);
+    max-height: 130px;
+    object-fit: contain;
+    margin: 0 auto 18px;
+}
+#edvanceSplash .splash-powered {
+    color: #b9cce6;
+    font-size: 11px;
+    letter-spacing: 3px;
+    margin-bottom: 5px;
+}
+#edvanceSplash .splash-edvance-title {
+    font-size: clamp(26px, 6vw, 36px);
+    font-weight: 800;
+    letter-spacing: .5px;
+}
+#edvanceSplash .splash-tagline {
+    color: #c7d4e5;
+    font-size: 13px;
+    margin-top: 4px;
+}
+#edvanceSplash .splash-divider {
+    width: 64px;
+    height: 2px;
+    margin: 25px auto;
+    background: linear-gradient(90deg, #5db6ff, #fff);
+    border-radius: 5px;
+}
+#edvanceSplash .splash-airxpress-logo {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+    margin: 0 auto 8px;
+}
+#edvanceSplash .splash-airxpress-title {
+    font-size: clamp(25px, 6vw, 34px);
+    font-weight: 800;
+}
+#edvanceSplash .splash-loading {
+    color: #c7d4e5;
+    font-size: 13px;
+    margin-top: 7px;
+}
+#edvanceSplash .splash-progress {
+    width: 145px;
+    height: 3px;
+    margin: 25px auto 0;
+    background: rgba(255,255,255,.17);
+    border-radius: 10px;
+    overflow: hidden;
+}
+#edvanceSplash .splash-progress span {
+    display: block;
+    height: 100%;
+    width: 40%;
+    background: #76bdff;
+    border-radius: inherit;
+    animation: edvanceSplashProgress 1.8s ease-in-out forwards;
+}
+@keyframes edvanceSplashRise {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes edvanceSplashProgress {
+    from { width: 0; }
+    to { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #edvanceSplash, #edvanceSplash .splash-inner {
+        animation: none;
+        transition: none;
+    }
+    #edvanceSplash .splash-progress span {
+        animation: none;
+        width: 100%;
+    }
+}
+
+/* EDVANCE_WAVE_STYLE_V1 */
+#edvanceSplash .splash-inner {
+    position: relative;
+    isolation: isolate;
+}
+
+#edvanceSplash .splash-inner::before,
+#edvanceSplash .splash-inner::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 50%;
+    top: 17%;
+    width: min(330px, 85vw);
+    aspect-ratio: 1;
+    border: 1px solid rgba(123, 190, 255, .28);
+    border-radius: 44% 56% 62% 38% / 43% 42% 58% 57%;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(66, 143, 225, .16),
+        rgba(27, 73, 125, .06) 48%,
+        transparent 70%
+    );
+    transform: translate(-50%, -10%) scale(.72) rotate(0deg);
+    opacity: 0;
+    pointer-events: none;
+    animation: edvanceLogoWave 4.8s ease-in-out infinite;
+}
+
+#edvanceSplash .splash-inner::after {
+    animation-delay: .8s;
+    border-color: rgba(170, 216, 255, .18);
+}
+
+#edvanceSplash .splash-edvance-logo {
+    position: relative;
+    z-index: 1;
+    animation: edvanceLogoGlow 4.8s ease-in-out both;
+    filter: drop-shadow(0 0 0 rgba(91, 174, 255, 0));
+}
+
+#edvanceSplash .splash-powered,
+#edvanceSplash .splash-edvance-title,
+#edvanceSplash .splash-tagline {
+    animation: edvanceBrandFade 4.8s ease-in-out both;
+}
+
+#edvanceSplash .splash-powered {
+    animation-delay: .12s;
+}
+
+#edvanceSplash .splash-edvance-title {
+    animation-delay: .2s;
+}
+
+#edvanceSplash .splash-tagline {
+    animation-delay: .28s;
+}
+
+#edvanceSplash .splash-divider,
+#edvanceSplash .splash-airxpress-logo {
+    display: none;
+}
+
+#edvanceSplash .splash-airxpress-title {
+    margin-top: 26px;
+    opacity: 0;
+    animation: airxpressBrandFade 4.8s ease-in-out both;
+}
+
+#edvanceSplash .splash-loading {
+    opacity: 0;
+    animation: airxpressBrandFade 4.8s ease-in-out both;
+}
+
+#edvanceSplash .splash-progress {
+    opacity: .8;
+}
+
+@keyframes edvanceLogoWave {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -10%) scale(.72) rotate(0deg);
+    }
+    25% { opacity: .8; }
+    65% { opacity: .35; }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -10%) scale(1.18) rotate(18deg);
+    }
+}
+
+@keyframes edvanceLogoGlow {
+    0% {
+        opacity: 0;
+        transform: scale(.94);
+        filter: drop-shadow(0 0 0 rgba(91,174,255,0));
+    }
+    18% {
+        opacity: 1;
+        transform: scale(1);
+        filter: drop-shadow(0 0 18px rgba(91,174,255,.42));
+    }
+    65% {
+        opacity: 1;
+        filter: drop-shadow(0 0 10px rgba(91,174,255,.2));
+    }
+    82%, 100% {
+        opacity: 0;
+        filter: drop-shadow(0 0 0 rgba(91,174,255,0));
+    }
+}
+
+@keyframes edvanceBrandFade {
+    0%, 8% { opacity: 0; transform: translateY(8px); }
+    20%, 58% { opacity: 1; transform: translateY(0); }
+    78%, 100% { opacity: 0; transform: translateY(-5px); }
+}
+
+@keyframes airxpressBrandFade {
+    0%, 55% { opacity: 0; transform: translateY(8px); }
+    72%, 88% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #edvanceSplash .splash-inner::before,
+    #edvanceSplash .splash-inner::after,
+    #edvanceSplash .splash-edvance-logo,
+    #edvanceSplash .splash-powered,
+    #edvanceSplash .splash-edvance-title,
+    #edvanceSplash .splash-tagline,
+    #edvanceSplash .splash-airxpress-title,
+    #edvanceSplash .splash-loading {
+        animation: none;
+    }
+    #edvanceSplash .splash-edvance-logo,
+    #edvanceSplash .splash-powered,
+    #edvanceSplash .splash-edvance-title,
+    #edvanceSplash .splash-tagline {
+        opacity: 1;
+    }
+    #edvanceSplash .splash-airxpress-title,
+    #edvanceSplash .splash-loading {
+        opacity: 1;
+    }
+}
+/* END EDVANCE_WAVE_STYLE_V1 */
+
+</style>
+
+<script>
+(function () {
+    const splash = document.getElementById("edvanceSplash");
+    if (!splash) return;
+
+    let alreadyShown = false;
+    try {
+        alreadyShown = sessionStorage.getItem("airxpressEdvanceSplashShown") === "1";
+    } catch (e) {
+        // If session storage is blocked, still show and dismiss the splash safely.
+    }
+
+    function dismissSplash() {
+        splash.classList.add("splash-hidden");
+        window.setTimeout(function () {
+            if (splash.parentNode) splash.parentNode.removeChild(splash);
+        }, 650);
+    }
+
+    if (alreadyShown) {
+        dismissSplash();
+        return;
+    }
+
+    try {
+        sessionStorage.setItem("airxpressEdvanceSplashShown", "1");
+    } catch (e) {}
+
+    window.setTimeout(dismissSplash, 5000);
+})();
+</script>
+<!-- END AIRXPRESS_EDVANCE_SPLASH_V1 -->
+
+
 <!-- ==============================
      NAVIGATION
 ============================== -->
@@ -2905,6 +3214,8 @@ section:not(.hero) {
     }
 </script>
 
+
+{% include 'orders/includes/customer_inactivity_warning.html' %}
 </body>
 </html>
 

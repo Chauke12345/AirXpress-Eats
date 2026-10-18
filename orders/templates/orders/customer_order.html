@@ -1655,7 +1655,7 @@ textarea {
 
                                     <strong class="menu-price">
                                         {% if item.price %}
-                                            R{{ item.price }}
+                                            R{{ item.customer_price }}
                                         {% else %}
                                             Price not set
                                         {% endif %}
@@ -2171,6 +2171,8 @@ function updateCartCount(count) {
 
 </script>
 
+
+{% include 'orders/includes/customer_inactivity_warning.html' %}
 </body>
 
 </html>

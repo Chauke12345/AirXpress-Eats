@@ -536,8 +536,11 @@ def cart(request, shop_slug):
         )
 
         if menu_item.pricing_type == "fixed":
-
-            unit_price = menu_item.price or Decimal("0.00")
+            shop_unit_price = menu_item.price or Decimal("0.00")
+            unit_price = (
+                shop_unit_price * Decimal("1.25")
+            ).quantize(Decimal("0.01"))
+            shop_line_total = shop_unit_price * quantity
             line_total = unit_price * quantity
 
             cart_items.append({
@@ -545,27 +548,26 @@ def cart(request, shop_slug):
                 "quantity": quantity,
                 "unit_price": unit_price,
                 "line_total": line_total,
+                "shop_line_total": shop_line_total,
                 "pricing_type": "fixed",
             })
 
         else:
-
-            amount = Decimal(
-                str(
-                    cart_item.get(
-                        "amount",
-                        "0.00",
-                    )
-                )
+            shop_amount = Decimal(
+                str(cart_item.get("amount", "0.00"))
             )
-
-            line_total = amount
+            unit_price = (
+                shop_amount * Decimal("1.25")
+            ).quantize(Decimal("0.01"))
+            line_total = unit_price
+            shop_line_total = shop_amount
 
             cart_items.append({
                 "menu_item": menu_item,
                 "quantity": 1,
-                "unit_price": amount,
+                "unit_price": unit_price,
                 "line_total": line_total,
+                "shop_line_total": shop_line_total,
                 "pricing_type": "amount",
             })
 
@@ -802,27 +804,24 @@ def checkout(request, shop_slug):
         if not menu_item:
             continue
 
-        quantity = int(
-            cart_item.get("quantity", 1)
-        )
+        quantity = int(cart_item.get("quantity", 1))
 
         if menu_item.pricing_type == "fixed":
-
-            unit_price = menu_item.price or Decimal("0.00")
+            shop_unit_price = menu_item.price or Decimal("0.00")
+            unit_price = (
+                shop_unit_price * Decimal("1.25")
+            ).quantize(Decimal("0.01"))
+            shop_line_total = shop_unit_price * quantity
             line_total = unit_price * quantity
-
         else:
-
-            unit_price = Decimal(
-                str(
-                    cart_item.get(
-                        "amount",
-                        "0.00",
-                    )
-                )
+            shop_unit_price = Decimal(
+                str(cart_item.get("amount", "0.00"))
             )
-
+            unit_price = (
+                shop_unit_price * Decimal("1.25")
+            ).quantize(Decimal("0.01"))
             quantity = 1
+            shop_line_total = shop_unit_price
             line_total = unit_price
 
         cart_items.append({
@@ -830,6 +829,7 @@ def checkout(request, shop_slug):
             "quantity": quantity,
             "unit_price": unit_price,
             "line_total": line_total,
+            "shop_line_total": shop_line_total,
             "pricing_type": menu_item.pricing_type,
         })
 
@@ -1033,87 +1033,34 @@ def checkout(request, shop_slug):
                 else:
 
                     if parsed_distance <= 0:
-
                         messages.error(
                             request,
                             "We could not calculate a valid delivery distance. Please check your address.",
                         )
-
-                    elif parsed_distance > delivery_pricing.max_radius_km:
-
+                    elif parsed_distance > Decimal("8.00"):
                         delivery_unavailable = True
-
                         messages.error(
                             request,
-                            (
-                                "Delivery unavailable at this address. "
-                                "AirXpress Eats currently delivers within "
-                                f"a maximum {delivery_pricing.max_radius_km} km "
-                                "driving distance from this shop."
-                            ),
+                            "Delivery unavailable. AirXpress Eats delivers within a maximum 8 km driving distance from this shop.",
                         )
-
                     else:
-
-                        delivery_rate = (
-                            DeliveryRate.objects
-                            .filter(
-                                delivery_pricing=delivery_pricing,
-                                max_distance_km__gte=parsed_distance,
-                            )
-                            .order_by("max_distance_km")
-                            .first()
-                        )
-
-                        if not delivery_rate:
-
-                            messages.error(
-                                request,
-                                "A delivery fee could not be determined for this address.",
-                            )
-
+                        if parsed_distance <= Decimal("3.00"):
+                            delivery_fee = Decimal("35.00")
+                        elif parsed_distance <= Decimal("5.00"):
+                            delivery_fee = Decimal("45.00")
                         else:
+                            delivery_fee = Decimal("55.00")
 
-                            delivery_fee = delivery_rate.delivery_fee
+                        platform_fee = Decimal("0.00")
+                        driver_payout = (
+                            delivery_fee * Decimal("0.50")
+                        ).quantize(Decimal("0.01"))
 
-                            # =============================================
-                            # AIRXPRESS SERVICE CHARGE
-                            # 15% of the food subtotal.
-                            # Backend calculation only.
-                            # =============================================
+                        total = subtotal + delivery_fee
+                        delivery_distance_km = parsed_distance
+                        price_calculated = True
 
-                            platform_fee = (
-                                subtotal * Decimal("0.15")
-                            ).quantize(
-                                Decimal("0.01")
-                            )
-
-                            # =============================================
-                            # DRIVER PAYOUT
-                            # 40% of the delivery fee.
-                            # Backend calculation only.
-                            # =============================================
-
-                            driver_payout = (
-                                delivery_fee * Decimal("0.40")
-                            ).quantize(
-                                Decimal("0.01")
-                            )
-
-                            # =============================================
-                            # FINAL CUSTOMER TOTAL
-                            # =============================================
-
-                            total = (
-                                subtotal
-                                + delivery_fee
-                                + platform_fee
-                            )
-
-                            delivery_distance_km = parsed_distance
-                            price_calculated = True
-
-                            if action == "confirm":
+                        if action == "confirm":
 
                                 order = Order.objects.create(
                                     shop=shop,
@@ -1141,6 +1088,7 @@ def checkout(request, shop_slug):
                                         order=order,
                                         menu_item=item["menu_item"],
                                         requested_amount=item["line_total"],
+                                        shop_amount=item["shop_line_total"],
                                         quantity=item["quantity"],
                                         unit_price=(
                                             item["unit_price"]
@@ -1167,13 +1115,13 @@ def checkout(request, shop_slug):
                     order_id=order.id,
                 )
 
-                            messages.success(
-                                request,
-                                (
-                                    "Delivery calculated successfully. "
-                                    "Please review and confirm your complete order total."
-                                ),
-                            )
+                        messages.success(
+                            request,
+                            (
+                                "Delivery calculated successfully. "
+                                "Please review and confirm your complete order total."
+                            ),
+                        )
 
 
     # =========================================================
@@ -1341,6 +1289,28 @@ def login_gateway(request):
     return render(request, "orders/login.html")
 
 
+@require_POST
+@login_required(login_url="/customer/login/")
+def customer_keep_alive(request):
+    """Extend an authenticated customer's session after explicit confirmation."""
+    import time
+
+    user = request.user
+
+    if user.is_staff or user.is_superuser:
+        return JsonResponse({"ok": False}, status=403)
+
+    try:
+        user.customer_profile
+    except Exception:
+        return JsonResponse({"ok": False}, status=403)
+
+    request.session["airxpress_customer_last_activity"] = int(time.time())
+    request.session.set_expiry(10 * 60)
+
+    return JsonResponse({"ok": True, "expires_in": 600})
+
+
 def customer_login(request):
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
@@ -1479,17 +1449,18 @@ def customer_order(request, shop_slug):
     if not preview_mode:
         menu_queryset = menu_queryset.filter(is_available=True)
 
-    menu_items = (
-        menu_queryset        .select_related(
-            "category"
-        )
-        .order_by(
+    menu_items = list(
+        menu_queryset.select_related("category").order_by(
             "category__display_order",
             "category__name",
             "display_order",
             "name",
         )
     )
+    for item in menu_items:
+        item.customer_price = (
+            (item.price or Decimal("0.00")) * Decimal("1.25")
+        ).quantize(Decimal("0.01"))
 
     # =====================================================
     # POST REQUEST
@@ -3850,6 +3821,14 @@ def driver_accept_request(
             )
         )
 
+        # Payment must be confirmed before driver acceptance.
+        if order.payment_status != "paid":
+            messages.warning(
+                request,
+                "This order cannot be accepted because payment has not been confirmed."
+            )
+            return redirect("driver_dashboard")
+
         # Another driver may have accepted first.
         if order.driver_id:
 
@@ -5248,7 +5227,11 @@ def staff_daily_report(request):
                 "quantity"
             ] += item.quantity
 
-            if item.final_amount is not None:
+            if item.shop_amount is not None:
+
+                item_value = item.shop_amount
+
+            elif item.final_amount is not None:
 
                 item_value = item.final_amount
 
@@ -5270,15 +5253,15 @@ def staff_daily_report(request):
 
             if item.final_amount is not None:
 
-                item_value = (
-                    item.final_amount
-                )
+                item_value = item.final_amount
+
+            elif item.shop_amount is not None:
+
+                item_value = item.shop_amount
 
             else:
 
-                item_value = (
-                    item.requested_amount
-                )
+                item_value = item.requested_amount
 
         item_report[item_name][
             "value"

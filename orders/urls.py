@@ -65,6 +65,12 @@ urlpatterns = [
     ),
 
     path(
+        "customer/keep-alive/",
+        views.customer_keep_alive,
+        name="customer_keep_alive",
+    ),
+
+    path(
         "customer/login/",
         views.customer_login,
         name="customer_login",
