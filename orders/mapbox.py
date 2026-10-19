@@ -164,6 +164,34 @@ def geocode_address(
 
     if locality_match:
         requested_locality = locality_match.group(1).strip()
+    else:
+        # Recognise common locality names when an address includes a
+        # street and locality, for example "23 5th Avenue, Alexandra".
+        known_localities = (
+            "alexandra",
+            "sunninghill",
+            "cosmo city",
+            "midrand",
+            "roodepoort",
+            "randburg",
+            "soweto",
+            "sandton",
+            "pretoria",
+            "kempton park",
+            "edenvale",
+            "boksburg",
+            "germiston",
+            "benoni",
+            "fourways",
+        )
+
+        for locality in sorted(known_localities, key=len, reverse=True):
+            if re.search(
+                r"\b" + re.escape(locality) + r"\b",
+                normalized_requested,
+            ):
+                requested_locality = locality
+                break
 
     if requested_locality:
         requested_locality_words = {

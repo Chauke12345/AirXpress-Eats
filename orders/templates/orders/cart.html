@@ -533,7 +533,7 @@
 
                 <div
                     class="cart-item"
-                    data-item-id="{{ item.menu_item.id }}"
+                    data-item-id="{{ item.cart_key }}"
                 >
 
                     <div class="cart-item-info">
@@ -541,6 +541,15 @@
                         <div class="item-name">
                             {{ item.menu_item.name }}
                         </div>
+
+                        {% if item.extras %}
+                            <div class="item-detail cart-item-extras">
+                                <strong>Extras:</strong>
+                                {% for extra in item.extras %}
+                                    <span>{{ extra.name }} (+R{{ extra.customer_price }})</span>{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
 
                         {% if item.pricing_type == "fixed" %}
 
@@ -553,7 +562,7 @@
                                 <button
                                     type="button"
                                     class="quantity-btn decrease-btn"
-                                    data-item-id="{{ item.menu_item.id }}"
+                                    data-item-id="{{ item.cart_key }}"
                                     aria-label="Decrease quantity"
                                 >
                                     -
@@ -561,7 +570,7 @@
 
                                 <span
                                     class="quantity-value"
-                                    data-item-id="{{ item.menu_item.id }}"
+                                    data-item-id="{{ item.cart_key }}"
                                 >
                                     {{ item.quantity }}
                                 </span>
@@ -569,7 +578,7 @@
                                 <button
                                     type="button"
                                     class="quantity-btn increase-btn"
-                                    data-item-id="{{ item.menu_item.id }}"
+                                    data-item-id="{{ item.cart_key }}"
                                     aria-label="Increase quantity"
                                 >
                                     +
@@ -597,7 +606,7 @@
                         <button
                             type="button"
                             class="remove-btn"
-                            data-item-id="{{ item.menu_item.id }}"
+                            data-item-id="{{ item.cart_key }}"
                         >
                             Remove
                         </button>

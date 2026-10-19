@@ -148,6 +148,78 @@
         color: #050505 !important;
     }
 
+
+/* NALEDI_COLLAPSIBLE_EXTRAS_V1 */
+.naledi-menu-grid .naledi-extras-collapse {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    margin-top: 10px;
+    box-sizing: border-box;
+    border: 1px solid #444;
+    border-radius: 12px;
+    background: #151515;
+    overflow: hidden;
+}
+
+.naledi-menu-grid .naledi-extras-collapse > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px;
+    cursor: pointer;
+    list-style: none;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.92rem;
+}
+
+.naledi-menu-grid .naledi-extras-collapse > summary::-webkit-details-marker {
+    display: none;
+}
+
+.naledi-menu-grid .naledi-extras-heading {
+    min-width: 0;
+}
+
+.naledi-menu-grid .naledi-extras-arrow {
+    width: 9px;
+    height: 9px;
+    flex: 0 0 9px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform 0.18s ease;
+    margin-right: 3px;
+}
+
+.naledi-menu-grid .naledi-extras-collapse[open] > summary {
+    border-bottom: 1px solid #444;
+}
+
+.naledi-menu-grid .naledi-extras-collapse[open] .naledi-extras-arrow {
+    transform: rotate(225deg);
+}
+
+.naledi-menu-grid .naledi-extras-collapse .naledi-extras {
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+}
+
+.naledi-menu-grid .naledi-extras-collapse .naledi-extras legend {
+    padding: 8px 6px 4px;
+}
+
+@media (max-width: 600px) {
+    .naledi-menu-grid .naledi-extras-collapse > summary {
+        padding: 11px;
+    }
+}
+/* END NALEDI_COLLAPSIBLE_EXTRAS_V1 */
+
 </style>
 </head>
 
@@ -1425,6 +1497,225 @@ textarea {
     }
 }
 /* END LOVE_ALEX_LAYOUT_OVERRIDE_V1 */
+
+
+/* Naledi's optional extras: keep the controls inside each menu card. */
+.naledi-extras {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr));
+    gap: 8px 12px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 12px 0 0;
+    padding: 12px;
+    border: 1px solid #454545;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.025);
+}
+.naledi-extras legend {
+    padding: 0 6px;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+.naledi-extra-option {
+    box-sizing: border-box;
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-size: 0.88rem;
+    line-height: 1.35;
+    cursor: pointer;
+}
+.naledi-extra-option input[type="checkbox"] {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: #f5b52e;
+}
+.naledi-extra-option span {
+    min-width: 0;
+}
+@media (max-width: 600px) {
+    .naledi-extras {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 10px;
+    }
+}
+
+
+
+/* NALEDI_MENU_LAYOUT_FIX_V1 */
+.category-grid:has(.naledi-menu-grid) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+}
+
+.category-grid:has(.naledi-menu-grid) > * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+}
+
+.naledi-menu-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: stretch;
+    gap: 18px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+.naledi-menu-grid .cart-menu-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 14px !important;
+    overflow: hidden !important;
+    border: 1px solid #333 !important;
+    border-radius: 14px !important;
+    background: #111 !important;
+}
+
+.naledi-menu-grid .menu-item-image {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 16 / 10;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.naledi-menu-grid .menu-item-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.naledi-menu-grid .cart-menu-info {
+    flex: initial !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-wrap: anywhere;
+}
+
+.naledi-menu-grid .cart-menu-info h3 {
+    margin: 0 0 8px;
+    line-height: 1.35;
+}
+
+.naledi-menu-grid .cart-menu-info p {
+    margin: 0 0 8px;
+    line-height: 1.5;
+}
+
+.naledi-menu-grid .add-cart-form {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+}
+
+.naledi-menu-grid .quantity-control {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    width: 100% !important;
+    min-width: 0 !important;
+    flex-wrap: wrap;
+}
+
+.naledi-menu-grid .quantity-control input {
+    width: 82px;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.naledi-menu-grid .naledi-extras {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px 10px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 12px !important;
+    border: 1px solid #444 !important;
+    border-radius: 12px;
+    background: #151515;
+}
+
+.naledi-menu-grid .naledi-extra-option {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+}
+
+.naledi-menu-grid .naledi-extra-option input {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    margin: 2px 0 0;
+    accent-color: #e0ad35;
+}
+
+.naledi-menu-grid .add-cart-button {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 44px;
+    box-sizing: border-box !important;
+    white-space: normal !important;
+}
+
+@media (max-width: 700px) {
+    .naledi-menu-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 14px !important;
+    }
+
+    .naledi-menu-grid .cart-menu-item {
+        padding: 12px !important;
+    }
+
+    .naledi-menu-grid .naledi-extras {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 380px) {
+    .naledi-menu-grid .naledi-extras {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+}
+/* END NALEDI_MENU_LAYOUT_FIX_V1 */
+
 </style>
 
 
@@ -1606,6 +1897,8 @@ textarea {
                     <div class="mozeka-menu-grid">
                     {% elif shop.slug == "munchie-fellas" %}
                     <div class="munchie-menu-grid">
+                    {% elif shop.pk == 8 %}
+                    <div class="naledi-menu-grid">
                     {% endif %}
 
                     {% for item in group.list %}
@@ -1717,6 +2010,29 @@ textarea {
 
                                     </div>
 
+                                {% endif %}
+
+                                {% if shop.pk == 8 and item.pricing_type == "fixed" %}
+                                <details class="naledi-extras-collapse">
+                                    <summary>
+                                        <span class="naledi-extras-heading">Add extras (optional)</span>
+                                        <span class="naledi-extras-arrow" aria-hidden="true"></span>
+                                    </summary>
+                                    <fieldset class="naledi-extras">
+                                        <legend>Choose your extras</legend>
+                                        {% for extra in extras_options %}
+                                        <label class="naledi-extra-option">
+                                            <input
+                                                type="checkbox"
+                                                name="extras"
+                                                value="{{ extra.id }}"
+                                            >
+                                            <span>{{ extra.name }}</span>
+                                            <span>+R{{ extra.customer_price }}</span>
+                                        </label>
+                                        {% endfor %}
+                                    </fieldset>
+                                </details>
                                 {% endif %}
 
                                 <button

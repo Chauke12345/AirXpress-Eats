@@ -238,6 +238,37 @@
             margin-bottom: 12px;
         }
 
+        .checkout-messages {
+            margin-bottom: 18px;
+        }
+
+        .checkout-message {
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border-left: 5px solid #777;
+            background: #fff;
+            line-height: 1.5;
+        }
+
+        .checkout-message.error {
+            border-left-color: #b42318;
+            background: #fff1f0;
+            color: #7a1712;
+        }
+
+        .checkout-message.success {
+            border-left-color: #16803c;
+            background: #effaf2;
+            color: #14532d;
+        }
+
+        .checkout-message.warning {
+            border-left-color: #b7791f;
+            background: #fff8e6;
+            color: #744210;
+        }
+
         .delivery-unavailable-message {
             padding: 18px;
             border-radius: 12px;
@@ -290,6 +321,16 @@
 
 
 <main class="container">
+
+{% if messages %}
+    <div class="checkout-messages" role="status" aria-live="polite">
+        {% for message in messages %}
+            <div class="checkout-message {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
 
 <form method="POST">
 {% csrf_token %}
@@ -417,6 +458,15 @@
                     </div>
 
                     <div class="item-details">
+
+                        {% if item.extras %}
+                            <div class="checkout-item-extras">
+                                <strong>Extras:</strong>
+                                {% for extra in item.extras %}
+                                    <span>{{ extra.name }} (+R{{ extra.customer_price }})</span>{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
 
                         {% if item.pricing_type == "fixed" %}
 

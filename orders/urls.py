@@ -127,13 +127,13 @@ urlpatterns = [
     ),
 
     path(
-        "shop/<slug:shop_slug>/cart/update/<int:menu_item_id>/",
+        "shop/<slug:shop_slug>/cart/update/<str:menu_item_id>/",
         views.update_cart,
         name="update_cart",
     ),
 
     path(
-        "shop/<slug:shop_slug>/cart/remove/<int:menu_item_id>/",
+        "shop/<slug:shop_slug>/cart/remove/<str:menu_item_id>/",
         views.remove_from_cart,
         name="remove_from_cart",
     ),
