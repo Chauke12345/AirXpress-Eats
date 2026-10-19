@@ -1067,30 +1067,44 @@ def checkout(request, shop_slug):
                             request,
                             "We could not calculate a valid delivery distance. Please check your address.",
                         )
-                    elif parsed_distance > Decimal("8.00"):
+                    elif parsed_distance > delivery_pricing.max_radius_km:
                         delivery_unavailable = True
                         messages.error(
                             request,
-                            "Delivery unavailable. AirXpress Eats delivers within a maximum 8 km driving distance from this shop.",
+                            (
+                                "Delivery unavailable. AirXpress Eats delivers "
+                                f"within a maximum {delivery_pricing.max_radius_km} km "
+                                "driving distance from this shop."
+                            ),
                         )
                     else:
-                        if parsed_distance <= Decimal("3.00"):
-                            delivery_fee = Decimal("35.00")
-                        elif parsed_distance <= Decimal("5.00"):
-                            delivery_fee = Decimal("45.00")
+                        matching_rate = (
+                            delivery_pricing.rates
+                            .filter(max_distance_km__gte=parsed_distance)
+                            .order_by("max_distance_km")
+                            .first()
+                        )
+
+                        if matching_rate is None:
+                            delivery_unavailable = True
+                            messages.error(
+                                request,
+                                "Delivery unavailable. No delivery rate is configured for this distance.",
+                            )
                         else:
-                            delivery_fee = Decimal("55.00")
+                            delivery_fee = matching_rate.delivery_fee
+                            platform_fee = Decimal("0.00")
+                            driver_payout = (
+                                delivery_fee
+                                * delivery_pricing.driver_percentage
+                                / Decimal("100.00")
+                            ).quantize(Decimal("0.01"))
 
-                        platform_fee = Decimal("0.00")
-                        driver_payout = (
-                            delivery_fee * Decimal("0.50")
-                        ).quantize(Decimal("0.01"))
+                            total = subtotal + delivery_fee
+                            delivery_distance_km = parsed_distance
+                            price_calculated = True
 
-                        total = subtotal + delivery_fee
-                        delivery_distance_km = parsed_distance
-                        price_calculated = True
-
-                        if action == "confirm":
+                            if action == "confirm":
 
                                 order = Order.objects.create(
                                     shop=shop,
@@ -1141,20 +1155,21 @@ def checkout(request, shop_slug):
                                 request.session.modified = True
 
                                 return redirect(
-                    "payfast_payment",
-                    order_id=order.id,
-                )
-
-                        messages.success(
-                            request,
-                            (
-                                "Delivery calculated successfully. "
-                                "Please review and confirm your complete order total."
-                            ),
-                        )
+                                    "payfast_payment",
+                                    order_id=order.id,
+                                )
 
 
-    # =========================================================
+                            messages.success(
+                                request,
+                                (
+                                    "Delivery calculated successfully. "
+                                    "Please review and confirm your complete order total."
+                                ),
+                            )
+
+
+        # =========================================================
     context = {
         "shop": shop,
         "cart_items": cart_items,
