@@ -354,6 +354,22 @@ def home(request):
                 (item.price or Decimal("0.00")) * Decimal("1.25")
             ).quantize(Decimal("0.01"))
 
+    # Mozeka & Sons: assign weekday menu headings.
+    if shop.pk == 20 and shop.name == "Mozeka & Sons Catering Services":
+        for item in menu_items:
+            if item.name.startswith("Thursday - "):
+                item.menu_day = "Thursday Menu"
+            elif item.name.startswith("Friday - "):
+                item.menu_day = "Friday Menu"
+            elif item.name.startswith("Saturday - "):
+                item.menu_day = "Saturday Menu"
+            elif item.name.startswith("Sunday Lunch - "):
+                item.menu_day = "Sunday Lunch Menu"
+            elif item.name.startswith("Monday - African Cuisine - "):
+                item.menu_day = "Monday — African Cuisine"
+            else:
+                item.menu_day = "Other Menu"
+
     # Assign separately to the actual objects used by Popular Picks.
     for item in popular_items:
         item.customer_price = (
@@ -1475,6 +1491,22 @@ def customer_order(request, shop_slug):
         item.customer_price = (
             (item.price or Decimal("0.00")) * Decimal("1.25")
         ).quantize(Decimal("0.01"))
+
+    # Weekday headings for Mozeka & Sons only.
+    if shop.pk == 20 and shop.name == "Mozeka & Sons Catering Services":
+        for item in menu_items:
+            if item.name.startswith("Thursday - "):
+                item.menu_day = "Thursday Menu"
+            elif item.name.startswith("Friday - "):
+                item.menu_day = "Friday Menu"
+            elif item.name.startswith("Saturday - "):
+                item.menu_day = "Saturday Menu"
+            elif item.name.startswith("Sunday Lunch - "):
+                item.menu_day = "Sunday Lunch Menu"
+            elif item.name.startswith("Monday - African Cuisine - "):
+                item.menu_day = "Monday ? African Cuisine"
+            else:
+                item.menu_day = "Other Menu"
 
     # =====================================================
     # POST REQUEST
