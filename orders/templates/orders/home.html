@@ -2646,7 +2646,7 @@ section:not(.hero) {
             <div class="ax-product-info">
               <span class="ax-product-name">{{ item.name }}</span>
               <span class="ax-product-shop">{{ item.shop.name }}</span>
-              <span class="ax-product-price">R{{ item.price|floatformat:2 }}</span>
+              <span class="ax-product-price">R{{ item.customer_price|floatformat:2 }}</span>
             </div>
           </a>
         {% endfor %}
@@ -2672,7 +2672,7 @@ section:not(.hero) {
               <div class="ax-product-info">
                 <span class="ax-product-name">{{ item.name }}</span>
                 <span class="ax-product-shop">{{ item.shop.name }}</span>
-                <span class="ax-product-price">R{{ item.price|floatformat:2 }}</span>
+                <span class="ax-product-price">R{{ item.customer_price|floatformat:2 }}</span>
               </div>
             </a>
           {% endfor %}

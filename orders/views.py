@@ -346,6 +346,20 @@ def home(request):
             remaining = remaining[offset:] + remaining[:offset]
             popular_items.extend(remaining[:5 - len(popular_items)])
 
+    # Apply the same customer-facing markup used by the menu.
+    # Keep MenuItem.price unchanged for shop accounting and payouts.
+    for row in category_rows:
+        for item in row["items"]:
+            item.customer_price = (
+                (item.price or Decimal("0.00")) * Decimal("1.25")
+            ).quantize(Decimal("0.01"))
+
+    # Assign separately to the actual objects used by Popular Picks.
+    for item in popular_items:
+        item.customer_price = (
+            (item.price or Decimal("0.00")) * Decimal("1.25")
+        ).quantize(Decimal("0.01"))
+
     context = {
         "shops": shops,
         "restaurant_groups": restaurant_groups,
