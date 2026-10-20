@@ -1104,7 +1104,7 @@ textarea {
 /* END MUNCHIE FELLAS RESPONSIVE MENU LAYOUT */
 
 
-/* MOZEKА PREVIEW CARD LAYOUT */
+/* MOZEKA PREVIEW CARD LAYOUT */
 .category-grid.mozeka-preview-grid {
     display: block !important;
     width: 100%;
@@ -1218,8 +1218,8 @@ textarea {
         padding: 10px;
     }
 }
-/* END MOZEKА PREVIEW CARD LAYOUT */
-/* MOZEKA_FINAL_LAYOUT_FIX_V1 */
+/* END MOZEKA PREVIEW CARD LAYOUT */
+/* MOZEKA PREVIEW CARD LAYOUT */
 .category-grid:has(.mozeka-menu-grid) {
     grid-template-columns: minmax(0, 1fr) !important;
     width: 100% !important;
@@ -1387,7 +1387,7 @@ textarea {
         font-size: 14px;
     }
 }
-/* END MOZEKA_FINAL_LAYOUT_FIX_V1 */
+/* END MOZEKA PREVIEW CARD LAYOUT */
 
 /* LOVE_ALEX_LAYOUT_OVERRIDE_V1 */
 .category-grid:has(.love-alex-menu-grid) {
@@ -1716,6 +1716,308 @@ textarea {
 }
 /* END NALEDI_MENU_LAYOUT_FIX_V1 */
 
+
+/* Porang World responsive menu */
+.porang-world-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    width: 100%;
+    margin-top: 14px;
+}
+
+.porang-world-menu-grid .cart-menu-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100%;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+}
+
+.porang-world-menu-grid .menu-item-image {
+    width: 100%;
+    height: 190px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.porang-world-menu-grid .menu-item-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.porang-world-menu-grid .cart-menu-info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 14px;
+}
+
+.porang-world-menu-grid .cart-menu-info form {
+    width: 100%;
+    margin-top: auto;
+}
+
+@media (max-width: 900px) {
+    .porang-world-menu-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+}
+
+@media (max-width: 560px) {
+    .porang-world-menu-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+    }
+
+    .porang-world-menu-grid .menu-item-image {
+        height: 220px;
+    }
+}
+
+/* PORANG_WORLD_LAYOUT_FIX */
+.category-grid.porang-world-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 24px !important;
+    width: 100%;
+}
+
+.porang-world-grid > .category-card {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+    padding: 20px !important;
+    border-radius: 18px !important;
+    background: #fff !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 5px 18px rgba(0, 0, 0, 0.06);
+}
+
+.porang-world-grid .category-title {
+    margin: 0 0 18px !important;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0b323;
+    color: #172033 !important;
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+.porang-world-grid .porang-world-menu-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    align-items: stretch;
+    gap: 20px !important;
+    width: 100%;
+}
+
+.porang-world-grid .porang-world-menu-grid > .cart-menu-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    min-width: 0;
+    height: 100%;
+    padding: 0 !important;
+    overflow: hidden;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 15px !important;
+    background: #fff !important;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+    box-sizing: border-box;
+}
+
+.porang-world-grid .menu-item-image {
+    width: 100% !important;
+    height: 210px !important;
+    min-height: 0 !important;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #f5f5f5;
+}
+
+.porang-world-grid .menu-item-image img {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+.porang-world-grid .cart-menu-info {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px;
+    flex: 1;
+    padding: 16px !important;
+    min-width: 0;
+}
+
+.porang-world-grid .cart-menu-info > strong:first-child {
+    color: #172033;
+    font-size: 1.05rem;
+    line-height: 1.4;
+}
+
+.porang-world-grid .cart-menu-info > span {
+    color: #5b6472;
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.porang-world-grid .menu-price {
+    color: #146c43 !important;
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.porang-world-grid .add-cart-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: auto;
+    padding: 0 16px 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.porang-world-grid .quantity-control,
+.porang-world-grid .amount-cart-control {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.porang-world-grid .add-cart-form input {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.porang-world-grid .add-cart-button {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+    .porang-world-grid .porang-world-menu-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 16px !important;
+    }
+
+    .porang-world-grid .menu-item-image {
+        height: 185px !important;
+    }
+}
+
+@media (max-width: 560px) {
+    .porang-world-grid > .category-card {
+        padding: 12px !important;
+    }
+
+    .porang-world-grid .porang-world-menu-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 16px !important;
+    }
+
+    .porang-world-grid .menu-item-image {
+        height: 230px !important;
+    }
+
+    .porang-world-grid .cart-menu-info {
+        padding: 14px !important;
+    }
+
+    .porang-world-grid .add-cart-form {
+        padding: 0 14px 14px;
+    }
+}
+/* END PORANG_WORLD_LAYOUT_FIX */
+
+/* PORANG_AIRXPRESS_DARK_THEME */
+.category-grid.porang-world-grid {
+    background: #0b0b0b !important;
+    color: #fff !important;
+}
+
+.porang-world-grid > .category-card {
+    background: #111111 !important;
+    color: #ffffff !important;
+    border: 1px solid #292929 !important;
+    box-shadow: none !important;
+}
+
+.porang-world-grid .category-title {
+    color: #ffffff !important;
+    border-bottom: 1px solid #333333 !important;
+}
+
+.porang-world-grid .porang-world-menu-grid > .cart-menu-item {
+    background: #111111 !important;
+    color: #ffffff !important;
+    border: 1px solid #292929 !important;
+    box-shadow: none !important;
+}
+
+.porang-world-grid .cart-menu-info > strong:first-child,
+.porang-world-grid .cart-menu-info > span,
+.porang-world-grid .cart-menu-info small,
+.porang-world-grid .quantity-control label {
+    color: #ffffff !important;
+}
+
+.porang-world-grid .menu-price {
+    color: #ffffff !important;
+}
+
+.porang-world-grid .menu-item-image {
+    background: #1b1b1b !important;
+}
+
+.porang-world-grid .quantity-control input,
+.porang-world-grid .amount-cart-control input {
+    background: #171717 !important;
+    color: #ffffff !important;
+    border: 1px solid #333333 !important;
+    border-radius: 10px !important;
+}
+
+.porang-world-grid .add-cart-button {
+    display: block !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #111111 !important;
+    border: 1px solid #ffffff !important;
+    border-radius: 10px !important;
+    padding: 12px 16px !important;
+    font-weight: 800 !important;
+    cursor: pointer;
+}
+
+.porang-world-grid .add-cart-button:hover {
+    background: #e8e8e8 !important;
+    color: #000000 !important;
+}
+
+.porang-world-grid .cart-menu-item:hover {
+    border-color: #444444 !important;
+}
+
+@media (max-width: 560px) {
+    .porang-world-grid > .category-card {
+        padding: 12px !important;
+    }
+}
+/* END PORANG_AIRXPRESS_DARK_THEME */
 </style>
 
 
@@ -1875,7 +2177,7 @@ textarea {
         </div>
         {% endif %}
         {% regroup menu_items by category as category_groups %}
-<div class="category-grid{% if shop.slug == "vele-ns-catering" %} vele-catering-grid{% endif %}{% if shop.slug == "munchie-fellas" %} munchie-shop-grid{% endif %}{% if preview_mode and shop.pk == 20 and shop.name == "Mozeka & Sons Catering Services" %} mozeka-preview-grid{% endif %}">
+<div class="category-grid{% if shop.slug == "porangi-world" %} porang-world-grid{% endif %}{% if shop.slug == "vele-ns-catering" %} vele-catering-grid{% endif %}{% if shop.slug == "munchie-fellas" %} munchie-shop-grid{% endif %}{% if preview_mode and shop.pk == 20 and shop.name == "Mozeka & Sons Catering Services" %} mozeka-preview-grid{% endif %}">
 
             {% for group in category_groups %}
 
@@ -1899,6 +2201,8 @@ textarea {
                     <div class="munchie-menu-grid">
                     {% elif shop.pk == 8 %}
                     <div class="naledi-menu-grid">
+                    {% elif shop.slug == "porangi-world" %}
+                    <div class="porang-world-menu-grid">
                     {% endif %}
 
                     {% for item in group.list %}
@@ -2044,7 +2348,7 @@ textarea {
 
                             </form>
                             {% else %}
-                            <p style="color:#8a5a00;font-weight:600;margin-top:10px;">Preview only — ordering disabled</p>
+                            <p style="color:#8a5a00;font-weight:600;margin-top:10px;">Preview only - ordering disabled</p>
                             {% endif %}
 
                         </div>
