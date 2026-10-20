@@ -1,0 +1,122 @@
+[
+  {
+    "name": "Thursday - Grilled Chicken",
+    "price": "110.00",
+    "description": "Thursday menu. Starch: Savoury Rice (Basmati) or Pap. Three sides available."
+  },
+  {
+    "name": "Thursday - Lamb Chops",
+    "price": "160.00",
+    "description": "Thursday menu. Starch: Savoury Rice (Basmati) or Pap. Three sides available."
+  },
+  {
+    "name": "Thursday - T-Bone Steak",
+    "price": "130.00",
+    "description": "Thursday menu. Starch: Savoury Rice (Basmati) or Pap. Three sides available."
+  },
+  {
+    "name": "Thursday - Short Rib Stew",
+    "price": "130.00",
+    "description": "Thursday menu. Starch: Savoury Rice (Basmati) or Pap. Three sides available."
+  },
+  {
+    "name": "Friday - Grilled Fish",
+    "price": "120.00",
+    "description": "Friday menu. Starch: Savoury Rice (Basmati) or Fries / Potato Wedges."
+  },
+  {
+    "name": "Friday - Salmon",
+    "price": "190.00",
+    "description": "Friday menu. Starch: Savoury Rice (Basmati) or Fries / Potato Wedges."
+  },
+  {
+    "name": "Friday - Seafood Basket",
+    "price": "140.00",
+    "description": "Friday menu. Starch: Savoury Rice (Basmati) or Fries / Potato Wedges."
+  },
+  {
+    "name": "Friday - Butter Chicken",
+    "price": "110.00",
+    "description": "Friday menu. Starch: Savoury Rice (Basmati) or Fries / Potato Wedges."
+  },
+  {
+    "name": "Friday - T-Bone Steak",
+    "price": "130.00",
+    "description": "Friday menu. Starch: Savoury Rice (Basmati) or Fries / Potato Wedges."
+  },
+  {
+    "name": "Friday - Seafood Boil (Pre-order)",
+    "price": "380.00",
+    "description": "Friday menu. Pre-order required. Starch: Savoury Rice (Basmati) or Fries / Potato Wedges."
+  },
+  {
+    "name": "Saturday - T-Bone Steak",
+    "price": "130.00",
+    "description": "Saturday menu. Starch: Savoury Rice (Basmati), Pap + Fries. Three sides available."
+  },
+  {
+    "name": "Saturday - Lamb Chops",
+    "price": "160.00",
+    "description": "Saturday menu. Starch: Savoury Rice (Basmati), Pap + Fries. Three sides available."
+  },
+  {
+    "name": "Saturday - Mix Grill (Wors, Chicken, Steak)",
+    "price": "230.00",
+    "description": "Saturday menu. Starch: Savoury Rice (Basmati), Pap + Fries. Three sides available."
+  },
+  {
+    "name": "Saturday - Grilled Chicken",
+    "price": "110.00",
+    "description": "Saturday menu. Starch: Savoury Rice (Basmati), Pap + Fries. Three sides available."
+  },
+  {
+    "name": "Sunday Lunch - Lamb Shank (Pre-order)",
+    "price": "230.00",
+    "description": "Sunday lunch. Pre-order required. Starch: Savoury Rice (Basmati), Dumpling or Creamy Mash Potato."
+  },
+  {
+    "name": "Sunday Lunch - Short Rib Stew",
+    "price": "130.00",
+    "description": "Sunday lunch. Starch: Savoury Rice (Basmati), Dumpling or Creamy Mash Potato."
+  },
+  {
+    "name": "Sunday Lunch - Grilled Fish",
+    "price": "120.00",
+    "description": "Sunday lunch. Starch: Savoury Rice (Basmati), Dumpling or Creamy Mash Potato."
+  },
+  {
+    "name": "Sunday Lunch - T-Bone Steak",
+    "price": "130.00",
+    "description": "Sunday lunch. Starch: Savoury Rice (Basmati), Dumpling or Creamy Mash Potato."
+  },
+  {
+    "name": "Monday - African Cuisine - Mogodu",
+    "price": "110.00",
+    "description": "Monday African cuisine. Starch: Ting, Samp or Dumpling. Three sides available."
+  },
+  {
+    "name": "Monday - African Cuisine - Hardbody Chicken",
+    "price": "120.00",
+    "description": "Monday African cuisine. Starch: Ting, Samp or Dumpling. Three sides available."
+  },
+  {
+    "name": "Monday - African Cuisine - Pork Trotters",
+    "price": "100.00",
+    "description": "Monday African cuisine. Starch: Ting, Samp or Dumpling. Three sides available."
+  },
+  {
+    "name": "Monday - African Cuisine - Malana",
+    "price": "90.00",
+    "description": "Monday African cuisine. Starch: Ting, Samp or Dumpling. Three sides available."
+  },
+  {
+    "name": "Monday - African Cuisine - Gizzards",
+    "price": "80.00",
+    "description": "Monday African cuisine. Starch: Ting, Samp or Dumpling. Three sides available."
+  },
+  {
+    "name": "Monday - African Cuisine - Chicken Feet",
+    "price": "80.00",
+    "description": "Monday African cuisine. Starch: Ting, Samp or Dumpling. Three sides available."
+  }
+]

@@ -1,0 +1,242 @@
+[
+  {
+    "name": "Thursday - Grilled Chicken",
+    "price": "110.00",
+    "description": "Thursday menu. Starch: Savoury Rice (Basmati) or Pap. Three sides available.",
+    "pricing_type": "fixed",
+    "display_order": 1,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/IMG-20261015-WA0005.jpg"
+  },
+  {
+    "name": "Thursday - Lamb Chops",
+    "price": "160.00",
+    "description": "Thursday menu. Starch: Savoury Rice (Basmati) or Pap. Three sides available.",
+    "pricing_type": "fixed",
+    "display_order": 2,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/IMG-20261015-WA0006.jpg"
+  },
+  {
+    "name": "Thursday - T-Bone Steak",
+    "price": "130.00",
+    "description": "Thursday menu. Starch: Savoury Rice (Basmati) or Pap. Three sides available.",
+    "pricing_type": "fixed",
+    "display_order": 3,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/IMG-20261015-WA0007.jpg"
+  },
+  {
+    "name": "Thursday - Short Rib Stew",
+    "price": "130.00",
+    "description": "Thursday menu. Starch: Savoury Rice (Basmati) or Pap. Three sides available.",
+    "pricing_type": "fixed",
+    "display_order": 4,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/IMG-20261015-WA0008.jpg"
+  },
+  {
+    "name": "Friday - Grilled Fish",
+    "price": "120.00",
+    "description": "Friday menu. Starch: Savoury Rice (Basmati) or Fries / Potato Wedges.",
+    "pricing_type": "fixed",
+    "display_order": 5,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/IMG-20261015-WA0009_edit_172188176439001.jpg"
+  },
+  {
+    "name": "Friday - Salmon",
+    "price": "190.00",
+    "description": "Friday menu. Starch: Savoury Rice (Basmati) or Fries / Potato Wedges.",
+    "pricing_type": "fixed",
+    "display_order": 6,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/IMG-20261015-WA0010.jpg"
+  },
+  {
+    "name": "Friday - Seafood Basket",
+    "price": "140.00",
+    "description": "Friday menu. Starch: Savoury Rice (Basmati) or Fries / Potato Wedges.",
+    "pricing_type": "fixed",
+    "display_order": 7,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/IMG-20261015-WA0011.jpg"
+  },
+  {
+    "name": "Friday - Butter Chicken",
+    "price": "110.00",
+    "description": "Friday menu. Starch: Savoury Rice (Basmati) or Fries / Potato Wedges.",
+    "pricing_type": "fixed",
+    "display_order": 8,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/IMG-20261015-WA0013.jpg"
+  },
+  {
+    "name": "Friday - T-Bone Steak",
+    "price": "130.00",
+    "description": "Friday menu. Starch: Savoury Rice (Basmati) or Fries / Potato Wedges.",
+    "pricing_type": "fixed",
+    "display_order": 9,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/IMG-20261015-WA0014.jpg"
+  },
+  {
+    "name": "Friday - Seafood Boil (Pre-order)",
+    "price": "380.00",
+    "description": "Friday menu. Pre-order required. Starch: Savoury Rice (Basmati) or Fries / Potato Wedges.",
+    "pricing_type": "fixed",
+    "display_order": 10,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/IMG-20261015-WA0015.jpg"
+  },
+  {
+    "name": "Saturday - T-Bone Steak",
+    "price": "130.00",
+    "description": "Saturday menu. Starch: Savoury Rice (Basmati), Pap + Fries. Three sides available.",
+    "pricing_type": "fixed",
+    "display_order": 11,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/IMG-20261015-WA0016(1).jpg"
+  },
+  {
+    "name": "Saturday - Lamb Chops",
+    "price": "160.00",
+    "description": "Saturday menu. Starch: Savoury Rice (Basmati), Pap + Fries. Three sides available.",
+    "pricing_type": "fixed",
+    "display_order": 12,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/IMG-20261015-WA0017.jpg"
+  },
+  {
+    "name": "Saturday - Mix Grill (Wors, Chicken, Steak)",
+    "price": "230.00",
+    "description": "Saturday menu. Starch: Savoury Rice (Basmati), Pap + Fries. Three sides available.",
+    "pricing_type": "fixed",
+    "display_order": 13,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/IMG-20261015-WA0039.jpg"
+  },
+  {
+    "name": "Saturday - Grilled Chicken",
+    "price": "110.00",
+    "description": "Saturday menu. Starch: Savoury Rice (Basmati), Pap + Fries. Three sides available.",
+    "pricing_type": "fixed",
+    "display_order": 14,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/IMG-20261015-WA0040.jpg"
+  },
+  {
+    "name": "Sunday Lunch - Lamb Shank (Pre-order)",
+    "price": "230.00",
+    "description": "Sunday lunch. Pre-order required. Starch: Savoury Rice (Basmati), Dumpling or Creamy Mash Potato.",
+    "pricing_type": "fixed",
+    "display_order": 15,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/IMG-20261015-WA0041.jpg"
+  },
+  {
+    "name": "Sunday Lunch - Short Rib Stew",
+    "price": "130.00",
+    "description": "Sunday lunch. Starch: Savoury Rice (Basmati), Dumpling or Creamy Mash Potato.",
+    "pricing_type": "fixed",
+    "display_order": 16,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/IMG-20261015-WA0042.jpg"
+  },
+  {
+    "name": "Sunday Lunch - Grilled Fish",
+    "price": "120.00",
+    "description": "Sunday lunch. Starch: Savoury Rice (Basmati), Dumpling or Creamy Mash Potato.",
+    "pricing_type": "fixed",
+    "display_order": 17,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/Sunday_Lunch_Grilled_Fish.jpg"
+  },
+  {
+    "name": "Sunday Lunch - T-Bone Steak",
+    "price": "130.00",
+    "description": "Sunday lunch. Starch: Savoury Rice (Basmati), Dumpling or Creamy Mash Potato.",
+    "pricing_type": "fixed",
+    "display_order": 18,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/Sunday_Lunch_TBone_Steak.jpg"
+  },
+  {
+    "name": "Monday - African Cuisine - Mogodu",
+    "price": "110.00",
+    "description": "Monday African cuisine. Starch: Ting, Samp or Dumpling. Three sides available.",
+    "pricing_type": "fixed",
+    "display_order": 19,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/Monday_Mogodu.jpg"
+  },
+  {
+    "name": "Monday - African Cuisine - Hardbody Chicken",
+    "price": "120.00",
+    "description": "Monday African cuisine. Starch: Ting, Samp or Dumpling. Three sides available.",
+    "pricing_type": "fixed",
+    "display_order": 20,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/Monday_Hardbody_Chicken.jpg"
+  },
+  {
+    "name": "Monday - African Cuisine - Pork Trotters",
+    "price": "100.00",
+    "description": "Monday African cuisine. Starch: Ting, Samp or Dumpling. Three sides available.",
+    "pricing_type": "fixed",
+    "display_order": 21,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/Monday_Pork_Trotters.jpg"
+  },
+  {
+    "name": "Monday - African Cuisine - Malana",
+    "price": "90.00",
+    "description": "Monday African cuisine. Starch: Ting, Samp or Dumpling. Three sides available.",
+    "pricing_type": "fixed",
+    "display_order": 22,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/Monday_Malana.jpg"
+  },
+  {
+    "name": "Monday - African Cuisine - Gizzards",
+    "price": "80.00",
+    "description": "Monday African cuisine. Starch: Ting, Samp or Dumpling. Three sides available.",
+    "pricing_type": "fixed",
+    "display_order": 23,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/Monday_Gizzards.jpg"
+  },
+  {
+    "name": "Monday - African Cuisine - Chicken Feet",
+    "price": "80.00",
+    "description": "Monday African cuisine. Starch: Ting, Samp or Dumpling. Three sides available.",
+    "pricing_type": "fixed",
+    "display_order": 24,
+    "is_available": true,
+    "category_id": 10,
+    "image": "menu_items/Monday_Chicken_Feet.jpg"
+  }
+]
