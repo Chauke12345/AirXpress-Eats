@@ -2535,6 +2535,15 @@ section:not(.hero) {
     scroll-snap-align: start;
     transition: background .2s, border-color .2s, transform .2s;
 }
+.ax-category-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    line-height: 1;
+    margin-right: 7px;
+    flex-shrink: 0;
+}
 .ax-category-chip:hover {
     background: #303030;
     border-color: #aaa;
@@ -2623,7 +2632,8 @@ section:not(.hero) {
     <div class="ax-category-row" aria-label="Homepage categories">
       {% for key, label in homepage_categories %}
         <a class="ax-category-chip" href="#category-{{ key }}">
-          {{ label }}
+          <span class="ax-category-icon" aria-hidden="true">{% if key == "main_meals" %}🍛{% elif key == "burgers" %}🍔{% elif key == "chicken" %}🍗{% elif key == "meat_braai" %}🔥{% elif key == "sides" %}🍟{% elif key == "drinks" %}🥤{% elif key == "desserts" %}🍰{% elif key == "groceries" %}🛒{% else %}🍽️{% endif %}</span>
+          <span>{{ label }}</span>
         </a>
       {% endfor %}
     </div>
@@ -3480,3 +3490,5 @@ section:not(.hero) {
     }
 }
 </style>
+
+
