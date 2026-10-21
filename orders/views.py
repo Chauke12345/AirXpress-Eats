@@ -1462,6 +1462,13 @@ def customer_order(request, shop_slug):
     if not preview_mode:
         menu_queryset = menu_queryset.filter(is_available=True)
 
+    # The Love of Alex: hide items without valid prices.
+    if shop.pk == 5 and shop.name == "The Love of Alex":
+        menu_queryset = menu_queryset.filter(
+            price__isnull=False,
+            price__gt=0,
+        )
+
     menu_items = list(
         menu_queryset.select_related("category").order_by(
             "category__display_order",
