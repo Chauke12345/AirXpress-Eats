@@ -1,4 +1,4 @@
-﻿import json
+import json
 import math
 import secrets
 import hashlib
@@ -273,7 +273,7 @@ def home(request):
     available_items = MenuItem.objects.filter(
         shop__is_active=True,
         is_available=True,
-        price__gt=0,
+        price__gte=Decimal("45.00"),
     ).select_related(
         "shop",
         "category",
@@ -435,6 +435,12 @@ def add_to_cart(request, shop_slug, menu_item_id):
         is_available=True,
     )
     is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+    if menu_item.price is None or menu_item.price < Decimal("45.00"):
+        message = "This item is unavailable because its base price is below R45."
+        if is_ajax:
+            return JsonResponse({"success": False, "message": message}, status=400)
+        messages.error(request, message)
+        return redirect("customer_order", shop_slug=shop_slug)
     cart = request.session.get("cart", {})
 
     if menu_item.pricing_type == "fixed":
@@ -560,6 +566,11 @@ def cart(request, shop_slug):
 
         if not menu_item:
             continue
+        if menu_item.price is None or menu_item.price < Decimal("45.00"):
+            cart_data.pop(cart_key, None)
+            request.session["cart"] = cart_data
+            request.session.modified = True
+            continue
 
         quantity = max(1, int(cart_item.get("quantity", 1)))
         extras = cart_item.get("extras", []) if shop.pk == 8 else []
@@ -639,6 +650,14 @@ def update_cart(request, shop_slug, menu_item_id):
     menu_item = get_object_or_404(
         MenuItem, id=menu_id, shop=shop, is_available=True
     )
+    if menu_item.price is None or menu_item.price < Decimal("45.00"):
+        cart.pop(item_key, None)
+        request.session["cart"] = cart
+        request.session.modified = True
+        return JsonResponse(
+            {"success": False, "message": "Items below R45 are no longer available."},
+            status=400,
+        )
 
     if menu_item.pricing_type != "fixed":
         return JsonResponse({
@@ -776,7 +795,7 @@ def checkout(request, shop_slug):
     cart_items = []
     subtotal = Decimal("0.00")
 
-    for cart_key, cart_item in cart_data.items():
+    for cart_key, cart_item in list(cart_data.items()):
 
         menu_id = str(cart_key).split("__", 1)[0]
         menu_item = MenuItem.objects.filter(
@@ -786,6 +805,11 @@ def checkout(request, shop_slug):
         ).first()
 
         if not menu_item:
+            continue
+        if menu_item.price is None or menu_item.price < Decimal("45.00"):
+            cart_data.pop(cart_key, None)
+            request.session["cart"] = cart_data
+            request.session.modified = True
             continue
 
         quantity = max(1, int(cart_item.get("quantity", 1)))
@@ -1460,9 +1484,11 @@ def customer_order(request, shop_slug):
 
     menu_queryset = MenuItem.objects.filter(shop=shop)
     if not preview_mode:
-        menu_queryset = menu_queryset.filter(is_available=True)
-
-    # The Love of Alex: hide items without valid prices.
+        menu_queryset = menu_queryset.filter(
+            is_available=True,
+            price__gte=Decimal("45.00"),
+        )
+# The Love of Alex: hide items without valid prices.
     if shop.pk == 5 and shop.name == "The Love of Alex":
         menu_queryset = menu_queryset.filter(
             price__isnull=False,
