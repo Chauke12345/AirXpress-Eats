@@ -1492,7 +1492,7 @@ def customer_order(request, shop_slug):
     if shop.pk == 5 and shop.name == "The Love of Alex":
         menu_queryset = menu_queryset.filter(
             price__isnull=False,
-            price__gt=0,
+            price__gt=Decimal("45.00"),
         )
 
     menu_items = list(
