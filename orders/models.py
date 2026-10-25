@@ -1451,6 +1451,7 @@ class SupportTicket(models.Model):
     requires_escalation = models.BooleanField(default=False)
     escalation_notes = models.TextField(blank=True)
     staff_notes = models.TextField(blank=True)
+    customer_response = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     resolved_at = models.DateTimeField(null=True, blank=True)

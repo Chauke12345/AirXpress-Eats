@@ -210,13 +210,26 @@
                         </select>
                     </div>
                     <div>
-                        <label for="notes-{{ ticket.id }}">Internal staff notes</label>
-                        <textarea name="staff_notes" id="notes-{{ ticket.id }}" rows="3" maxlength="10000" placeholder="Record investigation steps or resolution...">{{ ticket.staff_notes }}</textarea>
+                        <label for="notes-{{ ticket.id }}">Internal staff notes (private)</label>
+                        <textarea name="staff_notes" id="notes-{{ ticket.id }}" rows="3" maxlength="10000" placeholder="Private investigation notes...">{{ ticket.staff_notes }}</textarea>
+                    </div>
+                    <div class="full">
+                        <label for="response-{{ ticket.id }}">Message for the customer</label>
+                        <textarea name="customer_response" id="response-{{ ticket.id }}" rows="3" maxlength="10000" placeholder="Write the update the customer may see...">{{ ticket.customer_response }}</textarea>
                     </div>
                     <div class="full">
                         <button class="primary" type="submit">Save ticket update</button>
                     </div>
                 </form>
+                {% if ticket.whatsapp_url %}
+                    <p>
+                        <a class="button" style="background-color: #25D366; color: #ffffff; border-color: #25D366;" href="{{ ticket.whatsapp_url }}" target="_blank" rel="noopener noreferrer">Send update on WhatsApp</a>
+                    </p>
+                {% elif not ticket.customer_phone %}
+                    <p class="meta">A customer phone number is needed for WhatsApp.</p>
+                {% elif not ticket.customer_response %}
+                    <p class="meta">Save a customer response to prepare the WhatsApp message.</p>
+                {% endif %}
             </article>
         {% empty %}
             <div class="panel empty">No tickets match these filters.</div>

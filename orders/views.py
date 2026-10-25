@@ -2831,6 +2831,7 @@ def owner_update_support_ticket(request, ticket_id):
     ticket = get_object_or_404(SupportTicket, id=ticket_id)
     new_status = request.POST.get("status", "").strip()
     staff_notes = request.POST.get("staff_notes", "").strip()
+    customer_response = request.POST.get("customer_response", "").strip()
 
     if new_status not in {"open", "in_progress", "resolved"}:
         messages.error(request, "Invalid ticket status.")
@@ -2840,11 +2841,17 @@ def owner_update_support_ticket(request, ticket_id):
         messages.error(request, "Internal notes must be 10,000 characters or fewer.")
         return redirect("owner_support_dashboard")
 
+    if len(customer_response) > 10000:
+        messages.error(request, "Customer response must be 10,000 characters or fewer.")
+        return redirect("owner_support_dashboard")
+
     ticket.status = new_status
     ticket.staff_notes = staff_notes
+    ticket.customer_response = customer_response
     ticket.save(update_fields=[
         "status",
         "staff_notes",
+        "customer_response",
         "resolved_at",
         "updated_at",
     ])
@@ -2854,6 +2861,8 @@ def owner_update_support_ticket(request, ticket_id):
         f"Support ticket {str(ticket.reference)[:8].upper()} updated successfully.",
     )
     return redirect("owner_support_dashboard")
+
+
 @user_passes_test(is_owner, login_url="/owner/login/")
 def owner_support_dashboard(request):
     tickets = SupportTicket.objects.all()
@@ -2876,6 +2885,38 @@ def owner_support_dashboard(request):
         ),
         "-created_at",
     )
+
+    from urllib.parse import quote
+    from django.urls import reverse
+
+    login_url = request.build_absolute_uri(reverse("customer_login"))
+
+    for ticket in tickets:
+        ticket.whatsapp_url = ""
+        phone = "".join(
+            character
+            for character in (ticket.customer_phone or "")
+            if character.isdigit()
+        )
+
+        if phone.startswith("0"):
+            phone = "27" + phone[1:]
+        elif not phone.startswith("27"):
+            phone = ""
+
+        if phone and len(phone) >= 11 and ticket.customer_response:
+            message = (
+                f"Hello {ticket.customer_name or 'there'}, "
+                f"here is an update on your AirXpress Eats support ticket "
+                f"{str(ticket.reference)[:8].upper()}. "
+                f"Status: {ticket.get_status_display()}. "
+                f"{ticket.customer_response}\n\n"
+                f"Log in to your account here: {login_url}\n\n"
+                f"Thank you, AirXpress Eats Support."
+            )
+            ticket.whatsapp_url = (
+                f"https://wa.me/{phone}?text={quote(message)}"
+            )
 
     context = {
         "tickets": tickets,
