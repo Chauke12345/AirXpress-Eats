@@ -252,9 +252,15 @@
         }
 
         .checkout-message.error {
-            border-left-color: #b42318;
-            background: #fff1f0;
-            color: #7a1712;
+            border: 2px solid #b42318;
+            border-left: 8px solid #b42318;
+            background: #fff0ee;
+            color: #65120d;
+            padding: 18px 20px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            line-height: 1.65;
+            box-shadow: 0 4px 12px rgba(180, 35, 24, 0.12);
         }
 
         .checkout-message.success {
@@ -285,6 +291,34 @@
             margin: 10px 0 0;
         }
     </style>
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""
+    >
+    <style>
+        #delivery-map { min-height: 320px; }
+        #use-current-location,
+        #confirm-delivery-location {
+            display: block;
+            margin-top: 12px;
+            padding: 12px 16px;
+            border: 0;
+            border-radius: 8px;
+            background: #111;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        #confirm-delivery-location:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+        #gps-status { margin-top: 8px; }
+    </style>
+
 </head>
 
 <body>
@@ -391,6 +425,26 @@
 
         </div>
 
+        <div class="field" id="delivery-map-section">
+            <label>Pin-point your delivery location</label>
+            <p id="gps-help">
+                Use your current location, adjust the pin if needed, then confirm.
+            </p>
+            <button type="button" id="use-current-location">
+                Use my current location
+            </button>
+            <div id="delivery-map"
+                 role="application"
+                 aria-label="Map to select your delivery location"
+                 style="height: 320px; width: 100%; margin-top: 12px; border-radius: 12px; background: #f0f0f0;">
+            </div>
+            <button type="button" id="confirm-delivery-location" disabled>
+                Confirm delivery location
+            </button>
+            <p id="gps-status" role="status" aria-live="polite"></p>
+            <input type="hidden" id="confirmed_latitude" name="confirmed_latitude">
+            <input type="hidden" id="confirmed_longitude" name="confirmed_longitude">
+        </div>
 
         <div class="field">
 
@@ -672,6 +726,123 @@
 
 
 {% include 'orders/includes/customer_inactivity_warning.html' %}
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+
+<script id="airxpress-gps-script">
+document.addEventListener("DOMContentLoaded", function () {
+    const mapElement = document.getElementById("delivery-map");
+    const gpsButton = document.getElementById("use-current-location");
+    const confirmButton = document.getElementById("confirm-delivery-location");
+    const status = document.getElementById("gps-status");
+    const addressField = document.getElementById("delivery_address");
+    const latitudeField = document.getElementById("confirmed_latitude");
+    const longitudeField = document.getElementById("confirmed_longitude");
+
+    if (!mapElement || typeof L === "undefined") {
+        return;
+    }
+
+    const map = L.map(mapElement).setView([-26.2, 28.04], 11);
+
+    L.tileLayer("https://tile.openstreetmap.de/{z}/{x}/{y}.png", {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    let pin = null;
+
+    function clearConfirmation() {
+        latitudeField.value = "";
+        longitudeField.value = "";
+    }
+
+    function positionPin(lat, lon) {
+        clearConfirmation();
+
+        if (!pin) {
+            pin = L.marker([lat, lon], { draggable: true }).addTo(map);
+
+            pin.on("dragend", function () {
+                clearConfirmation();
+                status.textContent = "Pin moved. Confirm your delivery location.";
+            });
+        } else {
+            pin.setLatLng([lat, lon]);
+        }
+
+        map.setView([lat, lon], 17);
+        confirmButton.disabled = false;
+        status.textContent = "Check the pin position, then confirm your delivery location.";
+    }
+
+    map.on("click", function (event) {
+        positionPin(event.latlng.lat, event.latlng.lng);
+    });
+
+    gpsButton.addEventListener("click", function () {
+        if (!navigator.geolocation) {
+            status.textContent = "GPS is unavailable. Tap the map to select your location.";
+            return;
+        }
+
+        status.textContent = "Finding your current location...";
+
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                positionPin(
+                    position.coords.latitude,
+                    position.coords.longitude
+                );
+            },
+            function () {
+                status.textContent =
+                    "Location unavailable. Please tap the map or type your address.";
+            },
+            { enableHighAccuracy: true, timeout: 15000 }
+        );
+    });
+
+    confirmButton.addEventListener("click", async function () {
+        if (!pin) return;
+
+        const location = pin.getLatLng();
+        confirmButton.disabled = true;
+        status.textContent = "Checking the selected address...";
+
+        try {
+            const url = "{% url 'gps_reverse_geocode' %}"
+                + "?lat=" + encodeURIComponent(location.lat)
+                + "&lon=" + encodeURIComponent(location.lng);
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (!response.ok || !data.address) {
+                throw new Error(data.error || "Address lookup failed.");
+            }
+
+            latitudeField.value = location.lat;
+            longitudeField.value = location.lng;
+            addressField.value = data.address;
+
+            status.textContent =
+                "Location confirmed. Check your delivery address before continuing.";
+        } catch (error) {
+            clearConfirmation();
+            status.textContent = error.message
+                + " You can adjust the pin or enter the address manually.";
+        } finally {
+            confirmButton.disabled = false;
+        }
+    });
+
+    addressField.addEventListener("input", clearConfirmation);
+});
+</script>
+
 </body>
 </html>
 

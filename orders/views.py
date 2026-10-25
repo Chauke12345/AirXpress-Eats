@@ -1,4 +1,4 @@
-import json
+﻿import json
 import math
 import secrets
 import hashlib
@@ -78,7 +78,7 @@ from .models import (
     SupportTicket
 )
 
-from .mapbox import MapboxError, calculate_driving_distance, calculate_driver_route
+from .mapbox import MapboxError, calculate_driving_distance, calculate_driving_distance_to_coordinates, calculate_driver_route
 from .services import send_delivery_otp_sms
 def _delivery_otp_hash(order_id, code):
     """Hash a delivery OTP for one specific order."""
@@ -242,6 +242,91 @@ def address_suggestions(request):
         )
 
 
+def gps_reverse_geocode(request):
+    """Resolve a customer's confirmed map-pin coordinates to an address."""
+    from django.views.decorators.http import require_GET
+
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "GET requests only."},
+            status=405,
+        )
+
+    try:
+        latitude = float(request.GET.get("lat", ""))
+        longitude = float(request.GET.get("lon", ""))
+    except (TypeError, ValueError):
+        return JsonResponse(
+            {"error": "Valid latitude and longitude are required."},
+            status=400,
+        )
+
+    if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
+        return JsonResponse(
+            {"error": "Coordinates are outside valid ranges."},
+            status=400,
+        )
+
+    token = getattr(settings, "MAPBOX_TOKEN", "")
+    if not token:
+        return JsonResponse(
+            {"error": "Location service is not configured."},
+            status=503,
+        )
+
+    import urllib.parse
+    import urllib.request
+    import json
+
+    params = urllib.parse.urlencode({
+        "longitude": longitude,
+        "latitude": latitude,
+        "country": "ZA",
+        "language": "en",
+        "limit": 1,
+        "access_token": token,
+    })
+    url = (
+        "https://api.mapbox.com/search/geocode/v6/reverse?"
+        + params
+    )
+
+    try:
+        with urllib.request.urlopen(url, timeout=10) as response:
+            data = json.loads(response.read().decode("utf-8"))
+
+        features = data.get("features", [])
+        if not features:
+            return JsonResponse(
+                {"error": "No address found for this pin. Please adjust it or enter your address manually."},
+                status=404,
+            )
+
+        properties = features[0].get("properties", {})
+        address = (
+            properties.get("full_address")
+            or properties.get("name")
+            or ""
+        ).strip()
+
+        if not address:
+            return JsonResponse(
+                {"error": "No readable address found for this pin."},
+                status=404,
+            )
+
+        return JsonResponse({
+            "address": address,
+            "latitude": latitude,
+            "longitude": longitude,
+        })
+
+    except Exception:
+        return JsonResponse(
+            {"error": "Could not look up this location. Please try again or enter the address manually."},
+            status=502,
+        )
+
 def home(request):
     """
     Public AirXpress Eats marketplace homepage.
@@ -366,7 +451,7 @@ def home(request):
             elif item.name.startswith("Sunday Lunch - "):
                 item.menu_day = "Sunday Lunch Menu"
             elif item.name.startswith("Monday - African Cuisine - "):
-                item.menu_day = "Monday — African Cuisine"
+                item.menu_day = "Monday â€” African Cuisine"
             else:
                 item.menu_day = "Other Menu"
 
@@ -999,7 +1084,7 @@ def checkout(request, shop_slug):
 
             messages.error(
                 request,
-                "This shop is not configured for delivery routing yet. Please contact AirXpress.",
+                "Delivery availability for this shop could not be verified just now. Please contact AirXpress Eats support for assistance.",
             )
 
         else:
@@ -1021,11 +1106,51 @@ def checkout(request, shop_slug):
 
                 try:
 
-                    route = calculate_driving_distance(
-                        shop.latitude,
-                        shop.longitude,
-                        delivery_address,
-                    )
+                    confirmed_latitude_raw = request.POST.get(
+                        "confirmed_latitude", ""
+                    ).strip()
+                    confirmed_longitude_raw = request.POST.get(
+                        "confirmed_longitude", ""
+                    ).strip()
+
+                    if confirmed_latitude_raw or confirmed_longitude_raw:
+                        if not confirmed_latitude_raw or not confirmed_longitude_raw:
+                            raise MapboxError(
+                                "Please confirm your delivery pin again."
+                            )
+
+                        try:
+                            confirmed_latitude = Decimal(
+                                confirmed_latitude_raw
+                            )
+                            confirmed_longitude = Decimal(
+                                confirmed_longitude_raw
+                            )
+                        except (InvalidOperation, ValueError):
+                            raise MapboxError(
+                                "The selected map location is invalid."
+                            )
+
+                        if not (
+                            Decimal("-90") <= confirmed_latitude <= Decimal("90")
+                            and Decimal("-180") <= confirmed_longitude <= Decimal("180")
+                        ):
+                            raise MapboxError(
+                                "The selected map location is outside valid coordinates."
+                            )
+
+                        route = calculate_driving_distance_to_coordinates(
+                            shop.latitude,
+                            shop.longitude,
+                            confirmed_latitude,
+                            confirmed_longitude,
+                        )
+                    else:
+                        route = calculate_driving_distance(
+                            shop.latitude,
+                            shop.longitude,
+                            delivery_address,
+                        )
 
                     parsed_distance = Decimal(
                         str(route["distance_km"])
@@ -1063,9 +1188,10 @@ def checkout(request, shop_slug):
                         messages.error(
                             request,
                             (
-                                "Delivery unavailable. AirXpress Eats delivers "
-                                f"within a maximum {delivery_pricing.max_radius_km} km "
-                                "driving distance from this shop."
+                                "Delivery for this shop is currently unavailable "
+                                "in your area. We're sorry for the inconvenience. "
+                                "Please try another shop available in your area "
+                                "or contact AirXpress Eats support for assistance."
                             ),
                         )
                     else:
@@ -1080,7 +1206,7 @@ def checkout(request, shop_slug):
                             delivery_unavailable = True
                             messages.error(
                                 request,
-                                "Delivery unavailable. No delivery rate is configured for this distance.",
+                                "Delivery availability for this shop could not be verified just now. Please contact AirXpress Eats support for assistance.",
                             )
                         else:
                             delivery_fee = matching_rate.delivery_fee
@@ -7840,3 +7966,4 @@ def driver_push_service_worker(request):
     response["Service-Worker-Allowed"] = "/"
     response["Cache-Control"] = "no-cache"
     return response
+

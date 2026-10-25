@@ -29,6 +29,12 @@ urlpatterns = [
     # =========================================================
 
     path(
+        "gps-reverse-geocode/",
+        views.gps_reverse_geocode,
+        name="gps_reverse_geocode",
+    ),
+
+    path(
         "address-suggestions/",
         views.address_suggestions,
         name="address_suggestions",

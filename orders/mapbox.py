@@ -1,4 +1,4 @@
-import json
+﻿import json
 import re
 import urllib.parse
 import urllib.request
@@ -575,6 +575,67 @@ def calculate_driving_distance(
 
 
 
+
+def calculate_driving_distance_to_coordinates(
+    shop_latitude,
+    shop_longitude,
+    customer_latitude,
+    customer_longitude,
+):
+    """Calculate driving distance to the customer's confirmed map pin."""
+
+    try:
+        shop_lat = float(shop_latitude)
+        shop_lon = float(shop_longitude)
+        customer_lat = float(customer_latitude)
+        customer_lon = float(customer_longitude)
+    except (TypeError, ValueError) as exc:
+        raise MapboxError("Invalid shop or customer coordinates.") from exc
+
+    if not (
+        -90 <= shop_lat <= 90
+        and -180 <= shop_lon <= 180
+        and -90 <= customer_lat <= 90
+        and -180 <= customer_lon <= 180
+    ):
+        raise MapboxError("Coordinates are outside valid ranges.")
+
+    if shop_latitude is None or shop_longitude is None:
+        raise MapboxError("The shop location is not configured.")
+
+    token = settings.MAPBOX_TOKEN
+    if not token:
+        raise MapboxError("Mapbox token is not configured.")
+
+    url = (
+        "https://api.mapbox.com/directions/v5/mapbox/driving/"
+        f"{shop_lon},{shop_lat};{customer_lon},{customer_lat}"
+        "?overview=false"
+        f"&access_token={urllib.parse.quote(token, safe='')}"
+    )
+
+    try:
+        with urllib.request.urlopen(url, timeout=20) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except Exception as exc:
+        raise MapboxError(f"Mapbox routing failed: {exc}") from exc
+
+    if data.get("code") != "Ok":
+        raise MapboxError(
+            data.get("message", "Mapbox could not calculate the route.")
+        )
+
+    routes = data.get("routes", [])
+    if not routes:
+        raise MapboxError("Mapbox returned no driving route.")
+
+    route = routes[0]
+    return {
+        "distance_km": round(route["distance"] / 1000, 2),
+        "duration_minutes": round(route["duration"] / 60, 1),
+        "customer_longitude": customer_lon,
+        "customer_latitude": customer_lat,
+    }
 
 def calculate_driver_route(
     driver_latitude,
