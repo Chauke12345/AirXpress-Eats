@@ -1452,6 +1452,7 @@ class SupportTicket(models.Model):
     escalation_notes = models.TextField(blank=True)
     staff_notes = models.TextField(blank=True)
     customer_response = models.TextField(blank=True)
+    include_password_reset_link = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     resolved_at = models.DateTimeField(null=True, blank=True)

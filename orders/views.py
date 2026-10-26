@@ -14,6 +14,9 @@ from django.contrib.auth.password_validation import validate_password
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.contrib import messages
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 from django.contrib.auth import (
     authenticate,
@@ -2832,6 +2835,7 @@ def owner_update_support_ticket(request, ticket_id):
     new_status = request.POST.get("status", "").strip()
     staff_notes = request.POST.get("staff_notes", "").strip()
     customer_response = request.POST.get("customer_response", "").strip()
+    include_password_reset_link = (request.POST.get("include_password_reset_link") == "on")
 
     if new_status not in {"open", "in_progress", "resolved"}:
         messages.error(request, "Invalid ticket status.")
@@ -2848,10 +2852,12 @@ def owner_update_support_ticket(request, ticket_id):
     ticket.status = new_status
     ticket.staff_notes = staff_notes
     ticket.customer_response = customer_response
+    ticket.include_password_reset_link = include_password_reset_link
     ticket.save(update_fields=[
         "status",
         "staff_notes",
         "customer_response",
+        "include_password_reset_link",
         "resolved_at",
         "updated_at",
     ])
@@ -2872,6 +2878,9 @@ def owner_support_dashboard(request):
 
     if status_filter in {"open", "in_progress", "resolved"}:
         tickets = tickets.filter(status=status_filter)
+    else:
+        # Keep resolved tickets hidden unless the owner selects Resolved.
+        tickets = tickets.exclude(status="resolved")
 
     if priority_filter in {"normal", "high", "critical"}:
         tickets = tickets.filter(priority=priority_filter)
@@ -2891,20 +2900,23 @@ def owner_support_dashboard(request):
 
     login_url = request.build_absolute_uri(reverse("customer_login"))
 
+    def normalize_sa_phone(value):
+        digits = "".join(ch for ch in (value or "") if ch.isdigit())
+        if digits.startswith("00"):
+            digits = digits[2:]
+        if digits.startswith("0"):
+            digits = "27" + digits[1:]
+        elif digits.startswith("27"):
+            pass
+        else:
+            return ""
+        return digits if len(digits) == 11 else ""
+
     for ticket in tickets:
         ticket.whatsapp_url = ""
-        phone = "".join(
-            character
-            for character in (ticket.customer_phone or "")
-            if character.isdigit()
-        )
+        phone = normalize_sa_phone(ticket.customer_phone)
 
-        if phone.startswith("0"):
-            phone = "27" + phone[1:]
-        elif not phone.startswith("27"):
-            phone = ""
-
-        if phone and len(phone) >= 11 and ticket.customer_response:
+        if phone and ticket.customer_response:
             message = (
                 f"Hello {ticket.customer_name or 'there'}, "
                 f"here is an update on your AirXpress Eats support ticket "
@@ -2912,8 +2924,34 @@ def owner_support_dashboard(request):
                 f"Status: {ticket.get_status_display()}. "
                 f"{ticket.customer_response}\n\n"
                 f"Log in to your account here: {login_url}\n\n"
-                f"Thank you, AirXpress Eats Support."
             )
+
+            reset_url = ""
+            if (
+                ticket.include_password_reset_link
+                and ticket.customer_id
+                and ticket.customer.is_active
+                and hasattr(ticket.customer, "customer_profile")
+            ):
+                profile = ticket.customer.customer_profile
+                registered_phone = normalize_sa_phone(profile.whatsapp_number)
+
+                if registered_phone and registered_phone == phone:
+                    uid = urlsafe_base64_encode(force_bytes(ticket.customer.pk))
+                    token = default_token_generator.make_token(ticket.customer)
+                    reset_path = reverse(
+                        "customer_password_reset_confirm",
+                        kwargs={"uidb64": uid, "token": token},
+                    )
+                    reset_url = request.build_absolute_uri(reset_path)
+
+            if reset_url:
+                message += (
+                    "Password reset link (use only if you requested it): "
+                    f"{reset_url}\n\n"
+                )
+
+            message += "Thank you, AirXpress Eats Support."
             ticket.whatsapp_url = (
                 f"https://wa.me/{phone}?text={quote(message)}"
             )

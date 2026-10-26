@@ -218,6 +218,12 @@
                         <textarea name="customer_response" id="response-{{ ticket.id }}" rows="3" maxlength="10000" placeholder="Write the update the customer may see...">{{ ticket.customer_response }}</textarea>
                     </div>
                     <div class="full">
+                        <label>
+                            <input type="checkbox" name="include_password_reset_link" value="on" {% if ticket.include_password_reset_link %}checked{% endif %}>
+                            Include password-reset link in WhatsApp (only for the matching registered customer)
+                        </label>
+                    </div>
+                    <div class="full">
                         <button class="primary" type="submit">Save ticket update</button>
                     </div>
                 </form>
