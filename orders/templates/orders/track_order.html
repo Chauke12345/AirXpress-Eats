@@ -1270,6 +1270,12 @@
               } else {
                   driverMarker.setLngLat(driverPoint);
 
+                  deliveryMap.easeTo({
+                      center: driverPoint,
+                      duration: 1000,
+                      essential: true
+                  });
+
                   console.log(
                       "AirXpress DRIVER MARKER FORCED TO:",
                       driverMarker.getLngLat()
