@@ -2921,8 +2921,8 @@ def owner_support_dashboard(request):
                 f"Hello {ticket.customer_name or 'there'}, "
                 f"here is an update on your AirXpress Eats support ticket "
                 f"{str(ticket.reference)[:8].upper()}. "
-                f"Status: {ticket.get_status_display()}. "
-                f"{ticket.customer_response}\n\n"
+                f"Status: {ticket.get_status_display()}.\n\n"
+                f"{ticket.customer_response + chr(10) + chr(10) if ticket.customer_response and ticket.customer_response.strip().lower() != 'updated' else ''}"
                 f"Log in to your account here: {login_url}\n\n"
             )
 
