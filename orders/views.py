@@ -5251,32 +5251,59 @@ def staff_update_order(
     login_url="/staff/login/"
 )
 def staff_order_history(request):
+    # HISTORY DATE MONTH FILTERS
+    from django.utils.dateparse import parse_date
 
     shop = get_user_shop(request.user)
 
-
     if not shop:
-        return render(
-            request,
-            "orders/no_shop.html",
-        )
+        return render(request, "orders/no_shop.html")
 
-    orders = (
-        Order.objects
-        .filter(
-            shop=shop,
-            status__in=[
-                "collected",
-                "cancelled",
-            ]
-        )
-        .prefetch_related(
-            "items__menu_item",
-        )
-        .order_by(
-            "-updated_at"
-        )
+    orders = Order.objects.filter(
+        shop=shop,
+        status__in=["collected", "cancelled"],
     )
+
+    selected_date = request.GET.get("date", "").strip()
+    selected_month = request.GET.get("month", "").strip()
+    sort_order = request.GET.get("sort", "newest").strip()
+
+    # A specific date takes priority over a month filter.
+    parsed_date = parse_date(selected_date) if selected_date else None
+
+    if parsed_date:
+        orders = orders.filter(created_at__date=parsed_date)
+        selected_date = parsed_date.isoformat()
+    else:
+        selected_date = ""
+
+    if not selected_date and selected_month:
+        parts = selected_month.split("-")
+        if (
+            len(parts) == 2
+            and parts[0].isdigit()
+            and parts[1].isdigit()
+            and len(parts[0]) == 4
+            and 1 <= int(parts[1]) <= 12
+        ):
+            orders = orders.filter(
+                created_at__year=int(parts[0]),
+                created_at__month=int(parts[1]),
+            )
+        else:
+            selected_month = ""
+    else:
+        selected_month = ""
+
+    if sort_order not in ("newest", "oldest"):
+        sort_order = "newest"
+
+    if sort_order == "oldest":
+        orders = orders.order_by("created_at", "id")
+    else:
+        orders = orders.order_by("-created_at", "-id")
+
+    orders = orders.prefetch_related("items__menu_item")
 
     return render(
         request,
@@ -5284,9 +5311,11 @@ def staff_order_history(request):
         {
             "shop": shop,
             "orders": orders,
+            "selected_date": selected_date,
+            "selected_month": selected_month,
+            "sort_order": sort_order,
         },
     )
-
 # =========================================================
 # STAFF DAILY MANAGER REPORT
 # =========================================================
@@ -8045,4 +8074,5 @@ def driver_push_service_worker(request):
     response["Service-Worker-Allowed"] = "/"
     response["Cache-Control"] = "no-cache"
     return response
+
 
