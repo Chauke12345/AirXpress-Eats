@@ -1,4 +1,4 @@
-﻿import json
+import json
 import math
 import secrets
 import hashlib
@@ -8,7 +8,7 @@ import base64
 import qrcode
 from datetime import timedelta
 from pathlib import Path
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_CEILING
 from django.contrib.auth.password_validation import validate_password
 
 from django.conf import settings
@@ -460,9 +460,10 @@ def home(request):
 
     # Assign separately to the actual objects used by Popular Picks.
     for item in popular_items:
-        item.customer_price = (
-            (item.price or Decimal("0.00")) * Decimal("1.25")
-        ).quantize(Decimal("0.01"))
+        item.customer_price = customer_price_for_shop(
+            item.price,
+            shop.pk,
+        )
 
     context = {
         "shops": shops,
@@ -509,6 +510,18 @@ NALEDI_EXTRAS_CATALOG = (
     ("smoked_russian", "Smoked Russian", Decimal("20.00")),
 )
 
+
+def customer_price_for_shop(base_price, shop_id):
+    """Apply the 25% markup; Ko Djyong rounds up to whole rands."""
+    base = Decimal(str(base_price or "0.00"))
+    marked_up = base * Decimal("1.25")
+    if shop_id == 15:
+        return marked_up.quantize(
+            Decimal("1"), rounding=ROUND_CEILING
+        ).quantize(Decimal("0.01"))
+    return marked_up.quantize(Decimal("0.01"))
+
+
 def add_to_cart(request, shop_slug, menu_item_id):
 
     shop = get_object_or_404(
@@ -523,7 +536,7 @@ def add_to_cart(request, shop_slug, menu_item_id):
         is_available=True,
     )
     is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
-    if menu_item.price is None or menu_item.price < Decimal("45.00"):
+    if menu_item.price is None or (shop.pk != 15 and menu_item.price < Decimal("45.00")):
         message = "This item is unavailable because its base price is below R45."
         if is_ajax:
             return JsonResponse({"success": False, "message": message}, status=400)
@@ -563,6 +576,38 @@ def add_to_cart(request, shop_slug, menu_item_id):
                 selected_extras.append({
                     "id": extra_id,
                     "name": name,
+                    "base_price": str(base_price),
+                    "customer_price": str(customer_price),
+                })
+
+        elif shop.pk == 15:
+            selected_ids = set(request.POST.getlist("extras"))
+            extras_queryset = MenuItem.objects.filter(
+                shop=shop,
+                category__name="Extras",
+                is_available=True,
+                pricing_type="fixed",
+                price__isnull=False,
+            )
+            catalog = {str(extra.pk): extra for extra in extras_queryset}
+
+            if not selected_ids.issubset(catalog.keys()):
+                error_message = "One or more selected extras are invalid."
+                if is_ajax:
+                    return JsonResponse(
+                        {"success": False, "message": error_message},
+                        status=400,
+                    )
+                messages.error(request, error_message)
+                return redirect("customer_order", shop_slug=shop.slug)
+
+            for extra_id in sorted(selected_ids):
+                extra = catalog[extra_id]
+                base_price = extra.price
+                customer_price = customer_price_for_shop(base_price, shop.pk)
+                selected_extras.append({
+                    "id": extra_id,
+                    "name": extra.name,
                     "base_price": str(base_price),
                     "customer_price": str(customer_price),
                 })
@@ -654,14 +699,14 @@ def cart(request, shop_slug):
 
         if not menu_item:
             continue
-        if menu_item.price is None or menu_item.price < Decimal("45.00"):
+        if menu_item.price is None or (shop.pk != 15 and menu_item.price < Decimal("45.00")):
             cart_data.pop(cart_key, None)
             request.session["cart"] = cart_data
             request.session.modified = True
             continue
 
         quantity = max(1, int(cart_item.get("quantity", 1)))
-        extras = cart_item.get("extras", []) if shop.pk == 8 else []
+        extras = cart_item.get("extras", []) if shop.pk in (8, 15) else []
 
         extras_base_total = sum(
             (Decimal(str(extra.get("base_price", "0.00"))) for extra in extras),
@@ -674,9 +719,7 @@ def cart(request, shop_slug):
 
         if menu_item.pricing_type == "fixed":
             shop_unit_price = menu_item.price or Decimal("0.00")
-            customer_unit_price = (
-                shop_unit_price * Decimal("1.25")
-            ).quantize(Decimal("0.01"))
+            customer_unit_price = customer_price_for_shop(shop_unit_price, shop.pk)
             shop_unit_total = shop_unit_price + extras_base_total
             customer_unit_total = customer_unit_price + extras_customer_total
             shop_line_total = shop_unit_total * quantity
@@ -738,7 +781,7 @@ def update_cart(request, shop_slug, menu_item_id):
     menu_item = get_object_or_404(
         MenuItem, id=menu_id, shop=shop, is_available=True
     )
-    if menu_item.price is None or menu_item.price < Decimal("45.00"):
+    if menu_item.price is None or (shop.pk != 15 and menu_item.price < Decimal("45.00")):
         cart.pop(item_key, None)
         request.session["cart"] = cart
         request.session.modified = True
@@ -770,14 +813,12 @@ def update_cart(request, shop_slug, menu_item_id):
         request.session.modified = True
         removed = False
 
-        extras = cart[item_key].get("extras", []) if shop.pk == 8 else []
+        extras = cart[item_key].get("extras", []) if shop.pk in (8, 15) else []
         extras_customer_total = sum(
             (Decimal(str(extra.get("customer_price", "0.00"))) for extra in extras),
             Decimal("0.00"),
         )
-        customer_unit_price = (
-            (menu_item.price or Decimal("0.00")) * Decimal("1.25")
-        ).quantize(Decimal("0.01")) + extras_customer_total
+        customer_unit_price = customer_price_for_shop(menu_item.price, shop.pk) + extras_customer_total
         line_total = customer_unit_price * quantity
 
     subtotal = Decimal("0.00")
@@ -791,14 +832,12 @@ def update_cart(request, shop_slug, menu_item_id):
 
         if cart_menu_item.pricing_type == "fixed":
             cart_quantity = max(1, int(cart_item.get("quantity", 1)))
-            extras = cart_item.get("extras", []) if shop.pk == 8 else []
+            extras = cart_item.get("extras", []) if shop.pk in (8, 15) else []
             extras_total = sum(
                 (Decimal(str(extra.get("customer_price", "0.00"))) for extra in extras),
                 Decimal("0.00"),
             )
-            unit_price = (
-                (cart_menu_item.price or Decimal("0.00")) * Decimal("1.25")
-            ).quantize(Decimal("0.01")) + extras_total
+            unit_price = customer_price_for_shop(cart_menu_item.price, shop.pk) + extras_total
             subtotal += unit_price * cart_quantity
         else:
             amount = Decimal(str(cart_item.get("amount", "0.00")))
@@ -850,14 +889,12 @@ def remove_from_cart(request, shop_slug, menu_item_id):
 
         if cart_menu_item.pricing_type == "fixed":
             quantity = max(1, int(cart_item.get("quantity", 1)))
-            extras = cart_item.get("extras", []) if shop.pk == 8 else []
+            extras = cart_item.get("extras", []) if shop.pk in (8, 15) else []
             extras_total = sum(
                 (Decimal(str(extra.get("customer_price", "0.00"))) for extra in extras),
                 Decimal("0.00"),
             )
-            unit_price = (
-                (cart_menu_item.price or Decimal("0.00")) * Decimal("1.25")
-            ).quantize(Decimal("0.01")) + extras_total
+            unit_price = customer_price_for_shop(cart_menu_item.price, shop.pk) + extras_total
             subtotal += unit_price * quantity
         else:
             amount = Decimal(str(cart_item.get("amount", "0.00")))
@@ -894,14 +931,14 @@ def checkout(request, shop_slug):
 
         if not menu_item:
             continue
-        if menu_item.price is None or menu_item.price < Decimal("45.00"):
+        if menu_item.price is None or (shop.pk != 15 and menu_item.price < Decimal("45.00")):
             cart_data.pop(cart_key, None)
             request.session["cart"] = cart_data
             request.session.modified = True
             continue
 
         quantity = max(1, int(cart_item.get("quantity", 1)))
-        extras = cart_item.get("extras", []) if shop.pk == 8 else []
+        extras = cart_item.get("extras", []) if shop.pk in (8, 15) else []
 
         extras_base_total = sum(
             (Decimal(str(extra.get("base_price", "0.00"))) for extra in extras),
@@ -914,9 +951,7 @@ def checkout(request, shop_slug):
 
         if menu_item.pricing_type == "fixed":
             shop_unit_price = menu_item.price or Decimal("0.00")
-            customer_unit_price = (
-                shop_unit_price * Decimal("1.25")
-            ).quantize(Decimal("0.01"))
+            customer_unit_price = customer_price_for_shop(shop_unit_price, shop.pk)
             shop_unit_total = shop_unit_price + extras_base_total
             customer_unit_total = customer_unit_price + extras_customer_total
             shop_line_total = shop_unit_total * quantity
@@ -1613,10 +1648,16 @@ def customer_order(request, shop_slug):
 
     menu_queryset = MenuItem.objects.filter(shop=shop)
     if not preview_mode:
-        menu_queryset = menu_queryset.filter(
-            is_available=True,
-            price__gte=Decimal("45.00"),
-        )
+        if shop.pk == 15:
+            menu_queryset = menu_queryset.filter(
+                is_available=True,
+                price__isnull=False,
+            )
+        else:
+            menu_queryset = menu_queryset.filter(
+                is_available=True,
+                price__gte=Decimal("45.00"),
+            )
 # The Love of Alex: hide items without valid prices.
     if shop.pk == 5 and shop.name == "The Love of Alex":
         menu_queryset = menu_queryset.filter(
@@ -1633,9 +1674,10 @@ def customer_order(request, shop_slug):
         )
     )
     for item in menu_items:
-        item.customer_price = (
-            (item.price or Decimal("0.00")) * Decimal("1.25")
-        ).quantize(Decimal("0.01"))
+        item.customer_price = customer_price_for_shop(
+            item.price,
+            shop.pk,
+        )
 
     # Weekday headings for Mozeka & Sons only.
     if shop.pk == 20 and shop.name == "Mozeka & Sons Catering Services":
@@ -1888,20 +1930,41 @@ def customer_order(request, shop_slug):
 
 
     # =========================================================
+    if shop.pk == 8:
+        extras_options = [
+            {
+                "id": extra_id,
+                "name": name,
+                "base_price": base_price,
+                "customer_price": customer_price_for_shop(base_price, shop.pk),
+            }
+            for extra_id, name, base_price in NALEDI_EXTRAS_CATALOG
+        ]
+    elif shop.pk == 15:
+        extras_options = [
+            {
+                "id": str(extra.pk),
+                "name": extra.name,
+                "base_price": extra.price,
+                "customer_price": customer_price_for_shop(extra.price, shop.pk),
+            }
+            for extra in MenuItem.objects.filter(
+                shop=shop,
+                category__name="Extras",
+                is_available=True,
+                price__isnull=False,
+                pricing_type="fixed",
+            ).order_by("display_order", "name")
+        ]
+    else:
+        extras_options = []
+
     context = {
         "shop": shop,
         "form": form,
         "menu_items": menu_items,
         "preview_mode": preview_mode,
-        "extras_options": [
-            {
-                "id": extra_id,
-                "name": name,
-                "base_price": base_price,
-                "customer_price": (base_price * Decimal("1.25")).quantize(Decimal("0.01")),
-            }
-            for extra_id, name, base_price in NALEDI_EXTRAS_CATALOG
-        ] if shop.pk == 8 else [],
+        "extras_options": extras_options,
     }
 
     return render(

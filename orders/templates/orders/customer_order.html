@@ -2201,6 +2201,8 @@ textarea {
                     <div class="munchie-menu-grid">
                     {% elif shop.pk == 8 %}
                     <div class="naledi-menu-grid">
+                    {% elif shop.pk == 15 %}
+                    <div class="naledi-menu-grid kodjyong-menu-grid">
                     {% elif shop.slug == "porangi-world" %}
                     <div class="porang-world-menu-grid">
                     {% endif %}
@@ -2316,7 +2318,8 @@ textarea {
 
                                 {% endif %}
 
-                                {% if shop.pk == 8 and item.pricing_type == "fixed" %}
+                                {% if shop.pk == 8 or shop.pk == 15 %}
+                                {% if item.pricing_type == "fixed" %}
                                 <details class="naledi-extras-collapse">
                                     <summary>
                                         <span class="naledi-extras-heading">Add extras (optional)</span>
@@ -2337,6 +2340,7 @@ textarea {
                                         {% endfor %}
                                     </fieldset>
                                 </details>
+                                {% endif %}
                                 {% endif %}
 
                                 <button
