@@ -300,6 +300,41 @@ LOGIN_REDIRECT_URL = "/staff/dashboard/"
 LOGIN_URL = "/staff/login/"
 
 # =========================================================
+# YOCO PAYMENTS
+# =========================================================
+
+# Keep credentials in environment variables, never in source code.
+def _get_yoco_setting(name):
+    """Read Yoco settings from environment variables or the local .env file."""
+    value = os.environ.get(name, "").strip()
+    if value:
+        return value
+
+    env_file = BASE_DIR / ".env"
+    if not env_file.exists():
+        return ""
+
+    for line in env_file.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        if key.strip() == name:
+            value = value.strip()
+            if len(value) >= 2 and value[0] == value[-1]:
+                if value[0] in (chr(34), chr(39)):
+                    value = value[1:-1]
+            return value
+
+    return ""
+
+
+YOCO_SECRET_KEY = _get_yoco_setting("YOCO_SECRET_KEY")
+YOCO_WEBHOOK_SECRET = _get_yoco_setting("YOCO_WEBHOOK_SECRET")
+
+
+# =========================================================
 # PAYFAST
 # =========================================================
 
