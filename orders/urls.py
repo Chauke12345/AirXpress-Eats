@@ -232,6 +232,19 @@ urlpatterns = [
         views.payfast_itn,
         name="payfast_itn",
     ),
+    # YOCO PAYMENT
+    # =========================================================
+    path(
+        "payment/yoco/<int:order_id>/<uuid:tracking_token>/",
+        views.yoco_payment,
+        name="yoco_payment",
+    ),
+    path(
+        "payment/yoco/webhook/",
+        views.yoco_webhook,
+        name="yoco_webhook",
+    ),
+
     # DRIVER LOGIN / LOGOUT
     # =========================================================
 

@@ -8,7 +8,7 @@ import base64
 import qrcode
 from datetime import timedelta
 from pathlib import Path
-from decimal import Decimal, InvalidOperation, ROUND_CEILING
+from decimal import Decimal, InvalidOperation, ROUND_CEILING, ROUND_HALF_UP
 from django.contrib.auth.password_validation import validate_password
 
 from django.conf import settings
@@ -454,7 +454,7 @@ def home(request):
             elif item.name.startswith("Sunday Lunch - "):
                 item.menu_day = "Sunday Lunch Menu"
             elif item.name.startswith("Monday - African Cuisine - "):
-                item.menu_day = "Monday â€” African Cuisine"
+                item.menu_day = "Monday - African Cuisine"
             else:
                 item.menu_day = "Other Menu"
 
@@ -1311,8 +1311,9 @@ def checkout(request, shop_slug):
                                 request.session.modified = True
 
                                 return redirect(
-                                    "payfast_payment",
+                                    "yoco_payment",
                                     order_id=order.id,
+                                    tracking_token=order.tracking_token,
                                 )
 
 
@@ -8139,3 +8140,255 @@ def driver_push_service_worker(request):
     return response
 
 
+
+
+# =========================================================
+# YOCO PAYMENT
+# =========================================================
+
+def yoco_payment(request, order_id, tracking_token):
+    """Create a Yoco hosted checkout for an unpaid order."""
+    from .yoco import create_checkout, YocoError
+
+    order = get_object_or_404(
+        Order.objects.select_related("shop"),
+        id=order_id,
+        tracking_token=tracking_token,
+    )
+
+    if order.payment_status == "paid":
+        return redirect(
+            "order_success",
+            shop_slug=order.shop.slug,
+            order_id=order.id,
+        )
+
+    if order.payment_status == "refunded":
+        messages.error(request, "This order has been refunded.")
+        return redirect(
+            "order_success",
+            shop_slug=order.shop.slug,
+            order_id=order.id,
+        )
+
+    if order.final_total is None or order.final_total <= Decimal("0.00"):
+        messages.error(request, "This order has an invalid payment amount.")
+        return redirect(
+            "order_success",
+            shop_slug=order.shop.slug,
+            order_id=order.id,
+        )
+
+    success_url = request.build_absolute_uri(
+        reverse(
+            "order_success",
+            kwargs={"shop_slug": order.shop.slug, "order_id": order.id},
+        )
+    )
+
+    try:
+        checkout = create_checkout(
+            order=order,
+            success_url=success_url,
+            cancel_url=success_url,
+            failure_url=success_url,
+        )
+    except YocoError:
+        logger = __import__("logging").getLogger(__name__)
+        logger.exception("Could not create Yoco checkout for order %s", order.id)
+        messages.error(
+            request,
+            "We could not start your payment. Please try again shortly.",
+        )
+        return redirect(
+            "order_success",
+            shop_slug=order.shop.slug,
+            order_id=order.id,
+        )
+
+    order.payment_provider = "yoco"
+    order.payment_reference = checkout["checkout_id"]
+    order.save(update_fields=["payment_provider", "payment_reference"])
+
+    return redirect(checkout["redirect_url"])
+
+
+@csrf_exempt
+@require_POST
+def yoco_webhook(request):
+    """Accept only fresh, correctly signed Yoco payment notifications."""
+    secret = getattr(settings, "YOCO_WEBHOOK_SECRET", "").strip()
+    if not secret:
+        return JsonResponse({"status": "webhook_not_configured"}, status=503)
+
+    raw_body = request.body
+    if len(raw_body) > 1_048_576:
+        return JsonResponse({"status": "payload_too_large"}, status=413)
+
+    webhook_id = request.headers.get("webhook-id", "").strip()
+    timestamp = request.headers.get("webhook-timestamp", "").strip()
+    signatures = request.headers.get("webhook-signature", "").strip()
+
+    if not webhook_id or not timestamp or not signatures:
+        return JsonResponse({"status": "missing_signature_headers"}, status=400)
+
+    try:
+        timestamp_value = int(timestamp)
+    except (TypeError, ValueError):
+        return JsonResponse({"status": "invalid_timestamp"}, status=400)
+
+    if abs(int(timezone.now().timestamp()) - timestamp_value) > 180:
+        return JsonResponse({"status": "expired_webhook"}, status=400)
+
+    if not secret.startswith("whsec_"):
+        return JsonResponse({"status": "invalid_webhook_configuration"}, status=503)
+
+    try:
+        signing_key = base64.b64decode(
+            secret[len("whsec_"):],
+            validate=True,
+        )
+    except (ValueError, base64.binascii.Error):
+        return JsonResponse({"status": "invalid_webhook_configuration"}, status=503)
+
+    signed_content = (
+        webhook_id.encode("utf-8")
+        + b"."
+        + timestamp.encode("utf-8")
+        + b"."
+        + raw_body
+    )
+    expected_signature = base64.b64encode(
+        hmac.new(signing_key, signed_content, hashlib.sha256).digest()
+    ).decode("ascii")
+
+    valid_signature = False
+    for item in signatures.split():
+        version, separator, supplied = item.partition(",")
+        if (
+            separator
+            and version == "v1"
+            and hmac.compare_digest(expected_signature, supplied)
+        ):
+            valid_signature = True
+            break
+
+    if not valid_signature:
+        return JsonResponse({"status": "invalid_signature"}, status=400)
+
+    try:
+        event = json.loads(raw_body)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({"status": "invalid_json"}, status=400)
+
+    if not isinstance(event, dict):
+        return JsonResponse({"status": "invalid_event"}, status=400)
+
+    event_type = event.get("type", "")
+    if event_type != "payment.succeeded":
+        # A valid, signed event that is not a successful payment
+        # must not mark an order as paid.
+        return JsonResponse({"status": "event_ignored"}, status=200)
+
+    payment = event.get("payload") or event.get("data") or {}
+    if not isinstance(payment, dict):
+        return JsonResponse({"status": "invalid_payment_payload"}, status=400)
+
+    metadata = payment.get("metadata") or {}
+    if not isinstance(metadata, dict):
+        return JsonResponse({"status": "invalid_metadata"}, status=400)
+
+    order_id = metadata.get("orderId") or metadata.get("order_id")
+    checkout_details = payment.get("checkout")
+
+    checkout_id = (
+        metadata.get("checkoutId")
+        or payment.get("checkoutId")
+        or payment.get("checkout_id")
+        or (
+            checkout_details.get("id")
+            if isinstance(checkout_details, dict)
+            else None
+        )
+    )
+
+    if not checkout_id:
+        return JsonResponse(
+            {"status": "missing_checkout_reference"},
+            status=400,
+        )
+
+    if order_id is not None:
+        try:
+            order_id = int(order_id)
+        except (TypeError, ValueError):
+            return JsonResponse({"status": "invalid_order_id"}, status=400)
+
+    try:
+        received_amount = int(payment.get("amount"))
+    except (TypeError, ValueError):
+        return JsonResponse({"status": "invalid_amount"}, status=400)
+
+    with transaction.atomic():
+        matching_orders = list(
+            Order.objects.select_for_update().filter(
+                payment_provider="yoco",
+                payment_reference=str(checkout_id),
+            )[:2]
+        )
+
+        if not matching_orders:
+            return JsonResponse({"status": "order_not_found"}, status=404)
+
+        if len(matching_orders) > 1:
+            return JsonResponse({"status": "ambiguous_checkout_reference"}, status=409)
+
+        order = matching_orders[0]
+
+        if order_id is not None and order.id != order_id:
+            return JsonResponse({"status": "order_reference_mismatch"}, status=400)
+
+        if order.final_total is None or order.final_total <= Decimal("0.00"):
+            return JsonResponse({"status": "invalid_order_amount"}, status=400)
+
+        expected_amount = int(
+            (order.final_total * Decimal("100")).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+        )
+
+        if order.payment_provider != "yoco":
+            return JsonResponse({"status": "provider_mismatch"}, status=400)
+
+        if order.payment_reference != str(checkout_id):
+            return JsonResponse({"status": "checkout_mismatch"}, status=400)
+
+        if received_amount != expected_amount:
+            return JsonResponse({"status": "amount_mismatch"}, status=400)
+
+        if payment.get("currency") != "ZAR":
+            return JsonResponse({"status": "currency_mismatch"}, status=400)
+
+        if order.payment_status != "paid":
+            order.payment_status = "paid"
+            order.payment_paid_at = timezone.now()
+            order.save(
+                update_fields=[
+                    "payment_status",
+                    "payment_paid_at",
+                    "updated_at",
+                ]
+            )
+
+            OrderStatusHistory.objects.create(
+                order=order,
+                status=order.status,
+                notes=f"Yoco payment confirmed for Order #{order.id}.",
+            )
+
+            if (
+                order.status == "ready"
+                and order.order_type == "delivery"
+                and not order.driver_id
+            ):
+                dispatch_order_to_available_drivers(order)
+
+    return JsonResponse({"status": "payment_confirmed"}, status=200)

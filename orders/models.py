@@ -717,20 +717,20 @@ class Order(models.Model):
         default="pending"
     )
 
-    # PayFast payment provider.
+    # Payment provider used for this order.
     payment_provider = models.CharField(
         max_length=30,
-        default="payfast",
+        default="yoco",
         blank=True
     )
 
-    # Unique PayFast/order payment reference.
+    # Unique payment reference from the payment provider.
     payment_reference = models.CharField(
         max_length=100,
         blank=True
     )
 
-    # Recorded only after PayFast confirms the payment.
+    # Recorded only after the provider confirms payment.
     payment_paid_at = models.DateTimeField(
         null=True,
         blank=True
