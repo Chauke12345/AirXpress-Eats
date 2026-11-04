@@ -1649,7 +1649,7 @@ def customer_order(request, shop_slug):
 
     menu_queryset = MenuItem.objects.filter(shop=shop)
     if not preview_mode:
-        if shop.pk == 15:
+        if shop.pk in (15, 25):
             menu_queryset = menu_queryset.filter(
                 is_available=True,
                 price__isnull=False,
