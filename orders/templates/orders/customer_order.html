@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -219,6 +219,89 @@
     }
 }
 /* END NALEDI_COLLAPSIBLE_EXTRAS_V1 */
+
+
+/* SKOP SUNDAYS RETURNS - SHOP 25 */
+.category-grid.skop-sundays-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+    width: 100%;
+}
+.skop-sundays-grid .category-card {
+    background: #171717 !important;
+    border: 1px solid #333 !important;
+    border-radius: 16px;
+    padding: 22px !important;
+    color: #fff !important;
+}
+.skop-sundays-grid .category-title {
+    color: #ff9f1c !important;
+    border-bottom: 2px solid #ff9f1c !important;
+    padding-bottom: 12px;
+}
+.skop-sundays-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+}
+.skop-sundays-menu-grid .cart-menu-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: #222 !important;
+    border: 1px solid #383838;
+    border-radius: 14px;
+    overflow: hidden;
+    padding: 0 !important;
+}
+.skop-sundays-menu-grid .menu-item-image {
+    width: 100%;
+    height: 190px;
+    overflow: hidden;
+}
+.skop-sundays-menu-grid .menu-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.skop-sundays-menu-grid .cart-menu-info {
+    padding: 14px;
+    flex: 1;
+}
+.skop-sundays-menu-grid .cart-menu-info strong,
+.skop-sundays-menu-grid .menu-price {
+    color: #fff !important;
+}
+.skop-sundays-menu-grid .menu-price {
+    color: #ff9f1c !important;
+    font-size: 18px;
+}
+.skop-sundays-menu-grid .add-cart-form {
+    padding: 0 14px 14px;
+}
+.skop-sundays-menu-grid .add-cart-button {
+    background: #f28c00 !important;
+    color: #111 !important;
+    width: 100%;
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+}
+@media (max-width: 900px) {
+    .skop-sundays-menu-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 520px) {
+    .skop-sundays-menu-grid {
+        grid-template-columns: 1fr;
+    }
+    .skop-sundays-menu-grid .menu-item-image {
+        height: 210px;
+    }
+}
+/* END SKOP SUNDAYS RETURNS */
 
 </style>
 </head>
@@ -2018,6 +2101,89 @@ textarea {
     }
 }
 /* END PORANG_AIRXPRESS_DARK_THEME */
+
+/* SKOP SUNDAYS RETURNS - SHOP 25 */
+.category-grid.skop-sundays-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+    width: 100%;
+}
+.skop-sundays-grid .category-card {
+    background: #171717 !important;
+    border: 1px solid #333 !important;
+    border-radius: 16px;
+    padding: 22px !important;
+    color: #fff !important;
+}
+.skop-sundays-grid .category-title {
+    color: #ff9f1c !important;
+    border-bottom: 2px solid #ff9f1c !important;
+    padding-bottom: 12px;
+}
+.skop-sundays-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+}
+.skop-sundays-menu-grid .cart-menu-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: #222 !important;
+    border: 1px solid #383838;
+    border-radius: 14px;
+    overflow: hidden;
+    padding: 0 !important;
+}
+.skop-sundays-menu-grid .menu-item-image {
+    width: 100%;
+    height: 190px;
+    overflow: hidden;
+}
+.skop-sundays-menu-grid .menu-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.skop-sundays-menu-grid .cart-menu-info {
+    padding: 14px;
+    flex: 1;
+}
+.skop-sundays-menu-grid .cart-menu-info strong,
+.skop-sundays-menu-grid .menu-price {
+    color: #fff !important;
+}
+.skop-sundays-menu-grid .menu-price {
+    color: #ff9f1c !important;
+    font-size: 18px;
+}
+.skop-sundays-menu-grid .add-cart-form {
+    padding: 0 14px 14px;
+}
+.skop-sundays-menu-grid .add-cart-button {
+    background: #f28c00 !important;
+    color: #111 !important;
+    width: 100%;
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+}
+@media (max-width: 900px) {
+    .skop-sundays-menu-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 520px) {
+    .skop-sundays-menu-grid {
+        grid-template-columns: 1fr;
+    }
+    .skop-sundays-menu-grid .menu-item-image {
+        height: 210px;
+    }
+}
+/* END SKOP SUNDAYS RETURNS */
+
 </style>
 
 
@@ -2177,7 +2343,7 @@ textarea {
         </div>
         {% endif %}
         {% regroup menu_items by category as category_groups %}
-<div class="category-grid{% if shop.slug == "porangi-world" %} porang-world-grid{% endif %}{% if shop.slug == "vele-ns-catering" %} vele-catering-grid{% endif %}{% if shop.slug == "munchie-fellas" %} munchie-shop-grid{% endif %}{% if preview_mode and shop.pk == 20 and shop.name == "Mozeka & Sons Catering Services" %} mozeka-preview-grid{% endif %}">
+<div class="category-grid{% if shop.pk == 25 %} skop-sundays-grid{% endif %}{% if shop.slug == "porangi-world" %} porang-world-grid{% endif %}{% if shop.slug == "vele-ns-catering" %} vele-catering-grid{% endif %}{% if shop.slug == "munchie-fellas" %} munchie-shop-grid{% endif %}{% if preview_mode and shop.pk == 20 and shop.name == "Mozeka & Sons Catering Services" %} mozeka-preview-grid{% endif %}">
 
             {% for group in category_groups %}
 
@@ -2193,6 +2359,8 @@ textarea {
 
                     {% if shop.slug == "vele-ns-catering" %}
                     <div class="vele-menu-grid">
+                    {% elif shop.pk == 25 %}
+                    <div class="skop-sundays-menu-grid">
                     {% elif shop.pk == 5 %}
                     <div class="love-alex-menu-grid">
                     {% elif shop.pk == 20 %}
@@ -2365,7 +2533,7 @@ textarea {
 
                     {% endfor %}
 
-                    {% if shop.slug == "vele-ns-catering" or shop.slug == "munchie-fellas" or shop.pk == 5 or shop.pk == 20 %}
+                    {% if shop.slug == "vele-ns-catering" or shop.slug == "munchie-fellas" or shop.pk == 5 or shop.pk == 20 or shop.pk == 25 %}
                     </div>
                     {% endif %}
 
@@ -2871,3 +3039,5 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 </script>
+
+
