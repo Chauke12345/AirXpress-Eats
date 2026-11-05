@@ -1,4 +1,4 @@
-import json
+﻿import json
 import math
 import secrets
 import hashlib
@@ -536,7 +536,7 @@ def add_to_cart(request, shop_slug, menu_item_id):
         is_available=True,
     )
     is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
-    if menu_item.price is None or (shop.pk != 15 and menu_item.price < Decimal("45.00")):
+    if menu_item.price is None or (shop.pk not in (15, 26) and menu_item.price < Decimal("45.00")):
         message = "This item is unavailable because its base price is below R45."
         if is_ajax:
             return JsonResponse({"success": False, "message": message}, status=400)
@@ -699,7 +699,7 @@ def cart(request, shop_slug):
 
         if not menu_item:
             continue
-        if menu_item.price is None or (shop.pk != 15 and menu_item.price < Decimal("45.00")):
+        if menu_item.price is None or (shop.pk not in (15, 26) and menu_item.price < Decimal("45.00")):
             cart_data.pop(cart_key, None)
             request.session["cart"] = cart_data
             request.session.modified = True
@@ -781,7 +781,7 @@ def update_cart(request, shop_slug, menu_item_id):
     menu_item = get_object_or_404(
         MenuItem, id=menu_id, shop=shop, is_available=True
     )
-    if menu_item.price is None or (shop.pk != 15 and menu_item.price < Decimal("45.00")):
+    if menu_item.price is None or (shop.pk not in (15, 26) and menu_item.price < Decimal("45.00")):
         cart.pop(item_key, None)
         request.session["cart"] = cart
         request.session.modified = True
@@ -931,7 +931,7 @@ def checkout(request, shop_slug):
 
         if not menu_item:
             continue
-        if menu_item.price is None or (shop.pk != 15 and menu_item.price < Decimal("45.00")):
+        if menu_item.price is None or (shop.pk not in (15, 26) and menu_item.price < Decimal("45.00")):
             cart_data.pop(cart_key, None)
             request.session["cart"] = cart_data
             request.session.modified = True
@@ -1649,7 +1649,7 @@ def customer_order(request, shop_slug):
 
     menu_queryset = MenuItem.objects.filter(shop=shop)
     if not preview_mode:
-        if shop.pk in (15, 25):
+        if shop.pk in (15, 25, 26):
             menu_queryset = menu_queryset.filter(
                 is_available=True,
                 price__isnull=False,
@@ -8392,3 +8392,5 @@ def yoco_webhook(request):
                 dispatch_order_to_available_drivers(order)
 
     return JsonResponse({"status": "payment_confirmed"}, status=200)
+
+
