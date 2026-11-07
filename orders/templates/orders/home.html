@@ -15,6 +15,12 @@
           type="image/png"
           href="{% static 'orders/images/Airxpress-logo.png' %}?v=2">
 
+    <link rel="manifest" href="{% static 'orders/airxpress.webmanifest' %}">
+    <meta name="theme-color" content="#ff6800">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="AirXpress Eats">
+    <link rel="apple-touch-icon" href="{% static 'orders/images/Airxpress-logo.png' %}">
     <style>
 
         * {
@@ -3226,6 +3232,80 @@ section:not(.hero) {
 
 
 {% include 'orders/includes/customer_inactivity_warning.html' %}
+<div id="airxpress-install-banner" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); width:calc(100% - 32px); max-width:460px; background:#141414; color:#fff; border:1px solid #ff6800; border-radius:16px; padding:18px; z-index:99999; box-shadow:0 8px 30px rgba(0,0,0,.55);">
+    <div style="display:flex; align-items:center; gap:12px;">
+        <img src="{% static 'orders/images/Airxpress-logo.png' %}" alt="AirXpress Eats" style="width:54px;height:54px;object-fit:cover;border-radius:12px;">
+        <div style="flex:1;">
+            <strong style="font-size:16px;">Get AirXpress Eats on your phone</strong>
+            <div style="font-size:13px;color:#ccc;">Faster access to your favourite food.</div>
+        </div>
+        <button id="airxpress-dismiss" type="button" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font-size:24px;cursor:pointer;">&times;</button>
+    </div>
+    <div id="airxpress-ios-help" style="display:none;font-size:13px;color:#ddd;margin-top:12px;">
+        Tap the Share button in Safari, then choose <strong>Add to Home Screen</strong>.
+    </div>
+    <div style="display:flex;gap:10px;margin-top:15px;">
+        <button id="airxpress-install-button" type="button" style="flex:1;background:#ff6800;color:#fff;border:0;border-radius:9px;padding:12px;font-weight:700;cursor:pointer;">Install App</button>
+        <button id="airxpress-later" type="button" style="background:#292929;color:#fff;border:0;border-radius:9px;padding:12px 16px;cursor:pointer;">Not now</button>
+    </div>
+</div>
+
+<script>
+(function () {
+    const banner = document.getElementById("airxpress-install-banner");
+    const installButton = document.getElementById("airxpress-install-button");
+    const dismissButton = document.getElementById("airxpress-dismiss");
+    const laterButton = document.getElementById("airxpress-later");
+    const iosHelp = document.getElementById("airxpress-ios-help");
+
+    if (!banner || window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true ||
+        sessionStorage.getItem("airxpressInstallDismissed") === "yes") {
+        return;
+    }
+
+    let installPrompt = null;
+
+    function showBanner() {
+        banner.style.display = "block";
+    }
+
+    window.addEventListener("beforeinstallprompt", function (event) {
+        event.preventDefault();
+        installPrompt = event;
+        showBanner();
+    });
+
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+    if (isIOS) {
+        installButton.style.display = "none";
+        iosHelp.style.display = "block";
+        showBanner();
+    }
+
+    installButton.addEventListener("click", async function () {
+        if (!installPrompt) return;
+        installPrompt.prompt();
+        await installPrompt.userChoice;
+        installPrompt = null;
+        banner.style.display = "none";
+    });
+
+    function dismissBanner() {
+        banner.style.display = "none";
+        sessionStorage.setItem("airxpressInstallDismissed", "yes");
+    }
+
+    dismissButton.addEventListener("click", dismissBanner);
+    laterButton.addEventListener("click", dismissBanner);
+
+    window.addEventListener("appinstalled", function () {
+        banner.style.display = "none";
+    });
+})();
+</script>
+
 </body>
 </html>
 
@@ -3490,5 +3570,7 @@ section:not(.hero) {
     }
 }
 </style>
+
+
 
 

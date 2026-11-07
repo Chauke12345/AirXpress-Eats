@@ -1,0 +1,19 @@
+﻿{
+  "name": "AirXpress Eats",
+  "short_name": "AirXpress",
+  "description": "Order delicious food with AirXpress Eats.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050505",
+  "theme_color": "#ff6800",
+  "icons": [
+    {
+      "src": "/static/orders/images/Airxpress-logo.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
