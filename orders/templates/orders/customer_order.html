@@ -2321,6 +2321,82 @@ textarea {
         justify-content: flex-end;
     }
 }
+
+/* MIKE'S FOOD MENU - READABLE CARD LAYOUT */
+.mikes-food-menu-page .cart-menu-item {
+    display: grid !important;
+    grid-template-columns: 130px minmax(0, 1fr) !important;
+    grid-template-areas:
+        "image info"
+        "form form" !important;
+    gap: 14px !important;
+    align-items: start !important;
+    padding: 16px !important;
+    box-sizing: border-box !important;
+}
+
+.mikes-food-menu-page .menu-item-image {
+    grid-area: image !important;
+    width: 130px !important;
+    height: 130px !important;
+    min-height: 130px !important;
+}
+
+.mikes-food-menu-page .cart-menu-info {
+    grid-area: info !important;
+    min-width: 0 !important;
+    width: 100% !important;
+}
+
+.mikes-food-menu-page .cart-menu-info strong,
+.mikes-food-menu-page .cart-menu-info span,
+.mikes-food-menu-page .cart-menu-info small {
+    display: block !important;
+    width: 100% !important;
+    line-height: 1.5 !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    margin-bottom: 6px !important;
+}
+
+.mikes-food-menu-page .add-cart-form {
+    grid-area: form !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+}
+
+.mikes-food-menu-page .quantity-control {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.mikes-food-menu-page .quantity-control label {
+    white-space: nowrap !important;
+}
+
+.mikes-food-menu-page .add-cart-button {
+    white-space: nowrap !important;
+}
+
+@media (max-width: 600px) {
+    .mikes-food-menu-page .cart-menu-item {
+        grid-template-columns: 100px minmax(0, 1fr) !important;
+    }
+
+    .mikes-food-menu-page .menu-item-image {
+        width: 100px !important;
+        height: 110px !important;
+        min-height: 110px !important;
+    }
+
+    .mikes-food-menu-page .add-cart-form {
+        flex-direction: row !important;
+    }
+}
 </style>
 
 
@@ -2328,7 +2404,7 @@ textarea {
 </head>
 </head>
 
-<body{% if shop.slug == "goodhope-restaurant" %} class="goodhope-menu-page"{% endif %}>
+<body{% if shop.slug == "goodhope-restaurant" %} class="goodhope-menu-page"{% elif shop.slug == "mikes-food-restaurant" %} class="mikes-food-menu-page"{% endif %}>
     <!-- Back to AirXpress Eats marketplace -->
     <div style="max-width: 1100px; margin: 18px auto 0; padding: 0 20px;">
         <a
@@ -3178,5 +3254,186 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 
+
+
+
+/* MIKE'S FOOD RESTAURANT - MENU IMAGE FIX */
+.mikes-food-menu-page .menu-item-image {
+    width: 100% !important;
+    height: 260px !important;
+    min-height: 260px !important;
+    overflow: hidden !important;
+    border-radius: 18px;
+    background: #151515;
+}
+
+.mikes-food-menu-page .menu-item-image img,
+.mikes-food-menu-page .menu-item-image-placeholder {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+
+
+/* MIKES FOOD CARD LAYOUT FIX V2 */
+.mikes-food-menu-page .cart-menu-item {
+    display: grid !important;
+    grid-template-columns: 150px minmax(0, 1fr) !important;
+    grid-template-areas:
+        "image info"
+        "image form" !important;
+    align-items: start !important;
+    gap: 12px 18px !important;
+    padding: 16px !important;
+    box-sizing: border-box !important;
+}
+
+.mikes-food-menu-page .menu-item-image {
+    grid-area: image !important;
+    width: 150px !important;
+    height: 150px !important;
+    min-height: 150px !important;
+    margin: 0 !important;
+}
+
+.mikes-food-menu-page .cart-menu-info {
+    grid-area: info !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+}
+
+.mikes-food-menu-page .cart-menu-info strong {
+    display: block !important;
+    line-height: 1.4 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+}
+
+.mikes-food-menu-page .cart-menu-info span {
+    line-height: 1.5 !important;
+}
+
+.mikes-food-menu-page .add-cart-form {
+    grid-area: form !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+.mikes-food-menu-page .quantity-control {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.mikes-food-menu-page .quantity-control label {
+    white-space: nowrap !important;
+}
+
+.mikes-food-menu-page .add-cart-button {
+    white-space: nowrap !important;
+}
+
+@media (max-width: 600px) {
+    .mikes-food-menu-page .cart-menu-item {
+        grid-template-columns: 105px minmax(0, 1fr) !important;
+        gap: 10px !important;
+        padding: 12px !important;
+    }
+
+    .mikes-food-menu-page .menu-item-image {
+        width: 105px !important;
+        height: 120px !important;
+        min-height: 120px !important;
+    }
+
+    .mikes-food-menu-page .add-cart-form {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .mikes-food-menu-page .add-cart-button {
+        width: 100% !important;
+    }
+}
+
+/* AIRXPRESS EATS - GLOBAL STANDARD MENU CARD LAYOUT */
+.cart-menu-item {
+    display: grid !important;
+    grid-template-columns: 130px minmax(0, 1fr) !important;
+    grid-template-areas:
+        "image info"
+        "form form" !important;
+    gap: 14px !important;
+    align-items: start !important;
+    padding: 16px !important;
+    box-sizing: border-box !important;
+}
+
+.cart-menu-item .menu-item-image {
+    grid-area: image !important;
+    width: 130px !important;
+    height: 130px !important;
+    min-height: 130px !important;
+    overflow: hidden !important;
+}
+
+.cart-menu-item .cart-menu-info {
+    grid-area: info !important;
+    min-width: 0 !important;
+    width: 100% !important;
+}
+
+.cart-menu-item .cart-menu-info strong,
+.cart-menu-item .cart-menu-info span,
+.cart-menu-item .cart-menu-info small {
+    display: block !important;
+    width: 100% !important;
+    line-height: 1.5 !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    margin-bottom: 6px !important;
+}
+
+.cart-menu-item .add-cart-form {
+    grid-area: form !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+}
+
+.cart-menu-item .quantity-control {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.cart-menu-item .quantity-control label {
+    white-space: nowrap !important;
+}
+
+.cart-menu-item .add-cart-button {
+    white-space: nowrap !important;
+}
+
+@media (max-width: 600px) {
+    .cart-menu-item {
+        grid-template-columns: 100px minmax(0, 1fr) !important;
+    }
+
+    .cart-menu-item .menu-item-image {
+        width: 100px !important;
+        height: 110px !important;
+        min-height: 110px !important;
+    }
+}
 
 
