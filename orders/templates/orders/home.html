@@ -3232,7 +3232,7 @@ section:not(.hero) {
 
 
 {% include 'orders/includes/customer_inactivity_warning.html' %}
-<div id="airxpress-install-banner" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); width:calc(100% - 32px); max-width:460px; background:#141414; color:#fff; border:1px solid #ff6800; border-radius:16px; padding:18px; z-index:99999; box-shadow:0 8px 30px rgba(0,0,0,.55);">
+<div id="airxpress-install-banner" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:calc(100% - 32px); max-width:460px; background:#141414; color:#fff; border:1px solid #ff6800; border-radius:16px; padding:18px; z-index:99999; box-shadow:0 8px 30px rgba(0,0,0,.55);">
     <div style="display:flex; align-items:center; gap:12px;">
         <img src="{% static 'orders/images/Airxpress-logo.png' %}" alt="AirXpress Eats" style="width:54px;height:54px;object-fit:cover;border-radius:12px;">
         <div style="flex:1;">
@@ -3259,21 +3259,37 @@ section:not(.hero) {
     const iosHelp = document.getElementById("airxpress-ios-help");
 
     if (!banner || window.matchMedia("(display-mode: standalone)").matches ||
-        window.navigator.standalone === true ||
-        sessionStorage.getItem("airxpressInstallDismissed") === "yes") {
+        window.navigator.standalone === true) {
         return;
     }
 
     let installPrompt = null;
 
+    function wasDismissed() {
+        try {
+            return localStorage.getItem("airxpressInstallDismissed") === "yes";
+        } catch (error) {
+            return false;
+        }
+    }
+
     function showBanner() {
-        banner.style.display = "block";
+        if (!wasDismissed()) {
+            banner.style.display = "block";
+        }
+    }
+
+    function dismissBanner() {
+        banner.style.display = "none";
+        try {
+            localStorage.setItem("airxpressInstallDismissed", "yes");
+        } catch (error) {}
     }
 
     window.addEventListener("beforeinstallprompt", function (event) {
         event.preventDefault();
         installPrompt = event;
-        showBanner();
+        setTimeout(showBanner, 3000);
     });
 
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -3281,21 +3297,17 @@ section:not(.hero) {
     if (isIOS) {
         installButton.style.display = "none";
         iosHelp.style.display = "block";
-        showBanner();
+        setTimeout(showBanner, 3000);
     }
 
     installButton.addEventListener("click", async function () {
         if (!installPrompt) return;
+
         installPrompt.prompt();
         await installPrompt.userChoice;
         installPrompt = null;
         banner.style.display = "none";
     });
-
-    function dismissBanner() {
-        banner.style.display = "none";
-        sessionStorage.setItem("airxpressInstallDismissed", "yes");
-    }
 
     dismissButton.addEventListener("click", dismissBanner);
     laterButton.addEventListener("click", dismissBanner);
@@ -3570,6 +3582,8 @@ section:not(.hero) {
     }
 }
 </style>
+
+
 
 
 
