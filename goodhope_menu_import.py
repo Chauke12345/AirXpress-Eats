@@ -73,7 +73,7 @@ else:
         for position, (category_name, name, original, image_name) in enumerate(MENU, start=1):
             original_price = Decimal(original)
             selling_price = (
-                original_price * Decimal("1.25")
+                original_price * (Decimal("1.10") if category_name == "Drinks" else Decimal("1.25"))
             ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
             item = MenuItem(

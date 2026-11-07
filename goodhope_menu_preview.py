@@ -9,7 +9,7 @@ assert shop.slug == "goodhope-restaurant", f"Unexpected shop: {shop.name} / {sho
 
 # Preview only: this script DOES NOT create or update database records.
 # Original prices are transcribed from the four Goodhope menu images.
-# Selling prices = original price x 1.25, rounded to 2 decimal places.
+# Selling prices = food/extras x 1.25; drinks x 1.10, rounded to 2 decimal places.
 
 MENU = [
     # Main meals / plates
@@ -116,7 +116,7 @@ media_root = Path(settings.MEDIA_ROOT)
 image_dir = media_root / "menu_items" / "goodhope"
 existing_names = set(MenuItem.objects.filter(shop_id=SHOP_ID).values_list("name", flat=True))
 
-print("\nGOODHOPE MENU PREVIEW — NO DATABASE CHANGES")
+print("\nGOODHOPE MENU PREVIEW â€” NO DATABASE CHANGES")
 print("Shop:", shop.name, "| ID:", shop.pk, "| slug:", shop.slug)
 print("Existing Goodhope menu items:", MenuItem.objects.filter(shop_id=SHOP_ID).count())
 print("Existing Goodhope categories:", Category.objects.filter(shop_id=SHOP_ID).count())
@@ -128,7 +128,7 @@ print("-" * 150)
 missing_images = []
 for i, (category, name, original, image_name) in enumerate(MENU, 1):
     original_price = Decimal(original)
-    selling_price = (original_price * Decimal("1.25")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    selling_price = (original_price * (Decimal("1.10") if category == "Drinks" else Decimal("1.25"))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     image_status = "-"
     if image_name:
         exists = (image_dir / image_name).is_file()
