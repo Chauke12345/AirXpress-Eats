@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -162,6 +162,11 @@
             margin-top: 10px;
         }
     </style>
+    <script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+        async
+        defer>
+    </script>
 </head>
 
 <body>
@@ -224,6 +229,14 @@
                 </button>.
             </span>
         </label>
+
+        <div class="turnstile-container" style="display:flex; justify-content:center; margin-top:20px;">
+            <div
+                class="cf-turnstile"
+                data-sitekey="{{ turnstile_site_key }}"
+                data-action="customer_registration">
+            </div>
+        </div>
 
         <button type="submit">
             CREATE ACCOUNT
@@ -358,4 +371,3 @@
 
 </body>
 </html>
-

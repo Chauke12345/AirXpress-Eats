@@ -333,6 +333,9 @@ def _get_yoco_setting(name):
 YOCO_SECRET_KEY = _get_yoco_setting("YOCO_SECRET_KEY")
 YOCO_WEBHOOK_SECRET = _get_yoco_setting("YOCO_WEBHOOK_SECRET")
 
+TURNSTILE_SITE_KEY = _get_yoco_setting("TURNSTILE_SITE_KEY")
+TURNSTILE_SECRET_KEY = _get_yoco_setting("TURNSTILE_SECRET_KEY")
+
 
 # =========================================================
 # PAYFAST

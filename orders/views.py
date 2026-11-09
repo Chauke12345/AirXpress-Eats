@@ -1,4 +1,4 @@
-﻿import json
+import json
 import math
 import secrets
 import hashlib
@@ -8,6 +8,7 @@ import base64
 import qrcode
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import urlsplit
 from decimal import Decimal, InvalidOperation, ROUND_CEILING, ROUND_HALF_UP
 from django.contrib.auth.password_validation import validate_password
 
@@ -83,6 +84,8 @@ from .models import (
 
 from .mapbox import MapboxError, calculate_driving_distance, calculate_driving_distance_to_coordinates, calculate_driver_route
 from .services import send_delivery_otp_sms
+from .turnstile import TurnstileError, verify_turnstile_token
+
 def _delivery_otp_hash(order_id, code):
     """Hash a delivery OTP for one specific order."""
     value = f"{order_id}:{code}".encode("utf-8")
@@ -1597,31 +1600,49 @@ def customer_register(request):
                 request,
                 "You must agree to the AirXpress Eats Terms and Conditions before creating an account.",
             )
+
         elif form.is_valid():
-            user = form.save()
+            token = request.POST.get("cf-turnstile-response", "")
 
-            login(
-                request,
-                user,
-                backend="django.contrib.auth.backends.ModelBackend",
-            )
+            try:
+                request_host = urlsplit(
+                    f"//{request.get_host()}"
+                ).hostname
 
-            request.session["airxpress_customer_name"] = (
-                user.first_name
-            )
+                verify_turnstile_token(
+                    token,
+                    request_host,
+                )
 
-            request.session["airxpress_customer_whatsapp"] = (
-                user.customer_profile.whatsapp_number
-            )
+            except TurnstileError as exc:
+                messages.error(request, str(exc))
 
-            request.session.modified = True
+            else:
+                user = form.save()
 
-            messages.success(
-                request,
-                "Your AirXpress account has been created successfully.",
-            )
+                login(
+                    request,
+                    user,
+                    backend="django.contrib.auth.backends.ModelBackend",
+                )
 
-            return redirect("home")
+                request.session["airxpress_customer_name"] = (
+                    user.first_name
+                )
+
+                request.session["airxpress_customer_whatsapp"] = (
+                    user.customer_profile.whatsapp_number
+                )
+
+                request.session.modified = True
+
+                messages.success(
+                    request,
+                    "Your AirXpress account has been created successfully.",
+                )
+
+                return redirect("home")
+
     else:
         form = CustomerRegistrationForm()
 
@@ -1630,6 +1651,7 @@ def customer_register(request):
         "orders/customer_register.html",
         {
             "form": form,
+            "turnstile_site_key": settings.TURNSTILE_SITE_KEY,
         },
     )
 
@@ -8392,5 +8414,3 @@ def yoco_webhook(request):
                 dispatch_order_to_available_drivers(order)
 
     return JsonResponse({"status": "payment_confirmed"}, status=200)
-
-
