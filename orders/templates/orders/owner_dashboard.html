@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -560,7 +560,7 @@
                 href="{% url 'owner_support_dashboard' %}"
                 class="owner-nav-link"
             >
-                <span class="owner-nav-icon" aria-hidden="true">ðŸŽ§</span>
+                <span class="owner-nav-icon" aria-hidden="true">&#127911;</span>
                 Support Tickets
             </a>
 
@@ -568,14 +568,14 @@
                 href="{% url 'owner_refund_enquiries' %}"
                 class="owner-nav-link"
             >
-                <span class="owner-nav-icon" aria-hidden="true">ðŸ’°</span>
+                <span class="owner-nav-icon" aria-hidden="true">&#128176;</span>
                 Refund Enquiries
             </a>
             <a
                 href="{% url 'owner_refund_audit_history' %}"
                 class="owner-nav-link"
             >
-                <span class="owner-nav-icon" aria-hidden="true">ðŸ“‹</span>
+                <span class="owner-nav-icon" aria-hidden="true">&#128203;</span>
                 Refund Audit History
             </a>
 
@@ -849,7 +849,7 @@
             <div><strong>Licence status:</strong> {{ driver.license_verification_status|default:"Not provided"|title }}</div>
             <div><strong>Licence uploaded:</strong>
                 {% if driver.driver_license %}
-                    Yes â€” <a href="{% url 'driver_view_license' driver.id %}" target="_blank" rel="noopener">View licence</a>
+                    Yes &#8212; <a href="{% url 'driver_view_license' driver.id %}" target="_blank" rel="noopener">View licence</a>
                 {% else %}
                     No
                 {% endif %}
