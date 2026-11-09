@@ -8,16 +8,14 @@ import base64
 import qrcode
 from datetime import timedelta
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 from decimal import Decimal, InvalidOperation, ROUND_CEILING, ROUND_HALF_UP
 from django.contrib.auth.password_validation import validate_password
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core import signing
 from django.contrib import messages
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
 
 from django.contrib.auth import (
     authenticate,
@@ -36,7 +34,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from django.http import JsonResponse
-from django.http import HttpResponse
+from django.http import HttpResponse, FileResponse, HttpResponseForbidden
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
@@ -85,6 +83,7 @@ from .models import (
 from .mapbox import MapboxError, calculate_driving_distance, calculate_driving_distance_to_coordinates, calculate_driver_route
 from .services import send_delivery_otp_sms
 from .turnstile import TurnstileError, verify_turnstile_token
+from .security import driver_required, validate_driver_license_file, is_driver
 
 def _delivery_otp_hash(order_id, code):
     """Hash a delivery OTP for one specific order."""
@@ -1401,6 +1400,10 @@ def submit_support_ticket(request):
         "orders not going through", "shop cannot accept orders",
         "shop can't accept orders", "delivery blocked", "driver cannot accept",
         "payment failing", "payment not working", "multiple customers",
+        "multiple users cannot log in", "multiple users cannot login",
+        "multiple users unable to log in", "multiple users unable to login",
+        "multiple users can't log in", "multiple users can't login",
+        "multiple users cannot access their accounts",
     )
 
     if any(term in text for term in critical_terms):
@@ -2921,7 +2924,6 @@ def owner_update_support_ticket(request, ticket_id):
     new_status = request.POST.get("status", "").strip()
     staff_notes = request.POST.get("staff_notes", "").strip()
     customer_response = request.POST.get("customer_response", "").strip()
-    include_password_reset_link = (request.POST.get("include_password_reset_link") == "on")
 
     if new_status not in {"open", "in_progress", "resolved"}:
         messages.error(request, "Invalid ticket status.")
@@ -2938,12 +2940,10 @@ def owner_update_support_ticket(request, ticket_id):
     ticket.status = new_status
     ticket.staff_notes = staff_notes
     ticket.customer_response = customer_response
-    ticket.include_password_reset_link = include_password_reset_link
     ticket.save(update_fields=[
         "status",
         "staff_notes",
         "customer_response",
-        "include_password_reset_link",
         "resolved_at",
         "updated_at",
     ])
@@ -2957,7 +2957,7 @@ def owner_update_support_ticket(request, ticket_id):
 
 @user_passes_test(is_owner, login_url="/owner/login/")
 def owner_support_dashboard(request):
-    tickets = SupportTicket.objects.all()
+    tickets = SupportTicket.objects.select_related("customer__customer_profile").all()
 
     status_filter = request.GET.get("status", "").strip()
     priority_filter = request.GET.get("priority", "").strip()
@@ -3000,7 +3000,31 @@ def owner_support_dashboard(request):
 
     for ticket in tickets:
         ticket.whatsapp_url = ""
+        ticket.reset_customer_profile_id = None
         phone = normalize_sa_phone(ticket.customer_phone)
+
+        # Only offer password resets for linked login/password-help tickets.
+        ticket_text = f"{ticket.subject or ''} {ticket.description or ''}".lower()
+        login_help_ticket = any(
+            term in ticket_text
+            for term in (
+                "login", "log in", "password", "sign in", "sign-in",
+                "cannot access account", "can't access account",
+            )
+        )
+
+        if ticket.customer_id and login_help_ticket and phone:
+            try:
+                profile = ticket.customer.customer_profile
+            except CustomerProfile.DoesNotExist:
+                profile = None
+
+            if (
+                profile
+                and ticket.customer.is_active
+                and normalize_sa_phone(profile.whatsapp_number) == phone
+            ):
+                ticket.reset_customer_profile_id = profile.id
 
         if phone and ticket.customer_response:
             message = (
@@ -3011,31 +3035,6 @@ def owner_support_dashboard(request):
                 f"{ticket.customer_response + chr(10) + chr(10) if ticket.customer_response and ticket.customer_response.strip().lower() != 'updated' else ''}"
                 f"Log in to your account here: {login_url}\n\n"
             )
-
-            reset_url = ""
-            if (
-                ticket.include_password_reset_link
-                and ticket.customer_id
-                and ticket.customer.is_active
-                and hasattr(ticket.customer, "customer_profile")
-            ):
-                profile = ticket.customer.customer_profile
-                registered_phone = normalize_sa_phone(profile.whatsapp_number)
-
-                if registered_phone and registered_phone == phone:
-                    uid = urlsafe_base64_encode(force_bytes(ticket.customer.pk))
-                    token = default_token_generator.make_token(ticket.customer)
-                    reset_path = reverse(
-                        "customer_password_reset_confirm",
-                        kwargs={"uidb64": uid, "token": token},
-                    )
-                    reset_url = request.build_absolute_uri(reset_path)
-
-            if reset_url:
-                message += (
-                    "Password reset link (use only if you requested it): "
-                    f"{reset_url}\n\n"
-                )
 
             message += "Thank you, AirXpress Eats Support."
             ticket.whatsapp_url = (
@@ -3818,20 +3817,12 @@ def driver_update_banking(request):
 
     return redirect("driver_dashboard")
 
+@driver_required
 def driver_upload_license(request):
     if request.method != "POST":
         return redirect("driver_dashboard")
 
     driver = request.user.driver_profile
-
-    print("=================================================")
-    print("AIRXPRESS LICENSE UPLOAD DEBUG")
-    print("REQUEST METHOD:", request.method)
-    print("FILES:", list(request.FILES.keys()))
-    print("LICENSE FILE:", request.FILES.get("driver_license"))
-    print("POST:", dict(request.POST))
-    print("=================================================")
-
     license_file = request.FILES.get("driver_license")
 
     if not license_file:
@@ -3839,6 +3830,12 @@ def driver_upload_license(request):
             request,
             "Please select a driver licence file before uploading.",
         )
+        return redirect("driver_dashboard")
+
+    try:
+        validate_driver_license_file(license_file)
+    except ValidationError as exc:
+        messages.error(request, exc.messages[0])
         return redirect("driver_dashboard")
 
     driver.driver_license = license_file
@@ -3861,11 +3858,23 @@ def driver_upload_license(request):
     return redirect("driver_dashboard")
 
 
+
+
+@driver_required
 def driver_update_profile(request):
     if request.method != "POST":
         return redirect("driver_dashboard")
 
     driver = request.user.driver_profile
+
+    license_file = request.FILES.get("driver_license")
+
+    if license_file:
+        try:
+            validate_driver_license_file(license_file)
+        except ValidationError as exc:
+            messages.error(request, exc.messages[0])
+            return redirect("driver_dashboard")
 
     driver.name = request.POST.get("name", "").strip()
     driver.vehicle_make_model = request.POST.get(
@@ -3881,10 +3890,11 @@ def driver_update_profile(request):
         ""
     ).strip()
 
-    if request.FILES.get("driver_license"):
-        driver.driver_license = request.FILES["driver_license"]
+    if license_file:
+        driver.driver_license = license_file
         driver.license_verification_status = "pending"
         driver.airxpress_verified = False
+
     if request.FILES.get("photo"):
         driver.photo = request.FILES["photo"]
 
@@ -3897,6 +3907,56 @@ def driver_update_profile(request):
 
     return redirect("driver_dashboard")
 
+
+
+@login_required(login_url="/login/")
+def driver_view_license(request, driver_id):
+    driver = get_object_or_404(Driver, pk=driver_id)
+
+    if not is_owner(request.user):
+        if not is_driver(request.user):
+            return HttpResponseForbidden("Access denied.")
+
+        if driver.user_id != request.user.id:
+            return HttpResponseForbidden("You can only view your own licence.")
+
+    if not driver.driver_license:
+        return HttpResponse("Licence document not found.", status=404)
+
+    filename = Path(driver.driver_license.name).name
+    extension = Path(filename).suffix.lower()
+
+    content_types = {
+        ".pdf": "application/pdf",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+    }
+
+    content_type = content_types.get(extension)
+
+    if not content_type:
+        return HttpResponse("Unsupported document type.", status=404)
+
+    try:
+        document = driver.driver_license.open("rb")
+    except (OSError, ValueError):
+        return HttpResponse("Licence document unavailable.", status=404)
+
+    response = FileResponse(
+        document,
+        content_type=content_type,
+        as_attachment=False,
+        filename=filename,
+    )
+    response["X-Content-Type-Options"] = "nosniff"
+    response["Cache-Control"] = "private, no-store, max-age=0"
+    response["Pragma"] = "no-cache"
+    response["Content-Security-Policy"] = "sandbox"
+
+    return response
+
+@driver_required
 def driver_dashboard(request):
 
     driver = request.user.driver_profile
@@ -6908,7 +6968,7 @@ def owner_reset_staff_password(request, staff_id):
     login_url="/owner/login/"
 )
 def owner_reset_customer_password(request, customer_id):
-    """Set a temporary password and require the customer to change it."""
+    """Generate a pending password and activate it only after owner confirmation."""
     if request.method != "POST":
         return redirect("owner_dashboard")
 
@@ -6917,37 +6977,145 @@ def owner_reset_customer_password(request, customer_id):
         id=customer_id,
         user__is_active=True,
     )
-
     customer = profile.user
-    password = request.POST.get("new_password", "")
-    confirm_password = request.POST.get("confirm_password", "")
 
-    if not password or password != confirm_password:
-        messages.error(
+    action = request.POST.get("action", "generate").strip()
+
+    if action == "confirm":
+        token = request.POST.get("confirmation_token", "")
+        password = request.POST.get("temporary_password", "")
+
+        try:
+            payload = signing.loads(
+                token,
+                salt="orders.owner_customer_password_reset",
+                max_age=900,
+            )
+        except signing.SignatureExpired:
+            messages.error(request, "The confirmation expired. Please generate a new temporary password.")
+            return redirect("owner_dashboard")
+        except signing.BadSignature:
+            messages.error(request, "Invalid password confirmation. Please generate a new temporary password.")
+            return redirect("owner_dashboard")
+
+        password_digest = hashlib.sha256(password.encode("utf-8")).hexdigest()
+        expected_digest = payload.get("password_digest", "")
+        pending_key = f"pending_customer_password_reset_{profile.id}"
+
+        if (
+            payload.get("customer_id") != customer.id
+            or payload.get("profile_id") != profile.id
+            or not hmac.compare_digest(password_digest, expected_digest)
+            or request.session.get(pending_key) != payload.get("nonce")
+        ):
+            messages.error(request, "Password confirmation could not be verified. Please generate a new temporary password.")
+            return redirect("owner_dashboard")
+
+        try:
+            validate_password(password, user=customer)
+        except ValidationError:
+            request.session.pop(pending_key, None)
+            messages.error(request, "The pending password is no longer valid. Please generate a new one.")
+            return redirect("owner_dashboard")
+
+        with transaction.atomic():
+            locked_profile = CustomerProfile.objects.select_for_update().get(pk=profile.pk)
+            locked_customer = customer.__class__.objects.select_for_update().get(pk=customer.pk)
+
+            if not locked_customer.is_active:
+                messages.error(request, "This customer account is no longer active.")
+                return redirect("owner_dashboard")
+
+            locked_customer.set_password(password)
+            locked_customer.save(update_fields=["password"])
+
+            locked_profile.must_change_password = True
+            locked_profile.save(update_fields=["must_change_password"])
+
+        request.session.pop(pending_key, None)
+        messages.success(
             request,
-            "The temporary passwords are empty or do not match.",
+            f"Temporary password activated for {customer.username}. The customer must change it at their next login.",
         )
         return redirect("owner_dashboard")
 
-    try:
-        validate_password(password, user=customer)
-    except ValidationError as exc:
-        for error in exc.messages:
-            messages.error(request, error)
+    if action != "generate":
+        messages.error(request, "Invalid password reset action.")
         return redirect("owner_dashboard")
 
-    customer.set_password(password)
-    customer.save(update_fields=["password"])
-
-    profile.must_change_password = True
-    profile.save(update_fields=["must_change_password"])
-
-    messages.success(
-        request,
-        f"Temporary password set for customer {customer.username}. "
-        "Share it privately. The customer must change it at their next login.",
+    phone = "".join(
+        character
+        for character in (profile.whatsapp_number or "")
+        if character.isdigit()
     )
-    return redirect("owner_dashboard")
+
+    if phone.startswith("00"):
+        phone = phone[2:]
+
+    if phone.startswith("0"):
+        phone = "27" + phone[1:]
+
+    if not phone.startswith("27") or len(phone) != 11:
+        messages.error(
+            request,
+            "The customer does not have a valid South African WhatsApp number. "
+            "Update their registered number before resetting the password.",
+        )
+        return redirect("owner_dashboard")
+
+    password = secrets.token_urlsafe(24)
+
+    try:
+        validate_password(password, user=customer)
+    except ValidationError:
+        messages.error(request, "A temporary password could not be validated. Please try again.")
+        return redirect("owner_dashboard")
+
+    nonce = secrets.token_urlsafe(24)
+    password_digest = hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+    confirmation_token = signing.dumps(
+        {
+            "customer_id": customer.id,
+            "profile_id": profile.id,
+            "nonce": nonce,
+            "password_digest": password_digest,
+        },
+        salt="orders.owner_customer_password_reset",
+    )
+
+    pending_key = f"pending_customer_password_reset_{profile.id}"
+    request.session[pending_key] = nonce
+
+    login_url = request.build_absolute_uri(reverse("customer_login"))
+    customer_name = customer.get_full_name().strip() or customer.username
+
+    whatsapp_message = (
+        f"Hello {customer_name},\n\n"
+        "Your AirXpress Eats password has been prepared for a temporary reset.\n\n"
+        f"Temporary password: {password}\n\n"
+        f"Login here: {login_url}\n\n"
+        "For your security, you must create a new password immediately "
+        "after logging in.\n\n"
+        "If you need assistance, please contact AirXpress Eats Support.\n\n"
+        "Thank you,\nAirXpress Eats Support"
+    )
+
+    whatsapp_url = f"https://wa.me/{phone}?text={quote(whatsapp_message)}"
+
+    return render(
+        request,
+        "orders/owner_customer_password_reset_result.html",
+        {
+            "customer": customer,
+            "temporary_password": password,
+            "confirmation_token": confirmation_token,
+            "whatsapp_number": profile.whatsapp_number,
+            "whatsapp_url": whatsapp_url,
+            "customer_login_url": login_url,
+        },
+    )
+
 
 # OWNER / AIRXPRESS DRIVER VERIFICATION
 # =========================================================
@@ -7023,6 +7191,7 @@ def owner_add_driver(request):
     )
     return redirect("owner_dashboard")
 
+@user_passes_test(is_owner, login_url="/owner/login/")
 def owner_verify_driver(request, driver_id):
 
     if request.method != "POST":

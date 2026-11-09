@@ -192,6 +192,22 @@
 
                 <div class="description">{{ ticket.description }}</div>
 
+                {% if ticket.reset_customer_profile_id %}
+                    <div style="margin: 14px 0; padding: 12px; border: 1px solid #d9e5dc; border-radius: 8px;">
+                        <strong>Verified customer account</strong>
+                        <p class="meta">The ticket is linked to an active customer account and the registered WhatsApp number matches.</p>
+                        <form method="post" action="{% url 'owner_reset_customer_password' ticket.reset_customer_profile_id %}">
+                            {% csrf_token %}
+                            <button class="primary" type="submit"
+                                    onclick="return confirm('Confirm that you have verified this customer\'s identity before generating a temporary password?');">
+                                Generate Temporary Password &amp; Prepare WhatsApp
+                            </button>
+                        </form>
+                    </div>
+                {% elif ticket.customer_id and login_help_ticket %}
+                    <p class="meta">Password reset unavailable: verify that the ticket phone number matches the customer's registered WhatsApp number.</p>
+                {% endif %}
+
                 {% if ticket.staff_notes %}
                     <div>
                         <strong>Internal notes</strong>
@@ -216,12 +232,6 @@
                     <div class="full">
                         <label for="response-{{ ticket.id }}">Message for the customer</label>
                         <textarea name="customer_response" id="response-{{ ticket.id }}" rows="3" maxlength="10000" placeholder="Write the update the customer may see...">{{ ticket.customer_response }}</textarea>
-                    </div>
-                    <div class="full">
-                        <label>
-                            <input type="checkbox" name="include_password_reset_link" value="on" {% if ticket.include_password_reset_link %}checked{% endif %}>
-                            Include password-reset link in WhatsApp (only for the matching registered customer)
-                        </label>
                     </div>
                     <div class="full">
                         <button class="primary" type="submit">Save ticket update</button>

@@ -104,6 +104,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "orders",
+    "axes",
 ]
 
 
@@ -125,6 +126,7 @@ MIDDLEWARE = [
     "orders.middleware.CustomerPasswordChangeMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "axes.middleware.AxesMiddleware",
 ]
 
 
@@ -427,3 +429,21 @@ WEBPUSH_VAPID_PRIVATE_KEY = os.environ.get(
 WEBPUSH_VAPID_SUBJECT = os.environ.get(
     "WEBPUSH_VAPID_SUBJECT", ""
 ).strip()
+
+
+# =========================================================
+# LOGIN RATE LIMITING - DJANGO AXES
+# =========================================================
+
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+AXES_HANDLER = "axes.handlers.database.AxesDatabaseHandler"
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 0.25  # 15 minutes
+AXES_USE_ATTEMPT_EXPIRATION = True
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
+AXES_RESET_ON_SUCCESS = True
+AXES_HTTP_RESPONSE_CODE = 429

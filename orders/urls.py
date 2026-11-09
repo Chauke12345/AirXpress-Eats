@@ -96,41 +96,7 @@ urlpatterns = [
         name="customer_change_password",
     ),
 
-    path(
-        "customer/password-reset/",
-        auth_views.PasswordResetView.as_view(
-            template_name="orders/customer_password_reset.html",
-            email_template_name="orders/customer_password_reset_email.txt",
-            subject_template_name="orders/customer_password_reset_subject.txt",
-            success_url="/customer/password-reset/done/",
-        ),
-        name="customer_password_reset",
-    ),
 
-    path(
-        "customer/password-reset/done/",
-        auth_views.PasswordResetDoneView.as_view(
-            template_name="orders/customer_password_reset_done.html",
-        ),
-        name="customer_password_reset_done",
-    ),
-
-    path(
-        "customer/reset/<uidb64>/<token>/",
-        auth_views.PasswordResetConfirmView.as_view(
-            template_name="orders/customer_password_reset_confirm.html",
-            success_url="/customer/reset/done/",
-        ),
-        name="customer_password_reset_confirm",
-    ),
-
-    path(
-        "customer/reset/done/",
-        auth_views.PasswordResetCompleteView.as_view(
-            template_name="orders/customer_password_reset_complete.html",
-        ),
-        name="customer_password_reset_complete",
-    ),
 
     path(
         "shop/<slug:shop_slug>/cart/update/<str:menu_item_id>/",
@@ -271,6 +237,11 @@ urlpatterns = [
     # DRIVER
     # =========================================================
 
+    path(
+        "driver/<int:driver_id>/license/",
+        views.driver_view_license,
+        name="driver_view_license",
+    ),
     path(
         "driver/dashboard/",
         views.driver_dashboard,

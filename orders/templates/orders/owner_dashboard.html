@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -560,7 +560,7 @@
                 href="{% url 'owner_support_dashboard' %}"
                 class="owner-nav-link"
             >
-                <span class="owner-nav-icon" aria-hidden="true">🎧</span>
+                <span class="owner-nav-icon" aria-hidden="true">ðŸŽ§</span>
                 Support Tickets
             </a>
 
@@ -568,14 +568,14 @@
                 href="{% url 'owner_refund_enquiries' %}"
                 class="owner-nav-link"
             >
-                <span class="owner-nav-icon" aria-hidden="true">💰</span>
+                <span class="owner-nav-icon" aria-hidden="true">ðŸ’°</span>
                 Refund Enquiries
             </a>
             <a
                 href="{% url 'owner_refund_audit_history' %}"
                 class="owner-nav-link"
             >
-                <span class="owner-nav-icon" aria-hidden="true">📋</span>
+                <span class="owner-nav-icon" aria-hidden="true">ðŸ“‹</span>
                 Refund Audit History
             </a>
 
@@ -849,7 +849,7 @@
             <div><strong>Licence status:</strong> {{ driver.license_verification_status|default:"Not provided"|title }}</div>
             <div><strong>Licence uploaded:</strong>
                 {% if driver.driver_license %}
-                    Yes — <a href="{{ driver.driver_license.url }}" target="_blank" rel="noopener">View licence</a>
+                    Yes â€” <a href="{% url 'driver_view_license' driver.id %}" target="_blank" rel="noopener">View licence</a>
                 {% else %}
                     No
                 {% endif %}
@@ -893,7 +893,7 @@
                 {% if driver.driver_license %}
 
                     <a
-                        href="{{ driver.driver_license.url }}"
+                        href="{% url 'driver_view_license' driver.id %}"
                         target="_blank"
                         rel="noopener"
                         style="
@@ -908,7 +908,7 @@
                             font-weight:600;
                         "
                     >
-                        ?? View Driver Licence
+                        View Driver Licence
                     </a>
 
                     <form
@@ -932,7 +932,7 @@
                                 cursor:pointer;
                             "
                         >
-                            ? Verify Driver
+                            Verify Driver
                         </button>
                     </form>
 
@@ -956,7 +956,7 @@
                                 cursor:pointer;
                             "
                         >
-                            ? Reject Licence
+                            Reject Licence
                         </button>
                     </form>
 
@@ -969,7 +969,7 @@
                         color:#991b1b;
                         font-weight:600;
                     ">
-                        ?? No driver licence uploaded.
+                        No Driver Licence Uploaded.
                     </div>
 
                 {% endif %}
@@ -1173,32 +1173,11 @@
 
             <form method="post" action="{% url 'owner_reset_customer_password' profile.id %}">
                 {% csrf_token %}
-
-                <label for="customer-new-password-{{ profile.id }}">Temporary password</label>
-                <input
-                    id="customer-new-password-{{ profile.id }}"
-                    type="password"
-                    name="new_password"
-                    required
-                    autocomplete="new-password"
-                    style="width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;border:1px solid #cbd5e1;border-radius:8px;"
-                >
-
-                <label for="customer-confirm-password-{{ profile.id }}">Confirm temporary password</label>
-                <input
-                    id="customer-confirm-password-{{ profile.id }}"
-                    type="password"
-                    name="confirm_password"
-                    required
-                    autocomplete="new-password"
-                    style="width:100%;box-sizing:border-box;padding:10px;margin:6px 0 12px;border:1px solid #cbd5e1;border-radius:8px;"
-                >
-
                 <button
                     type="submit"
                     style="width:100%;padding:11px;border:0;border-radius:8px;background:#198754;color:#fff;font-weight:700;cursor:pointer;"
                 >
-                    Set Temporary Password
+                    Generate Temporary Password &amp; Prepare WhatsApp
                 </button>
             </form>
         </div>
