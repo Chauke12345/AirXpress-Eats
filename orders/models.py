@@ -477,6 +477,10 @@ class Order(models.Model):
         ),
     ]
 
+    PRICING_VERSION_CHOICES = [
+        ("legacy", "Legacy pricing"),
+        ("markup_25_v1", "25% markup; shop receives original price"),
+    ]
     STATUS_CHOICES = [
         (
             "new",
@@ -651,6 +655,12 @@ class Order(models.Model):
         default="online"
     )
 
+    pricing_version = models.CharField(
+        max_length=24,
+        choices=PRICING_VERSION_CHOICES,
+        default="legacy",
+    )
+
     # Current progress of the order.
     status = models.CharField(
         max_length=20,
@@ -687,18 +697,18 @@ class Order(models.Model):
         blank=True
     )
 
-    # Internal AirXpress service charge.
-    # Calculated as 15% of the food subtotal.
-    # Not displayed separately to the customer.
+    # Legacy internal service-charge field retained for compatibility.
+    # Current checkout sets this to zero; the 25% food markup is included
+    # in customer-facing item prices.
     platform_fee = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         default=Decimal("0.00")
     )
 
-    # Internal driver payout.
-    # Calculated as 40% of the delivery fee.
-    # Not displayed to the customer.
+    # Driver payout snapshot calculated when the order is created.
+    # Current delivery settings use a 50% share; historical order values
+    # remain unchanged.
     driver_payout = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -883,7 +893,7 @@ class DeliveryPricing(models.Model):
     driver_percentage = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=Decimal("40.00"),
+        default=Decimal("50.00"),
     )
 
     service_percentage = models.DecimalField(

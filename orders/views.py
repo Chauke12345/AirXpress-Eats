@@ -1270,6 +1270,7 @@ def checkout(request, shop_slug):
                                     delivery_address=delivery_address,
                                     order_type="delivery",
                                     order_source="online",
+                                    pricing_version="markup_25_v1",
                                     status="new",
                                     estimated_total=subtotal,
                                     delivery_fee=delivery_fee,
@@ -7726,6 +7727,49 @@ def staff_dashboard_updates(request):
 # SHOP PAYOUT TEST SIMULATION - READ ONLY
 # =========================================================
 
+def _shop_payout_values_for_order(order):
+    """Calculate shop payout using the order pricing version."""
+    from decimal import ROUND_HALF_UP
+
+    items = list(order.items.all())
+    if not items:
+        return None
+
+    if order.pricing_version == "markup_25_v1":
+        if any(item.shop_amount is None for item in items):
+            return None
+
+        food_sales = sum((item.shop_amount for item in items), Decimal("0.00"))
+        food_sales = Decimal(food_sales or 0).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+        if food_sales <= Decimal('0.00'):
+            return None
+        return food_sales, Decimal("0.00"), food_sales
+
+    # Preserve historical calculations for legacy orders.
+    food_sales = sum((
+        item.final_amount
+        if item.final_amount is not None
+        else item.requested_amount
+        if item.requested_amount is not None
+        else item.unit_price or Decimal("0.00")
+    ) for item in items)
+    food_sales = Decimal(food_sales or 0).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    if food_sales <= Decimal('0.00'):
+        return None
+
+    commission = (food_sales * Decimal("0.15")).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    shop_payable = (food_sales * Decimal("0.85")).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    return food_sales, commission, shop_payable
+
+
 @user_passes_test(is_owner, login_url="/owner/login/")
 def simulate_shop_payouts(request):
     from datetime import date, timedelta
@@ -7782,19 +7826,11 @@ def simulate_shop_payouts(request):
         if not (week_start <= completed_date <= week_end):
             continue
 
-        food_sales = sum(
-            (
-                item.final_amount
-                if item.final_amount is not None
-                else item.requested_amount
-                if item.requested_amount is not None
-                else item.unit_price or Decimal("0.00")
-            )
-            for item in order.items.all()
-        )
-        food_sales = Decimal(food_sales or 0).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
+        payout_values = _shop_payout_values_for_order(order)
+        if payout_values is None:
+            blocked_count += 1
+            continue
+        food_sales, commission, shop_amount = payout_values
 
         if food_sales <= Decimal("0.00"):
             blocked_count += 1
@@ -7805,12 +7841,7 @@ def simulate_shop_payouts(request):
             blocked_count += 1
             continue
 
-        commission = (food_sales * Decimal("0.15")).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
-        shop_amount = (food_sales - commission).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
+
 
         shop_key = order.shop_id
         if shop_key not in shop_totals:
@@ -7835,7 +7866,7 @@ def simulate_shop_payouts(request):
     lines = [
         f"{value['name']}: {value['orders']} orders, "
         f"food sales R{value['sales']:.2f}, "
-        f"commission R{value['commission']:.2f}, "
+        f"legacy commission R{value['commission']:.2f}, "
         f"shop payable R{value['payable']:.2f}"
         for value in shop_totals.values()
     ]
@@ -7847,7 +7878,7 @@ def simulate_shop_payouts(request):
             f"Week {week_start} to {week_end}. "
             f"Eligible orders: {eligible_count}; blocked/already recorded: "
             f"{blocked_count}; food sales R{total_sales:.2f}; "
-            f"AirXpress commission R{total_commission:.2f}; "
+            f"legacy commission/adjustment R{total_commission:.2f}; "
             f"shop payable R{total_shop_payable:.2f}. "
             + " | ".join(lines)
         )
@@ -7949,7 +7980,7 @@ def download_shop_payout_batch_statement(request, batch_id):
         Spacer(1, 8),
     ])
 
-    order_rows = [["Order", "Food Sales", "Commission", "Shop Receives"]]
+    order_rows = [["Order", "Food Sales", "Legacy commission / adjustment", "Shop Receives"]]
     for payout in payouts:
         order_rows.append([
             f"#{payout.order_id}",
@@ -7987,8 +8018,9 @@ def download_shop_payout_batch_statement(request, batch_id):
         orders_table,
         Spacer(1, 12),
         Paragraph(
-            "AirXpress commission is 15% of food sales. The shop receives "
-            "the remaining 85%, subject to the figures recorded in this batch.",
+            "Commission/adjustment amounts reflect each order's pricing version. "
+            "Under current pricing, shops receive the original menu price; "
+            "legacy orders retain their historical commission calculation.",
             styles["Normal"],
         ),
         Spacer(1, 12),
@@ -8073,19 +8105,10 @@ def owner_shop_payouts(request):
                     if not (selected_start <= completion_date <= selected_end):
                         continue
 
-                    food_sales = sum(
-                        (
-                            item.final_amount
-                            if item.final_amount is not None
-                            else item.requested_amount
-                            if item.requested_amount is not None
-                            else item.unit_price or Decimal("0.00")
-                        )
-                        for item in order.items.all()
-                    )
-                    food_sales = Decimal(food_sales or 0).quantize(
-                        Decimal("0.01"), rounding=ROUND_HALF_UP
-                    )
+                    payout_values = _shop_payout_values_for_order(order)
+                    if payout_values is None:
+                        continue
+                    food_sales, commission, shop_amount = payout_values
 
                     if food_sales <= Decimal("0.00"):
                         continue
@@ -8095,18 +8118,8 @@ def owner_shop_payouts(request):
                         defaults={
                             "shop": shop,
                             "food_sales": food_sales,
-                            "commission": (
-                                food_sales * Decimal("0.15")
-                            ).quantize(
-                                Decimal("0.01"),
-                                rounding=ROUND_HALF_UP,
-                            ),
-                            "amount": (
-                                food_sales * Decimal("0.85")
-                            ).quantize(
-                                Decimal("0.01"),
-                                rounding=ROUND_HALF_UP,
-                            ),
+                            "commission": commission,
+                            "amount": shop_amount,
                             "statement_number": f"AXSP-{order.id}",
                         },
                     )
