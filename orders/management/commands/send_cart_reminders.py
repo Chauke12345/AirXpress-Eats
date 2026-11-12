@@ -6,10 +6,11 @@ from django.urls import reverse
 from django.utils import timezone
 
 from orders.models import CustomerCart, CustomerNotification, Order
+from orders.push_notifications import send_customer_push_notification
 
 
 class Command(BaseCommand):
-    help = "Send one-hour and 24-hour in-app abandoned-cart reminders."
+    help = "Send one-hour and 24-hour abandoned-cart reminders."
 
     def handle(self, *args, **options):
         now = timezone.now()
@@ -66,19 +67,39 @@ class Command(BaseCommand):
                 )
 
                 if one_hour_due:
-                    CustomerNotification.objects.create(
+                    title = "Your cart is waiting"
+                    message = (
+                        f"You still have items in your "
+                        f"{cart.shop.name} cart. Come back and "
+                        "complete your order when you're ready."
+                    )
+
+                    notification = CustomerNotification.objects.create(
                         customer=cart.customer,
                         notification_type="cart_reminder",
-                        title="Your cart is waiting",
-                        message=(
-                            f"You still have items in your "
-                            f"{cart.shop.name} cart. Come back and "
-                            "complete your order when you're ready."
-                        ),
+                        title=title,
+                        message=message,
                         target_url=cart_url,
                     )
+
                     cart.reminder_1_sent_at = now
                     cart.save(update_fields=["reminder_1_sent_at"])
+
+                    transaction.on_commit(
+                        lambda customer_id=cart.customer_id,
+                        push_title=title,
+                        push_body=message,
+                        push_url=cart_url,
+                        push_notification_id=notification.pk:
+                            send_customer_push_notification(
+                                customer_id=customer_id,
+                                title=push_title,
+                                body=push_body,
+                                url=push_url,
+                                notification_id=push_notification_id,
+                            )
+                    )
+
                     sent_first += 1
                     # Never send both reminders in the same execution.
                     continue
@@ -91,19 +112,39 @@ class Command(BaseCommand):
                 )
 
                 if second_due:
-                    CustomerNotification.objects.create(
+                    title = "A reminder about your cart"
+                    message = (
+                        f"Your {cart.shop.name} cart still has "
+                        "items waiting. Visit your cart if you'd "
+                        "like to complete your order."
+                    )
+
+                    notification = CustomerNotification.objects.create(
                         customer=cart.customer,
                         notification_type="cart_reminder",
-                        title="A reminder about your cart",
-                        message=(
-                            f"Your {cart.shop.name} cart still has "
-                            "items waiting. Visit your cart if you'd "
-                            "like to complete your order."
-                        ),
+                        title=title,
+                        message=message,
                         target_url=cart_url,
                     )
+
                     cart.reminder_2_sent_at = now
                     cart.save(update_fields=["reminder_2_sent_at"])
+
+                    transaction.on_commit(
+                        lambda customer_id=cart.customer_id,
+                        push_title=title,
+                        push_body=message,
+                        push_url=cart_url,
+                        push_notification_id=notification.pk:
+                            send_customer_push_notification(
+                                customer_id=customer_id,
+                                title=push_title,
+                                body=push_body,
+                                url=push_url,
+                                notification_id=push_notification_id,
+                            )
+                    )
+
                     sent_second += 1
 
         self.stdout.write(

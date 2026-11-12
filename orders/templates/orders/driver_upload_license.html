@@ -1,0 +1,117 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Licence Upload | AirXpress Eats</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #111;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        .card {
+            width: 100%;
+            max-width: 520px;
+            padding: 32px;
+            background: #1b1b1b;
+            border: 1px solid #333;
+            border-radius: 18px;
+        }
+        .logo {
+            display: block;
+            width: 145px;
+            max-height: 110px;
+            object-fit: contain;
+            margin: 0 auto 20px;
+        }
+        h1 { text-align: center; font-size: 25px; }
+        .intro { color: #bbb; text-align: center; line-height: 1.6; }
+        .notice {
+            padding: 14px;
+            margin: 20px 0;
+            border-radius: 10px;
+            background: #292929;
+            color: #f2d58a;
+            line-height: 1.5;
+        }
+        label { display: block; margin: 18px 0 8px; font-weight: 700; }
+        input[type=file] {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #444;
+            border-radius: 10px;
+            background: #111;
+            color: #fff;
+        }
+        button {
+            width: 100%;
+            margin-top: 22px;
+            padding: 15px;
+            border: 0;
+            border-radius: 10px;
+            background: #fff;
+            color: #111;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .messages { margin: 18px 0; }
+        .message {
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background: #303030;
+        }
+        .help { color: #aaa; font-size: 13px; line-height: 1.5; }
+        a { display: block; margin-top: 20px; text-align: center; color: #fff; }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <img class="logo" src="{% static 'orders/images/Airxpress-logo.png' %}" alt="AirXpress Eats logo">
+        <h1>Driver Licence Verification</h1>
+        <p class="intro">Welcome, {{ driver.name }}. Upload your valid driver's licence so AirXpress can review your application.</p>
+
+        <div class="notice">
+            Your driver account will remain pending until AirXpress has reviewed and approved your licence. You cannot accept delivery requests before approval.
+        </div>
+
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="message">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if driver.driver_license %}
+            <p class="help">A licence has already been submitted. You can upload a replacement if AirXpress has requested one or your previous submission was rejected.</p>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label for="driver_license">Driver's licence document *</label>
+            <input
+                type="file"
+                id="driver_license"
+                name="driver_license"
+                accept=".pdf,.jpg,.jpeg,.png"
+                required
+            >
+            <p class="help">Accepted formats: PDF, JPG, JPEG and PNG. Maximum file size: 5 MB. Please upload a clear, readable image or PDF.</p>
+            <button type="submit">Submit Licence for Review</button>
+        </form>
+
+        <a href="{% url 'driver_dashboard' %}">Return to Driver Dashboard</a>
+    </main>
+</body>
+</html>

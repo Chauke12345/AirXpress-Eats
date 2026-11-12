@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Registration | AirXpress Eats</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 25px 16px;
+            background: #111;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .register-card {
+            width: 100%;
+            max-width: 520px;
+            padding: 30px;
+            background: #1b1b1b;
+            border: 1px solid #333;
+            border-radius: 18px;
+            box-shadow: 0 20px 50px rgba(0,0,0,.35);
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .brand-logo {
+            width: 145px;
+            max-width: 100%;
+            max-height: 120px;
+            object-fit: contain;
+        }
+
+        h1 {
+            margin: 10px 0 5px;
+            font-size: 27px;
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .notice {
+            padding: 14px;
+            margin-bottom: 22px;
+            background: #292929;
+            border: 1px solid #444;
+            border-radius: 10px;
+            color: #ddd;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .section-title {
+            margin: 24px 0 14px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #383838;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .form-group { margin-bottom: 16px; }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #444;
+            border-radius: 9px;
+            background: #111;
+            color: #fff;
+            font-size: 15px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #fff;
+        }
+
+        .hint {
+            display: block;
+            margin-top: 6px;
+            color: #999;
+            font-size: 11px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 9px;
+            background: #fff;
+            color: #111;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        button:hover { opacity: .9; }
+
+        .messages { margin-bottom: 18px; }
+
+        .message {
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 9px;
+            background: #303030;
+            color: #fff;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .links {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .links a {
+            display: block;
+            margin-top: 12px;
+            color: #ddd;
+            text-decoration: none;
+        }
+
+        .links a:hover { text-decoration: underline; }
+
+        @media (max-width: 480px) {
+            .register-card { padding: 22px 18px; }
+        }
+    </style>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+
+<body>
+<div class="register-card">
+
+    <div class="brand">
+        <img class="brand-logo"
+             src="{% static 'orders/images/Airxpress-logo.png' %}"
+             alt="AirXpress Eats logo">
+        <h1>Driver Registration</h1>
+        <div class="subtitle">Join the AirXpress delivery team</div>
+    </div>
+
+    <div class="notice">
+        Create your driver account to begin onboarding.
+        Your account will remain pending until AirXpress reviews
+        your details and verifies your driver licence.
+        You cannot accept delivery requests before approval.
+    </div>
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="section-title">Personal details</div>
+
+        <div class="form-group">
+            <label for="name">Full name *</label>
+            <input type="text" id="name" name="name"
+                   value="{{ request.POST.name|default:'' }}"
+                   autocomplete="name" required maxlength="100">
+        </div>
+
+        <div class="form-group">
+            <label for="phone_number">Mobile phone number *</label>
+            <input type="tel" id="phone_number" name="phone_number"
+                   value="{{ request.POST.phone_number|default:'' }}"
+                   autocomplete="tel" required maxlength="20"
+                   placeholder="e.g. 082 123 4567">
+            <span class="hint">Use a number where AirXpress can reach you.</span>
+        </div>
+
+        <div class="section-title">Vehicle details</div>
+
+        <div class="form-group">
+            <label for="vehicle_make_model">Vehicle make and model</label>
+            <input type="text" id="vehicle_make_model"
+                   name="vehicle_make_model"
+                   value="{{ request.POST.vehicle_make_model|default:'' }}"
+                   maxlength="100" placeholder="e.g. Toyota Corolla">
+        </div>
+
+        <div class="form-group">
+            <label for="vehicle_colour">Vehicle colour</label>
+            <input type="text" id="vehicle_colour" name="vehicle_colour"
+                   value="{{ request.POST.vehicle_colour|default:'' }}"
+                   maxlength="50">
+        </div>
+
+        <div class="form-group">
+            <label for="vehicle_registration">Vehicle registration</label>
+            <input type="text" id="vehicle_registration"
+                   name="vehicle_registration"
+                   value="{{ request.POST.vehicle_registration|default:'' }}"
+                   maxlength="20">
+        </div>
+
+        <div class="section-title">Login details</div>
+
+        <div class="form-group">
+            <label for="username">Choose a username *</label>
+            <input type="text" id="username" name="username"
+                   value="{{ request.POST.username|default:'' }}"
+                   autocomplete="username" required maxlength="150">
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password *</label>
+            <input type="password" id="password" name="password"
+                   autocomplete="new-password" required>
+        </div>
+
+        <div class="form-group">
+            <label for="confirm_password">Confirm password *</label>
+            <input type="password" id="confirm_password"
+                   name="confirm_password"
+                   autocomplete="new-password" required>
+        </div>
+
+        <div class="form-group">
+            <div class="cf-turnstile"
+                 data-sitekey="{{ turnstile_site_key }}"
+                 data-action="driver_registration"></div>
+        </div>
+
+        <button type="submit">Create Driver Account</button>
+    </form>
+
+    <div class="links">
+        <a href="{% url 'driver_login' %}">Already registered? Sign in</a>
+        <a href="{% url 'home' %}">Back to AirXpress Eats</a>
+    </div>
+
+</div>
+</body>
+</html>

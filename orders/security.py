@@ -28,6 +28,14 @@ driver_required = user_passes_test(
 )
 
 
+def is_verified_driver(driver):
+    """Return True only when AirXpress has verified the driver's licence and profile."""
+    return (
+        driver.airxpress_verified
+        and driver.license_verification_status == "verified"
+    )
+
+
 def validate_driver_license_file(uploaded_file):
     """Validate driver licence size, extension and actual file signature."""
 

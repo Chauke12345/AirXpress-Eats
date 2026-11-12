@@ -164,6 +164,12 @@ class Driver(models.Model):
     name = models.CharField(
         max_length=100
     )
+
+    phone_number = models.CharField(
+        max_length=20,
+        blank=True,
+        default="",
+    )
     photo = models.ImageField(
         upload_to="drivers/",
         blank=True,
@@ -971,6 +977,25 @@ class CustomerNotification(models.Model):
     def __str__(self):
         return f"{self.title} - {self.customer.username}"
 
+
+
+class CustomerPushSubscription(models.Model):
+    """Browser push subscriptions belonging to customer accounts."""
+
+    customer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="customer_push_subscriptions",
+    )
+    endpoint = models.TextField(unique=True)
+    p256dh = models.TextField()
+    auth = models.TextField()
+    user_agent = models.CharField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Push subscription - {self.customer.username}"
 
 class DeliveryPricing(models.Model):
 

@@ -15,7 +15,7 @@ class TurnstileError(Exception):
     """Raised when human verification cannot be completed."""
 
 
-def verify_turnstile_token(token, expected_hostname):
+def verify_turnstile_token(token, expected_hostname, expected_action=None):
     """
     Verify a Cloudflare Turnstile token server-side.
 
@@ -80,7 +80,7 @@ def verify_turnstile_token(token, expected_hostname):
         logger.warning("Turnstile hostname validation failed.")
         raise TurnstileError("Human verification failed.")
 
-    if result.get("action") != TURNSTILE_REGISTRATION_ACTION:
+    if result.get("action") != (expected_action or TURNSTILE_REGISTRATION_ACTION):
         logger.warning("Turnstile action validation failed.")
         raise TurnstileError("Human verification failed.")
 

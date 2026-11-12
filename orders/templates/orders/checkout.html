@@ -845,6 +845,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 {% include "orders/partials/customer_notification_bell.html" %}
+<script defer src="{% static 'orders/js/customer-journey.js' %}" data-page="checkout" data-shop-slug="{{ shop.slug }}" data-shop-name="{{ shop.name|escape }}" data-customer-authenticated="{% if user.is_authenticated and user.customer_profile and not user.is_staff and not user.is_superuser %}true{% else %}false{% endif %}"></script>
 </body>
 </html>
 

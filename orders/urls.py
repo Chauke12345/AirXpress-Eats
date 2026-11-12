@@ -215,6 +215,11 @@ urlpatterns = [
     # =========================================================
 
     path(
+        "driver/register/",
+        views.driver_register,
+        name="driver_register",
+    ),
+    path(
         "driver/login/",
         views.driver_login,
         name="driver_login",
@@ -262,6 +267,30 @@ urlpatterns = [
         "driver/push/unsubscribe/",
         views.driver_push_unsubscribe,
         name="driver_push_unsubscribe",
+    ),
+    # =========================================================
+    # CUSTOMER WEB PUSH
+    # =========================================================
+
+    path(
+        "customer-push-sw.js",
+        views.customer_push_service_worker,
+        name="customer_push_service_worker",
+    ),
+    path(
+        "customer/push/vapid-public-key/",
+        views.customer_push_vapid_public_key,
+        name="customer_push_vapid_public_key",
+    ),
+    path(
+        "customer/push/subscribe/",
+        views.customer_push_subscribe,
+        name="customer_push_subscribe",
+    ),
+    path(
+        "customer/push/unsubscribe/",
+        views.customer_push_unsubscribe,
+        name="customer_push_unsubscribe",
     ),
 
     path(

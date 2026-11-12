@@ -63,6 +63,7 @@ from .models import (
     CustomerProfile,
     CustomerCart,
     CustomerNotification,
+    CustomerPushSubscription,
     Driver,
     DriverPushSubscription,
     DriverPayout,
@@ -88,7 +89,7 @@ from .mapbox import MapboxError, calculate_driving_distance, calculate_driving_d
 from .services import send_delivery_otp_sms
 from .customer_notifications import notify_customer_for_status_history
 from .turnstile import TurnstileError, verify_turnstile_token
-from .security import driver_required, validate_driver_license_file, is_driver
+from .security import driver_required, validate_driver_license_file, is_driver, is_verified_driver
 
 
 
@@ -3438,6 +3439,107 @@ def owner_mark_refund_notification_sent(request, refund_id):
     )
     return redirect("owner_refund_enquiries")
 
+def driver_register(request):
+    from django.contrib.auth import get_user_model
+
+    UserModel = get_user_model()
+    context = {"turnstile_site_key": settings.TURNSTILE_SITE_KEY}
+
+    if request.user.is_authenticated:
+        if is_driver(request.user):
+            return redirect("driver_dashboard")
+        return redirect("driver_login")
+
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        phone_number = request.POST.get("phone_number", "").strip()
+        username = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "")
+        confirm_password = request.POST.get("confirm_password", "")
+        vehicle_make_model = request.POST.get("vehicle_make_model", "").strip()
+        vehicle_colour = request.POST.get("vehicle_colour", "").strip()
+        vehicle_registration = request.POST.get("vehicle_registration", "").strip().upper()
+
+        phone_digits = "".join(character for character in phone_number if character.isdigit())
+        allowed_phone_characters = set("0123456789+ -()")
+
+        if not all([name, phone_number, username, password, confirm_password]):
+            messages.error(request, "Please complete all required fields.")
+            return render(request, "orders/driver_register.html", context)
+
+        if (
+            not set(phone_number).issubset(allowed_phone_characters)
+            or not 10 <= len(phone_digits) <= 15
+        ):
+            messages.error(request, "Enter a valid phone number, including your country code if applicable.")
+            return render(request, "orders/driver_register.html", context)
+
+        if password != confirm_password:
+            messages.error(request, "The passwords do not match.")
+            return render(request, "orders/driver_register.html", context)
+
+        if UserModel.objects.filter(username__iexact=username).exists():
+            messages.error(request, "That username is already in use.")
+            return render(request, "orders/driver_register.html", context)
+
+        if Driver.objects.filter(phone_number=phone_number).exists():
+            messages.error(request, "That phone number is already registered.")
+            return render(request, "orders/driver_register.html", context)
+
+        user = UserModel(username=username, first_name=name.split()[0])
+
+        try:
+            validate_password(password, user=user)
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+            return render(request, "orders/driver_register.html", context)
+
+        # Verify the human-check token before creating any account.
+        token = request.POST.get("cf-turnstile-response", "")
+
+        try:
+            request_host = urlsplit(f"//{request.get_host()}").hostname
+            verify_turnstile_token(
+                token,
+                request_host,
+                expected_action="driver_registration",
+            )
+        except TurnstileError as exc:
+            messages.error(request, str(exc))
+            return render(request, "orders/driver_register.html", context)
+
+        try:
+            with transaction.atomic():
+                user = UserModel.objects.create_user(
+                    username=username,
+                    password=password,
+                    first_name=name.split()[0],
+                )
+
+                Driver.objects.create(
+                    user=user,
+                    name=name,
+                    phone_number=phone_number,
+                    vehicle_make_model=vehicle_make_model,
+                    vehicle_colour=vehicle_colour,
+                    vehicle_registration=vehicle_registration,
+                    license_verification_status="pending",
+                    airxpress_verified=False,
+                    is_available=False,
+                )
+        except Exception:
+            messages.error(request, "Registration could not be completed. Please try again.")
+            raise
+
+        messages.success(
+            request,
+            "Your driver account has been created. Please wait for AirXpress to review your details and verify your licence before accepting deliveries.",
+        )
+        return redirect("driver_login")
+
+    return render(request, "orders/driver_register.html", context)
+
+
 def driver_login(request):
 
     if request.user.is_authenticated:
@@ -3448,6 +3550,8 @@ def driver_login(request):
             driver = None
 
         if driver is not None:
+            if not driver.driver_license or driver.license_verification_status == "rejected":
+                return redirect("driver_upload_license")
             return redirect("driver_dashboard")
 
         logout(request)
@@ -3530,9 +3634,13 @@ def driver_login(request):
 
                 login(request, user)
 
-                return redirect(
-                    "driver_dashboard"
-                )
+                if (
+                    not driver.driver_license
+                    or driver.license_verification_status == "rejected"
+                ):
+                    return redirect("driver_upload_license")
+
+                return redirect("driver_dashboard")
 
             messages.error(
                 request,
@@ -3862,10 +3970,18 @@ def driver_update_banking(request):
 
 @driver_required
 def driver_upload_license(request):
-    if request.method != "POST":
+    driver = request.user.driver_profile
+
+    if is_verified_driver(driver):
         return redirect("driver_dashboard")
 
-    driver = request.user.driver_profile
+    if request.method == "GET":
+        return render(
+            request,
+            "orders/driver_upload_license.html",
+            {"driver": driver},
+        )
+
     license_file = request.FILES.get("driver_license")
 
     if not license_file:
@@ -3873,13 +3989,13 @@ def driver_upload_license(request):
             request,
             "Please select a driver licence file before uploading.",
         )
-        return redirect("driver_dashboard")
+        return redirect("driver_upload_license")
 
     try:
         validate_driver_license_file(license_file)
     except ValidationError as exc:
         messages.error(request, exc.messages[0])
-        return redirect("driver_dashboard")
+        return redirect("driver_upload_license")
 
     driver.driver_license = license_file
     driver.license_verification_status = "pending"
@@ -3895,12 +4011,10 @@ def driver_upload_license(request):
 
     messages.success(
         request,
-        "Driver licence uploaded successfully. Your licence is now pending AirXpress verification.",
+        "Your driver licence was uploaded successfully. AirXpress will review it before activating your driver account.",
     )
 
     return redirect("driver_dashboard")
-
-
 
 
 @driver_required
@@ -4004,6 +4118,9 @@ def driver_dashboard(request):
 
     driver = request.user.driver_profile
 
+    if not driver.driver_license or driver.license_verification_status == "rejected":
+        return redirect("driver_upload_license")
+
     pending_requests = (
         DeliveryRequest.objects
         .filter(
@@ -4018,6 +4135,9 @@ def driver_dashboard(request):
             "-created_at"
         )
     )
+
+    if not is_verified_driver(driver):
+        pending_requests = pending_requests.none()
 
     assigned_orders = (
         Order.objects
@@ -4419,6 +4539,11 @@ def driver_decline_request(
 
     driver = request.user.driver_profile
 
+    if not is_verified_driver(driver):
+        messages.warning(request, "Your driver profile is not yet verified by AirXpress.")
+        return redirect("driver_dashboard")
+
+
     delivery_request = get_object_or_404(
         DeliveryRequest,
         id=request_id,
@@ -4464,6 +4589,11 @@ def driver_pickup_order(request, order_id):
         return redirect("driver_dashboard")
 
     driver = request.user.driver_profile
+
+    if not is_verified_driver(driver):
+        messages.warning(request, "Your driver profile is not yet verified by AirXpress.")
+        return redirect("driver_dashboard")
+
 
     with transaction.atomic():
 
@@ -4614,6 +4744,11 @@ def driver_deliver_order(request, order_id):
 
     driver = request.user.driver_profile
 
+    if not is_verified_driver(driver):
+        messages.warning(request, "Your driver profile is not yet verified by AirXpress.")
+        return redirect("driver_dashboard")
+
+
     with transaction.atomic():
 
         order = get_object_or_404(
@@ -4681,6 +4816,11 @@ def driver_complete_delivery(request, order_id):
         return redirect("driver_dashboard")
 
     driver = request.user.driver_profile
+
+    if not is_verified_driver(driver):
+        messages.warning(request, "Your driver profile is not yet verified by AirXpress.")
+        return redirect("driver_dashboard")
+
 
     with transaction.atomic():
 
@@ -4774,6 +4914,11 @@ def driver_complete_delivery(request, order_id):
 )
 def driver_scan_delivery_qr(request, order_id):
     driver = request.user.driver_profile
+
+    if not is_verified_driver(driver):
+        messages.warning(request, "Your driver profile is not yet verified by AirXpress.")
+        return redirect("driver_dashboard")
+
     order = get_object_or_404(Order, id=order_id, driver=driver)
 
     if order.status != "delivered":
@@ -4796,6 +4941,13 @@ def driver_verify_delivery_qr(request, order_id):
         return JsonResponse({"success": False, "message": "POST is required."}, status=405)
 
     driver = request.user.driver_profile
+
+    if not is_verified_driver(driver):
+        return JsonResponse({
+            "success": False,
+            "message": "Your driver profile is not yet verified by AirXpress.",
+        }, status=403)
+
     try:
         token = uuid.UUID((request.POST.get("token") or "").strip())
     except (ValueError, TypeError, AttributeError):
@@ -8371,6 +8523,104 @@ def driver_push_unsubscribe(request):
 
 
 # =========================================================
+# CUSTOMER WEB PUSH SUBSCRIPTIONS
+# =========================================================
+
+@customer_required(json_response=True)
+def customer_push_vapid_public_key(request):
+    """Return the public VAPID key to a signed-in customer."""
+    public_key = getattr(settings, "WEBPUSH_VAPID_PUBLIC_KEY", "").strip()
+
+    if not public_key:
+        return JsonResponse(
+            {"error": "Push notifications are not configured yet."},
+            status=503,
+        )
+
+    return JsonResponse({"publicKey": public_key})
+
+
+@customer_required(json_response=True)
+@require_POST
+def customer_push_subscribe(request):
+    """Save or refresh the signed-in customer's browser subscription."""
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({"error": "Invalid JSON payload."}, status=400)
+
+    endpoint = data.get("endpoint")
+    keys = data.get("keys")
+
+    if not isinstance(endpoint, str) or not endpoint.startswith("https://"):
+        return JsonResponse({"error": "Invalid push endpoint."}, status=400)
+
+    if len(endpoint) > 4000 or not isinstance(keys, dict):
+        return JsonResponse({"error": "Invalid subscription data."}, status=400)
+
+    p256dh = keys.get("p256dh")
+    auth_key = keys.get("auth")
+
+    if not all(
+        isinstance(value, str) and value
+        for value in (p256dh, auth_key)
+    ):
+        return JsonResponse(
+            {"error": "Subscription keys are missing."},
+            status=400,
+        )
+
+    if len(p256dh) > 500 or len(auth_key) > 500:
+        return JsonResponse(
+            {"error": "Subscription keys are too long."},
+            status=400,
+        )
+
+    try:
+        subscription, created = CustomerPushSubscription.objects.update_or_create(
+            endpoint=endpoint,
+            defaults={
+                "customer": request.user,
+                "p256dh": p256dh,
+                "auth": auth_key,
+                "user_agent": request.META.get("HTTP_USER_AGENT", "")[:500],
+            },
+        )
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception(
+            "Could not save customer push subscription."
+        )
+        return JsonResponse(
+            {"error": "Could not save notification settings."},
+            status=500,
+        )
+
+    return JsonResponse({"ok": True, "created": created})
+
+
+@customer_required(json_response=True)
+@require_POST
+def customer_push_unsubscribe(request):
+    """Remove only the signed-in customer's browser subscription."""
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({"error": "Invalid JSON payload."}, status=400)
+
+    endpoint = data.get("endpoint")
+
+    if not isinstance(endpoint, str) or not endpoint.startswith("https://"):
+        return JsonResponse({"error": "Invalid push endpoint."}, status=400)
+
+    deleted, _ = CustomerPushSubscription.objects.filter(
+        customer=request.user,
+        endpoint=endpoint,
+    ).delete()
+
+    return JsonResponse({"ok": True, "removed": bool(deleted)})
+
+# =========================================================
 # ROOT-SCOPED DRIVER PUSH SERVICE WORKER
 # =========================================================
 
@@ -8396,6 +8646,27 @@ def driver_push_service_worker(request):
 
 
 # =========================================================
+# =========================================================
+# ROOT-SCOPED CUSTOMER PUSH SERVICE WORKER
+# =========================================================
+
+def customer_push_service_worker(request):
+    """Serve the customer service worker at the site root."""
+    worker_path = Path(settings.BASE_DIR) / "static" / "customer-push-sw.js"
+
+    try:
+        worker_code = worker_path.read_text(encoding="utf-8")
+    except OSError:
+        return HttpResponse("Service worker unavailable.", status=404)
+
+    response = HttpResponse(
+        worker_code,
+        content_type="application/javascript; charset=utf-8",
+    )
+    response["Service-Worker-Allowed"] = "/"
+    response["Cache-Control"] = "no-cache"
+    return response
+
 # YOCO PAYMENT
 # =========================================================
 
