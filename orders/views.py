@@ -1160,19 +1160,29 @@ def checkout(request, shop_slug):
             request.user.customer_profile.whatsapp_number.strip()
         )
     if request.method == "GET":
-        previous_order = (
-            Order.objects
-            .filter(
-                customer_account=request.user,
-                delivery_address__isnull=False,
-            )
-            .exclude(delivery_address="")
-            .order_by("-created_at")
-            .first()
-        )
+        if request.user.is_authenticated and hasattr(
+            request.user,
+            "customer_profile",
+        ):
+            delivery_address = (
+                request.user.customer_profile.last_delivery_address
+            ).strip()
 
-        if previous_order:
-            delivery_address = previous_order.delivery_address
+        # Retain compatibility with addresses saved on older orders.
+        if not delivery_address:
+            previous_order = (
+                Order.objects
+                .filter(
+                    customer_account=request.user,
+                    delivery_address__isnull=False,
+                )
+                .exclude(delivery_address="")
+                .order_by("-created_at")
+                .first()
+            )
+
+            if previous_order:
+                delivery_address = previous_order.delivery_address
 
     if request.method == "POST":
 
@@ -1320,6 +1330,17 @@ def checkout(request, shop_slug):
                     )
 
                 else:
+
+                    if (
+                        parsed_distance > 0
+                        and request.user.is_authenticated
+                        and hasattr(request.user, "customer_profile")
+                    ):
+                        CustomerProfile.objects.filter(
+                            user=request.user
+                        ).update(
+                            last_delivery_address=delivery_address
+                        )
 
                     if parsed_distance <= 0:
                         messages.error(

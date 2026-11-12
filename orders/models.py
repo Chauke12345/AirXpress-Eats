@@ -283,6 +283,12 @@ class CustomerProfile(models.Model):
         blank=True,
     )
 
+    last_delivery_address = models.TextField(
+        blank=True,
+        default="",
+        help_text="Customer's most recently verified delivery address.",
+    )
+
     bank_name = models.CharField(
         max_length=100,
         blank=True,

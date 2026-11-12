@@ -303,6 +303,189 @@
 }
 /* END SKOP SUNDAYS RETURNS */
 
+
+
+/* MASUKU INC. - RESPONSIVE HORIZONTAL MENU */
+.masuku-shop-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+}
+
+.masuku-shop-grid .category-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    background: #101010 !important;
+    border: 1px solid #302719 !important;
+    border-radius: 18px !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+}
+
+.masuku-shop-grid .category-title {
+    color: #f2b544 !important;
+    border-bottom: 1px solid #493719;
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+}
+
+.masuku-menu-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    gap: 18px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+.masuku-menu-grid .cart-menu-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 0 16px !important;
+    overflow: hidden !important;
+    background: #191919 !important;
+    color: #fff !important;
+    border: 1px solid #3a3021 !important;
+    border-radius: 15px !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 5px 18px rgba(0,0,0,.22) !important;
+}
+
+.masuku-menu-grid .menu-item-image {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 4 / 3 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    background: #25211b !important;
+    border-radius: 0 !important;
+}
+
+.masuku-menu-grid .menu-item-image img {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+.masuku-menu-grid .menu-item-image-placeholder {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #d6a23b !important;
+    font-size: 42px !important;
+}
+
+.masuku-menu-grid .cart-menu-info {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    padding: 0 14px !important;
+    color: #fff !important;
+    overflow-wrap: anywhere !important;
+}
+
+.masuku-menu-grid .cart-menu-info strong {
+    color: #fff !important;
+    font-size: 17px !important;
+    line-height: 1.35 !important;
+}
+
+.masuku-menu-grid .cart-menu-info span {
+    color: #c9c2b6 !important;
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+}
+
+.masuku-menu-grid .cart-menu-info .menu-price {
+    color: #f2b544 !important;
+    font-size: 20px !important;
+    font-weight: 800 !important;
+}
+
+.masuku-menu-grid .add-cart-form {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: auto !important;
+    margin: auto 14px 0 !important;
+}
+
+.masuku-menu-grid .quantity-control {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    width: 100% !important;
+    color: #eee !important;
+}
+
+.masuku-menu-grid .quantity-control input {
+    width: 75px !important;
+    min-height: 40px !important;
+    color: #111 !important;
+    background: #fff !important;
+    border: 1px solid #c9a45b !important;
+    border-radius: 8px !important;
+}
+
+.masuku-menu-grid .add-cart-button {
+    width: 100% !important;
+    min-height: 44px !important;
+    white-space: normal !important;
+    color: #17120a !important;
+    background: #e8a92e !important;
+    border: 0 !important;
+    border-radius: 9px !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+}
+
+.masuku-menu-grid .add-cart-button:hover {
+    background: #ffc451 !important;
+}
+
+@media (max-width: 1050px) {
+    .masuku-menu-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 560px) {
+    .masuku-shop-grid .category-card {
+        padding: 12px !important;
+    }
+
+    .masuku-menu-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 16px !important;
+    }
+
+    .masuku-menu-grid .menu-item-image {
+        aspect-ratio: 16 / 9 !important;
+    }
+
+    .masuku-menu-grid .cart-menu-info {
+        padding: 0 13px !important;
+    }
+}
+/* END MASUKU INC. MENU */
+
 </style>
 </head>
 
@@ -2556,7 +2739,7 @@ textarea {
         </div>
         {% endif %}
         {% regroup menu_items by category as category_groups %}
-<div class="category-grid{% if shop.pk == 25 %} skop-sundays-grid{% endif %}{% if shop.slug == "porangi-world" %} porang-world-grid{% endif %}{% if shop.slug == "vele-ns-catering" %} vele-catering-grid{% endif %}{% if shop.slug == "munchie-fellas" %} munchie-shop-grid{% endif %}{% if preview_mode and shop.pk == 20 and shop.name == "Mozeka & Sons Catering Services" %} mozeka-preview-grid{% endif %}">
+<div class="category-grid{% if shop.pk == 16 %} masuku-shop-grid{% endif %}{% if shop.pk == 25 %} skop-sundays-grid{% endif %}{% if shop.slug == "porangi-world" %} porang-world-grid{% endif %}{% if shop.slug == "vele-ns-catering" %} vele-catering-grid{% endif %}{% if shop.slug == "munchie-fellas" %} munchie-shop-grid{% endif %}{% if preview_mode and shop.pk == 20 and shop.name == "Mozeka & Sons Catering Services" %} mozeka-preview-grid{% endif %}">
 
             {% for group in category_groups %}
 
@@ -2570,7 +2753,9 @@ textarea {
                         {% endif %}
                     </h3>
 
-                    {% if shop.slug == "vele-ns-catering" %}
+                    {% if shop.pk == 16 %}
+                    <div class="masuku-menu-grid">
+                    {% elif shop.slug == "vele-ns-catering" %}
                     <div class="vele-menu-grid">
                     {% elif shop.pk == 25 %}
                     <div class="skop-sundays-menu-grid">
@@ -2746,7 +2931,7 @@ textarea {
 
                     {% endfor %}
 
-                    {% if shop.slug == "vele-ns-catering" or shop.slug == "munchie-fellas" or shop.pk == 5 or shop.pk == 20 or shop.pk == 25 %}
+                    {% if shop.pk == 16 or shop.slug == "vele-ns-catering" or shop.slug == "munchie-fellas" or shop.pk == 5 or shop.pk == 20 or shop.pk == 25 %}
                     </div>
                     {% endif %}
 
