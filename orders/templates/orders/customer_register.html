@@ -195,6 +195,7 @@
 
     <form method="post">
         {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next|default:'' }}">
 
         <label for="id_full_name">Full Name</label>
         {{ form.full_name }}
@@ -369,5 +370,7 @@
 })();
 </script>
 
+
+{% include "orders/partials/customer_notification_bell.html" %}
 </body>
 </html>

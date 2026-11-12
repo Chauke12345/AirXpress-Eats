@@ -38,18 +38,26 @@ class CustomerPasswordChangeMiddleware:
         return self.get_response(request)
 
 class CustomerInactivityTimeoutMiddleware:
-    """Enforce a 10-minute inactivity limit for authenticated customers."""
+    """
+    Apply inactivity expiry only to customer accounts and the
+    platform administrator. Shop and driver sessions are exempt.
+    """
 
-    TIMEOUT_SECONDS = 10 * 60
-    WARNING_SECONDS = 8 * 60
-    LAST_ACTIVITY_KEY = "airxpress_customer_last_activity"
+    TIMEOUT_SECONDS = 30 * 60
+    WARNING_SECONDS = 28 * 60
+
+    CUSTOMER_KEY = "airxpress_customer_last_activity"
+    ADMIN_KEY = "airxpress_admin_last_activity"
 
     EXEMPT_PATHS = (
         "/customer/login/",
         "/customer/logout/",
+        "/owner/login/",
+        "/owner/logout/",
         "/payment/payfast/",
         "/static/",
         "/media/",
+        "/track/",  # Tracking requests do not refresh customer activity.
     )
 
     def __init__(self, get_response):
@@ -66,41 +74,62 @@ class CustomerInactivityTimeoutMiddleware:
         if (
             user is None
             or not user.is_authenticated
-            or user.is_staff
-            or user.is_superuser
             or any(path.startswith(item) for item in self.EXEMPT_PATHS)
         ):
             return self.get_response(request)
 
-        try:
-            is_customer = user.customer_profile is not None
-        except Exception:
-            is_customer = False
+        # Platform administrator has a separate protected session.
+        if user.is_superuser:
+            activity_key = self.ADMIN_KEY
+            login_url = "/owner/login/"
 
-        if not is_customer:
-            return self.get_response(request)
+        else:
+            # Drivers and all shop accounts control their own sessions.
+            try:
+                user.driver_profile
+                return self.get_response(request)
+            except Exception:
+                pass
+
+            try:
+                user.staff_profile
+                return self.get_response(request)
+            except Exception:
+                pass
+
+            # Ordinary Django staff accounts are not customer accounts.
+            if user.is_staff:
+                return self.get_response(request)
+
+            try:
+                user.customer_profile
+            except Exception:
+                return self.get_response(request)
+
+            activity_key = self.CUSTOMER_KEY
+            login_url = "/customer/login/"
 
         now = int(time.time())
-        last_activity = request.session.get(self.LAST_ACTIVITY_KEY)
+        last_activity = request.session.get(activity_key)
+        inactive_for = 0
 
-        if last_activity is None:
-            request.session[self.LAST_ACTIVITY_KEY] = now
-            request.session.set_expiry(self.TIMEOUT_SECONDS)
-            request.inactivity_seconds = 0
-            request.inactivity_warning = False
-        else:
+        if last_activity is not None:
             try:
                 inactive_for = max(0, now - int(last_activity))
             except (TypeError, ValueError):
                 inactive_for = 0
-                request.session[self.LAST_ACTIVITY_KEY] = now
 
             if inactive_for >= self.TIMEOUT_SECONDS:
                 logout(request)
-                request.session.flush()
-                return redirect("customer_login")
+                return redirect(login_url)
 
-            request.inactivity_seconds = inactive_for
-            request.inactivity_warning = inactive_for >= self.WARNING_SECONDS
+        # Refresh activity and the server-side session expiry.
+        request.session[activity_key] = now
+        request.session.set_expiry(self.TIMEOUT_SECONDS)
+
+        request.inactivity_seconds = inactive_for
+        request.inactivity_warning = (
+            inactive_for >= self.WARNING_SECONDS
+        )
 
         return self.get_response(request)

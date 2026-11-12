@@ -1,0 +1,117 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications | AirXpress Eats</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: #f5f5f5;
+            color: #222;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        .header {
+            background: #111;
+            color: white;
+            padding: 24px 18px;
+            text-align: center;
+        }
+        .header h1 { margin: 0 0 8px; }
+        .header a { color: #ff8a36; text-decoration: none; }
+        .container {
+            width: min(760px, calc(100% - 28px));
+            margin: 28px auto;
+        }
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .button {
+            display: inline-block;
+            border: 0;
+            border-radius: 22px;
+            padding: 10px 16px;
+            background: #ff6800;
+            color: white;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .notification {
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            padding: 17px;
+            margin-bottom: 12px;
+        }
+        .notification.unread {
+            border-left: 5px solid #ff6800;
+            background: #fffaf6;
+        }
+        .notification h2 { font-size: 16px; margin: 0 0 7px; }
+        .notification p { margin: 0 0 10px; line-height: 1.5; }
+        .meta { color: #777; font-size: 12px; }
+        .empty {
+            background: white;
+            border-radius: 12px;
+            padding: 35px 20px;
+            text-align: center;
+        }
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        form { margin: 0; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Your notifications</h1>
+        <p>Order updates and important messages from AirXpress Eats</p>
+        <a href="{% url 'home' %}">Back to AirXpress Eats</a>
+    </header>
+
+    <main class="container">
+        <div class="toolbar">
+            <strong>{{ notification_unread_count }} unread</strong>
+            {% if notification_unread_count %}
+            <form method="post" action="{% url 'customer_notifications_mark_all_read' %}">
+                {% csrf_token %}
+                <button class="button" type="submit">Mark all as read</button>
+            </form>
+            {% endif %}
+        </div>
+
+        {% for notification in notifications %}
+        <article class="notification {% if not notification.is_read %}unread{% endif %}">
+            <h2>{{ notification.title }}</h2>
+            <p>{{ notification.message }}</p>
+            <div class="toolbar">
+                <span class="meta">{{ notification.created_at|date:"d M Y, H:i" }}</span>
+                <div class="actions">
+                    {% if notification.target_url %}
+                    <a class="button" href="{{ notification.target_url }}">View update</a>
+                    {% endif %}
+                    {% if not notification.is_read %}
+                    <form method="post" action="{% url 'customer_notification_mark_read' notification.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'customer_notifications' %}">
+                        <button class="button" type="submit">Mark as read</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+        {% empty %}
+        <div class="empty">
+            <h2>You're all caught up!</h2>
+            <p>Your new order updates will appear here.</p>
+        </div>
+        {% endfor %}
+    </main>
+</body>
+</html>

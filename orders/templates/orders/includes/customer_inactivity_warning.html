@@ -25,8 +25,8 @@
   const message = document.getElementById("customer-idle-message");
   const csrfInput = document.querySelector("#customer-idle-csrf-form [name=csrfmiddlewaretoken]");
   const csrfToken = csrfInput ? csrfInput.value : "";
-  const timeoutMs = 10 * 60 * 1000;
-  const warningMs = 8 * 60 * 1000;
+  const timeoutMs = 30 * 60 * 1000;
+  const warningMs = 28 * 60 * 1000;
 
   let lastActivity = Date.now() -
       (Math.max(0, Number(panel.dataset.inactiveSeconds) || 0) * 1000);
@@ -101,16 +101,38 @@
     keepAlive();
   });
 
+  let logoutStarted = false;
+
+  async function expireSession() {
+    if (logoutStarted) return;
+    logoutStarted = true;
+
+    message.textContent = "Your session has expired. Signing you out securely. Your orders have not been deleted.";
+    stayButton.textContent = "Signing out...";
+    stayButton.disabled = true;
+    showWarning();
+
+    try {
+      await fetch("/customer/logout/", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "X-CSRFToken": csrfToken,
+          "X-Requested-With": "XMLHttpRequest"
+        }
+      });
+    } catch (error) {
+      // The server-side session expiry remains the fallback.
+    }
+
+    window.location.replace("/customer/login/");
+  }
+
   function checkInactivity() {
     const inactiveFor = Date.now() - lastActivity;
 
     if (inactiveFor >= timeoutMs) {
-      message.textContent = "Your session has expired for security. Your orders have not been deleted. Please sign in again.";
-      stayButton.textContent = "Go to sign in";
-      stayButton.onclick = function () {
-        window.location.href = "/customer/login/";
-      };
-      showWarning();
+      expireSession();
     } else if (inactiveFor >= warningMs) {
       showWarning();
     }

@@ -333,55 +333,10 @@
     </div>
 
     <div class="lookup">
-
-        <h2>Find Your Orders</h2>
-
+        <h2>Your Orders</h2>
         <p>
-            Enter the name and WhatsApp number used when placing your order.
+            These are the orders linked to your AirXpress Eats customer account.
         </p>
-
-        <form method="post">
-            {% csrf_token %}
-
-            <div class="form-grid">
-
-                <div class="form-group">
-                    <label for="customer_name">Your Name</label>
-
-                    <input
-                        type="text"
-                        id="customer_name"
-                        name="customer_name"
-                        value="{{ customer_name }}"
-                        placeholder="Enter your name"
-                        required
-                    >
-                </div>
-
-                <div class="form-group">
-                    <label for="whatsapp_number">WhatsApp / Contact Number</label>
-
-                    <input
-                        type="text"
-                        id="whatsapp_number"
-                        name="whatsapp_number"
-                        value="{{ whatsapp_number }}"
-                        placeholder="e.g. 0733141222"
-                        required
-                    >
-                </div>
-
-                <button
-                    type="submit"
-                    class="lookup-button"
-                >
-                    Find My Orders
-                </button>
-
-            </div>
-
-        </form>
-
     </div>
 
     {% if messages %}
@@ -559,21 +514,10 @@
 
         <div class="empty">
 
-            <h2>
-                {% if customer_name and whatsapp_number %}
-                    No Orders Found
-                {% else %}
-                    Find Your Previous Orders
-                {% endif %}
-            </h2>
+            <h2>No Orders Found</h2>
 
             <p>
-                {% if customer_name and whatsapp_number %}
-                    We could not find any orders matching those details.
-                    Please check your name and WhatsApp number.
-                {% else %}
-                    Enter your name and WhatsApp number above to view your previous AirXpress Eats orders.
-                {% endif %}
+                You do not have any orders linked to your customer account for this shop yet.
             </p>
 
             <a
@@ -591,6 +535,8 @@
 
 
 {% include 'orders/includes/customer_inactivity_warning.html' %}
+
+{% include "orders/partials/customer_notification_bell.html" %}
 </body>
 </html>
 

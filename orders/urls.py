@@ -543,4 +543,21 @@ path(
         "owner/shop-payout-batch/<int:batch_id>/statement/",
         views.download_shop_payout_batch_statement,
         name="download_shop_payout_batch_statement",
-    ),]
+    ),
+    # CUSTOMER NOTIFICATIONS
+    path(
+        "customer/notifications/",
+        views.customer_notifications,
+        name="customer_notifications",
+    ),
+    path(
+        "customer/notifications/<int:notification_id>/read/",
+        views.customer_notification_mark_read,
+        name="customer_notification_mark_read",
+    ),
+    path(
+        "customer/notifications/read-all/",
+        views.customer_notifications_mark_all_read,
+        name="customer_notifications_mark_all_read",
+    ),
+]

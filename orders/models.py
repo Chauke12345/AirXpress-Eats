@@ -314,6 +314,41 @@ class CustomerProfile(models.Model):
         return self.user.username
 
 # =========================================================
+# CUSTOMER SAVED CART
+# =========================================================
+
+class CustomerCart(models.Model):
+    customer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="saved_carts",
+    )
+    shop = models.ForeignKey(
+        Shop,
+        on_delete=models.CASCADE,
+        related_name="saved_customer_carts",
+    )
+    items = models.JSONField(default=dict, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    reminder_1_sent_at = models.DateTimeField(null=True, blank=True)
+    reminder_2_sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["customer", "shop"],
+                condition=models.Q(is_active=True),
+                name="unique_active_customer_shop_cart",
+            ),
+        ]
+
+    def __str__(self):
+        return f"Cart - {self.customer.username} - {self.shop.name}"
+
+# =========================================================
 # MENU CATEGORY
 # =========================================================
 
@@ -875,6 +910,67 @@ class OrderStatusHistory(models.Model):
             f"Order #{self.order.id} - "
             f"{self.get_status_display()}"
         )
+
+
+class CustomerNotification(models.Model):
+    NOTIFICATION_TYPES = [
+        ("order_update", "Order Update"),
+        ("payment_update", "Payment Update"),
+        ("cart_reminder", "Cart Reminder"),
+        ("general", "General"),
+    ]
+
+    customer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="customer_notifications",
+    )
+
+    order = models.ForeignKey(
+        "Order",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="customer_notifications",
+    )
+
+    status_history = models.OneToOneField(
+        "OrderStatusHistory",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="customer_notification",
+    )
+
+    notification_type = models.CharField(
+        max_length=30,
+        choices=NOTIFICATION_TYPES,
+        default="general",
+    )
+
+    title = models.CharField(max_length=150)
+    message = models.TextField()
+    target_url = models.CharField(max_length=500, blank=True, default="")
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(
+                fields=["customer", "is_read"],
+                name="cust_notif_unread_idx",
+            ),
+            models.Index(
+                fields=["customer", "-created_at"],
+                name="cust_notif_date_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.title} - {self.customer.username}"
+
 
 class DeliveryPricing(models.Model):
 

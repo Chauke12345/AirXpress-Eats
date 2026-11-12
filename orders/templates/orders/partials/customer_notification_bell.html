@@ -1,0 +1,66 @@
+{% if user.is_authenticated %}
+<style>
+    .ax-customer-notification-bell {
+        position: fixed;
+        right: 22px;
+        bottom: 22px;
+        z-index: 99999;
+        width: 58px;
+        height: 58px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #ff6800;
+        color: #fff !important;
+        text-decoration: none !important;
+        font-size: 25px;
+        box-shadow: 0 5px 20px rgba(0,0,0,.25);
+    }
+    .ax-customer-notification-bell:hover {
+        background: #e85e00;
+        transform: translateY(-2px);
+    }
+    .ax-customer-notification-count {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        min-width: 22px;
+        height: 22px;
+        padding: 0 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid white;
+        border-radius: 20px;
+        background: #d71920;
+        color: white;
+        font: bold 11px Arial, sans-serif;
+    }
+    @media (max-width: 600px) {
+        .ax-customer-notification-bell {
+            right: 15px;
+            bottom: 15px;
+            width: 52px;
+            height: 52px;
+        }
+    }
+</style>
+<a
+    class="ax-customer-notification-bell"
+    href="{% url 'customer_notifications' %}"
+    aria-label="Notifications: {{ customer_notification_unread_count }} unread"
+    title="Notifications"
+>
+    <span aria-hidden="true">&#128276;</span>
+    {% if customer_notification_unread_count %}
+    <span class="ax-customer-notification-count">
+        {% if customer_notification_unread_count > 99 %}
+            99+
+        {% else %}
+            {{ customer_notification_unread_count }}
+        {% endif %}
+    </span>
+    {% endif %}
+</a>
+{% endif %}

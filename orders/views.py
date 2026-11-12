@@ -8,9 +8,10 @@ import base64
 import qrcode
 from datetime import timedelta
 from pathlib import Path
-from urllib.parse import quote, urlsplit
+from urllib.parse import quote, urlsplit, urlencode
 from decimal import Decimal, InvalidOperation, ROUND_CEILING, ROUND_HALF_UP
 from django.contrib.auth.password_validation import validate_password
+from functools import wraps
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -51,6 +52,7 @@ from django.db import models
 from django.db import transaction
 from django.db.models import Sum, Count, Avg
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .forms import (
     CustomerOrderForm,
@@ -59,6 +61,8 @@ from .forms import (
 from .models import (
     Category,
     CustomerProfile,
+    CustomerCart,
+    CustomerNotification,
     Driver,
     DriverPushSubscription,
     DriverPayout,
@@ -82,8 +86,50 @@ from .models import (
 
 from .mapbox import MapboxError, calculate_driving_distance, calculate_driving_distance_to_coordinates, calculate_driver_route
 from .services import send_delivery_otp_sms
+from .customer_notifications import notify_customer_for_status_history
 from .turnstile import TurnstileError, verify_turnstile_token
 from .security import driver_required, validate_driver_license_file, is_driver
+
+
+
+def customer_required(view_func=None, *, json_response=False):
+    """Require an authenticated user with a CustomerProfile."""
+
+    def decorator(func):
+        @wraps(func)
+        def wrapped(request, *args, **kwargs):
+            is_customer = (
+                request.user.is_authenticated
+                and hasattr(request.user, "customer_profile")
+            )
+
+            if is_customer:
+                return func(request, *args, **kwargs)
+
+            next_url = request.get_full_path()
+            login_url = reverse("customer_login")
+            query_string = urlencode({"next": next_url})
+            login_url = f"{login_url}?{query_string}"
+
+            if json_response or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "message": "Please log in with your customer account to continue.",
+                        "login_url": login_url,
+                    },
+                    status=401,
+                )
+
+            return redirect(login_url)
+
+        return wrapped
+
+    if view_func is not None:
+        return decorator(view_func)
+
+    return decorator
+
 
 def _delivery_otp_hash(order_id, code):
     """Hash a delivery OTP for one specific order."""
@@ -524,6 +570,76 @@ def customer_price_for_shop(base_price, shop_id):
     return marked_up.quantize(Decimal("0.01"))
 
 
+def get_customer_shop_cart(request, shop):
+    """Get this customer's active saved cart for the selected shop."""
+
+    session_cart = request.session.get("cart", {})
+
+    saved_cart, created = CustomerCart.objects.get_or_create(
+        customer=request.user,
+        shop=shop,
+        is_active=True,
+        defaults={"items": {}},
+    )
+
+    # Safely migrate matching items from an older session cart.
+    if created and session_cart:
+        session_menu_ids = {
+            str(key).split("__", 1)[0]
+            for key in session_cart
+        }
+
+        valid_menu_ids = set(
+            str(menu_id)
+            for menu_id in MenuItem.objects.filter(
+                shop=shop,
+                id__in=session_menu_ids,
+            ).values_list("id", flat=True)
+        )
+
+        migrated_items = {
+            key: value
+            for key, value in session_cart.items()
+            if str(key).split("__", 1)[0] in valid_menu_ids
+        }
+
+        if migrated_items:
+            saved_cart.items = migrated_items
+            saved_cart.save(update_fields=["items", "updated_at"])
+
+    return saved_cart
+
+
+def save_customer_shop_cart(saved_cart, items):
+    """Save changed cart contents without refreshing unchanged carts."""
+
+    items = items or {}
+    items_changed = (saved_cart.items or {}) != items
+    active_changed = saved_cart.is_active != bool(items)
+
+    if not items_changed and not active_changed:
+        return saved_cart
+
+    saved_cart.items = items
+    saved_cart.is_active = bool(items)
+
+    # A genuine cart change starts a fresh reminder cycle.
+    saved_cart.reminder_1_sent_at = None
+    saved_cart.reminder_2_sent_at = None
+
+    saved_cart.save(
+        update_fields=[
+            "items",
+            "is_active",
+            "updated_at",
+            "reminder_1_sent_at",
+            "reminder_2_sent_at",
+        ]
+    )
+    return saved_cart
+
+
+@customer_required
 def add_to_cart(request, shop_slug, menu_item_id):
 
     shop = get_object_or_404(
@@ -544,7 +660,8 @@ def add_to_cart(request, shop_slug, menu_item_id):
             return JsonResponse({"success": False, "message": message}, status=400)
         messages.error(request, message)
         return redirect("customer_order", shop_slug=shop_slug)
-    cart = request.session.get("cart", {})
+    saved_cart = get_customer_shop_cart(request, shop)
+    cart = dict(saved_cart.items or {})
 
     if menu_item.pricing_type == "fixed":
         try:
@@ -660,6 +777,7 @@ def add_to_cart(request, shop_slug, menu_item_id):
             "quantity": 1,
         }
 
+    save_customer_shop_cart(saved_cart, cart)
     request.session["cart"] = cart
     request.session.modified = True
 
@@ -680,6 +798,7 @@ def add_to_cart(request, shop_slug, menu_item_id):
     return redirect("customer_order", shop_slug=shop.slug)
 
 
+@customer_required
 def cart(request, shop_slug):
 
     shop = get_object_or_404(
@@ -687,7 +806,8 @@ def cart(request, shop_slug):
         slug=shop_slug,
         is_active=True,
     )
-    cart_data = request.session.get("cart", {})
+    saved_cart = get_customer_shop_cart(request, shop)
+    cart_data = dict(saved_cart.items or {})
     cart_items = []
     subtotal = Decimal("0.00")
 
@@ -703,6 +823,7 @@ def cart(request, shop_slug):
             continue
         if menu_item.price is None or (shop.pk not in (15, 26) and menu_item.price < Decimal("45.00")):
             cart_data.pop(cart_key, None)
+            save_customer_shop_cart(saved_cart, cart_data)
             request.session["cart"] = cart_data
             request.session.modified = True
             continue
@@ -763,9 +884,14 @@ def cart(request, shop_slug):
         "cart_items": cart_items,
         "subtotal": subtotal,
     }
+    save_customer_shop_cart(saved_cart, cart_data)
+    request.session["cart"] = cart_data
+    request.session.modified = True
+
     return render(request, "orders/cart.html", context)
 
 
+@customer_required(json_response=True)
 def update_cart(request, shop_slug, menu_item_id):
 
     shop = get_object_or_404(Shop, slug=shop_slug, is_active=True)
@@ -773,7 +899,8 @@ def update_cart(request, shop_slug, menu_item_id):
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Invalid request."}, status=400)
 
-    cart = request.session.get("cart", {})
+    saved_cart = get_customer_shop_cart(request, shop)
+    cart = dict(saved_cart.items or {})
     item_key = str(menu_item_id)
 
     if item_key not in cart:
@@ -785,6 +912,7 @@ def update_cart(request, shop_slug, menu_item_id):
     )
     if menu_item.price is None or (shop.pk not in (15, 26) and menu_item.price < Decimal("45.00")):
         cart.pop(item_key, None)
+        save_customer_shop_cart(saved_cart, cart)
         request.session["cart"] = cart
         request.session.modified = True
         return JsonResponse(
@@ -805,14 +933,10 @@ def update_cart(request, shop_slug, menu_item_id):
 
     if quantity < 1:
         cart.pop(item_key, None)
-        request.session["cart"] = cart
-        request.session.modified = True
         removed = True
         line_total = Decimal("0.00")
     else:
         cart[item_key]["quantity"] = quantity
-        request.session["cart"] = cart
-        request.session.modified = True
         removed = False
 
         extras = cart[item_key].get("extras", []) if shop.pk in (8, 15) else []
@@ -822,6 +946,10 @@ def update_cart(request, shop_slug, menu_item_id):
         )
         customer_unit_price = customer_price_for_shop(menu_item.price, shop.pk) + extras_customer_total
         line_total = customer_unit_price * quantity
+
+    save_customer_shop_cart(saved_cart, cart)
+    request.session["cart"] = cart
+    request.session.modified = True
 
     subtotal = Decimal("0.00")
     for cart_key, cart_item in cart.items():
@@ -857,6 +985,7 @@ def update_cart(request, shop_slug, menu_item_id):
     })
 
 
+@customer_required(json_response=True)
 def remove_from_cart(request, shop_slug, menu_item_id):
 
     shop = get_object_or_404(Shop, slug=shop_slug, is_active=True)
@@ -864,7 +993,8 @@ def remove_from_cart(request, shop_slug, menu_item_id):
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Invalid request."}, status=400)
 
-    cart = request.session.get("cart", {})
+    saved_cart = get_customer_shop_cart(request, shop)
+    cart = dict(saved_cart.items or {})
     item_key = str(menu_item_id)
 
     if item_key not in cart:
@@ -877,6 +1007,7 @@ def remove_from_cart(request, shop_slug, menu_item_id):
         return JsonResponse({"success": False, "message": "Invalid cart item."}, status=404)
 
     cart.pop(item_key, None)
+    save_customer_shop_cart(saved_cart, cart)
     request.session["cart"] = cart
     request.session.modified = True
 
@@ -910,6 +1041,7 @@ def remove_from_cart(request, shop_slug, menu_item_id):
         "subtotal": f"{subtotal:.2f}",
     })
 
+@customer_required
 def checkout(request, shop_slug):
 
     shop = get_object_or_404(
@@ -918,7 +1050,8 @@ def checkout(request, shop_slug):
         is_active=True,
     )
 
-    cart_data = request.session.get("cart", {})
+    saved_cart = get_customer_shop_cart(request, shop)
+    cart_data = dict(saved_cart.items or {})
     cart_items = []
     subtotal = Decimal("0.00")
 
@@ -935,8 +1068,6 @@ def checkout(request, shop_slug):
             continue
         if menu_item.price is None or (shop.pk not in (15, 26) and menu_item.price < Decimal("45.00")):
             cart_data.pop(cart_key, None)
-            request.session["cart"] = cart_data
-            request.session.modified = True
             continue
 
         quantity = max(1, int(cart_item.get("quantity", 1)))
@@ -980,6 +1111,8 @@ def checkout(request, shop_slug):
         })
 
         subtotal += line_total
+
+    save_customer_shop_cart(saved_cart, cart_data)
 
     if not cart_items:
 
@@ -1026,58 +1159,27 @@ def checkout(request, shop_slug):
             request.user.customer_profile.whatsapp_number.strip()
         )
     if request.method == "GET":
-        saved_customer_name = request.session.get(
-            "airxpress_customer_name",
-            "",
-        ).strip()
-
-        saved_whatsapp_number = request.session.get(
-            "airxpress_customer_whatsapp",
-            "",
-        ).strip()
-
-        if saved_customer_name and saved_whatsapp_number:
-            previous_order = (
-                Order.objects
-                .filter(
-                    customer_name__iexact=saved_customer_name,
-                    whatsapp_number=saved_whatsapp_number,
-                    delivery_address__isnull=False,
-                )
-                .exclude(
-                    delivery_address="",
-                )
-                .order_by("-created_at")
-                .first()
+        previous_order = (
+            Order.objects
+            .filter(
+                customer_account=request.user,
+                delivery_address__isnull=False,
             )
+            .exclude(delivery_address="")
+            .order_by("-created_at")
+            .first()
+        )
 
-            if previous_order:
-                customer_name = previous_order.customer_name
-                whatsapp_number = previous_order.whatsapp_number
-                delivery_address = previous_order.delivery_address
+        if previous_order:
+            delivery_address = previous_order.delivery_address
 
     if request.method == "POST":
 
-        # Always use the registered account details for checkout.
-        # Do not trust editable POST identity fields for logged-in customers.
-        if request.user.is_authenticated and hasattr(
-            request.user,
-            "customer_profile",
-        ):
-            customer_name = request.user.first_name.strip()
-            whatsapp_number = (
-                request.user.customer_profile.whatsapp_number.strip()
-            )
-        else:
-            customer_name = request.POST.get(
-                "customer_name",
-                "",
-            ).strip()
-
-            whatsapp_number = request.POST.get(
-                "whatsapp_number",
-                "",
-            ).strip()
+        # Checkout identity always comes from the authenticated customer account.
+        customer_name = request.user.first_name.strip()
+        whatsapp_number = (
+            request.user.customer_profile.whatsapp_number.strip()
+        )
 
         delivery_address = request.POST.get(
             "delivery_address",
@@ -1265,6 +1367,7 @@ def checkout(request, shop_slug):
 
                                 order = Order.objects.create(
                                     shop=shop,
+                                    customer_account=request.user,
                                     customer_name=customer_name,
                                     whatsapp_number=whatsapp_number,
                                     delivery_address=delivery_address,
@@ -1300,7 +1403,7 @@ def checkout(request, shop_slug):
                                         extras=item.get("extras", []),
                                     )
 
-                                OrderStatusHistory.objects.create(
+                                status_history = OrderStatusHistory.objects.create(
                                     order=order,
                                     status="new",
                                     notes=(
@@ -1309,7 +1412,9 @@ def checkout(request, shop_slug):
                                         "at checkout."
                                     ),
                                 )
+                                notify_customer_for_status_history(status_history)
 
+                                save_customer_shop_cart(saved_cart, {})
                                 request.session["cart"] = {}
                                 request.session.modified = True
 
@@ -1515,12 +1620,14 @@ def customer_keep_alive(request):
         return JsonResponse({"ok": False}, status=403)
 
     request.session["airxpress_customer_last_activity"] = int(time.time())
-    request.session.set_expiry(10 * 60)
+    request.session.set_expiry(30 * 60)
 
-    return JsonResponse({"ok": True, "expires_in": 600})
+    return JsonResponse({"ok": True, "expires_in": 1800})
 
 
 def customer_login(request):
+    next_url = request.POST.get("next") or request.GET.get("next", "")
+
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
         password = request.POST.get("password", "")
@@ -1528,24 +1635,49 @@ def customer_login(request):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
+            if not hasattr(user, "customer_profile"):
+                messages.error(
+                    request,
+                    "This account is not registered as an AirXpress customer. Please use your staff, driver or owner login."
+                )
+                return render(
+                    request,
+                    "orders/customer_login.html",
+                    {"next": next_url},
+                )
+
             login(
                 request,
                 user,
                 backend="django.contrib.auth.backends.ModelBackend",
             )
 
-            if hasattr(user, "customer_profile"):
-                request.session["airxpress_customer_name"] = user.first_name
-                request.session["airxpress_customer_whatsapp"] = user.customer_profile.whatsapp_number
-                request.session.modified = True
+            request.session["airxpress_customer_name"] = user.first_name
+            request.session["airxpress_customer_whatsapp"] = (
+                user.customer_profile.whatsapp_number
+            )
+            request.session.modified = True
 
-            if hasattr(user, "customer_profile") and user.customer_profile.must_change_password:
+            if user.customer_profile.must_change_password:
                 return redirect("customer_change_password")
+
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure(),
+            ):
+                return redirect(next_url)
+
             return redirect("home")
 
         messages.error(request, "Invalid username or password.")
 
-    return render(request, "orders/customer_login.html")
+    return render(
+        request,
+        "orders/customer_login.html",
+        {"next": next_url},
+    )
+
 
 @login_required(login_url="/customer/login/")
 def customer_change_password(request):
@@ -1595,6 +1727,7 @@ def customer_change_password(request):
 
 def customer_register(request):
     from .forms import CustomerRegistrationForm
+    next_url = request.POST.get("next") or request.GET.get("next", "")
 
     if request.method == "POST":
         form = CustomerRegistrationForm(request.POST)
@@ -1645,6 +1778,13 @@ def customer_register(request):
                     "Your AirXpress account has been created successfully.",
                 )
 
+                if next_url and url_has_allowed_host_and_scheme(
+                    next_url,
+                    allowed_hosts={request.get_host()},
+                    require_https=request.is_secure(),
+                ):
+                    return redirect(next_url)
+
                 return redirect("home")
 
     else:
@@ -1656,6 +1796,7 @@ def customer_register(request):
         {
             "form": form,
             "turnstile_site_key": settings.TURNSTILE_SITE_KEY,
+            "next": next_url,
         },
     )
 
@@ -1736,46 +1877,41 @@ def customer_order(request, shop_slug):
     # Use the registered CustomerProfile details as the
     # authoritative checkout identity.
     # =========================================================
-    if request.user.is_authenticated and hasattr(
-        request.user,
-        "customer_profile",
+    if (
+        request.method == "GET"
+        and request.user.is_authenticated
+        and hasattr(request.user, "customer_profile")
     ):
         customer_name = request.user.first_name.strip()
         whatsapp_number = (
             request.user.customer_profile.whatsapp_number.strip()
         )
-    if request.method == "GET":
-        saved_customer_name = request.session.get(
-            "airxpress_customer_name",
-            "",
-        ).strip()
 
-        saved_whatsapp_number = request.session.get(
-            "airxpress_customer_whatsapp",
-            "",
-        ).strip()
-
-        if saved_customer_name and saved_whatsapp_number:
-            previous_order = (
-                Order.objects
-                .filter(
-                    customer_name__iexact=saved_customer_name,
-                    whatsapp_number=saved_whatsapp_number,
-                    delivery_address__isnull=False,
-                )
-                .exclude(
-                    delivery_address="",
-                )
-                .order_by("-created_at")
-                .first()
+        previous_order = (
+            Order.objects
+            .filter(
+                customer_account=request.user,
+                delivery_address__isnull=False,
             )
+            .exclude(delivery_address="")
+            .order_by("-created_at")
+            .first()
+        )
 
-            if previous_order:
-                customer_name = previous_order.customer_name
-                whatsapp_number = previous_order.whatsapp_number
-                delivery_address = previous_order.delivery_address
+        if previous_order:
+            delivery_address = previous_order.delivery_address
 
     if request.method == "POST":
+
+        if (
+            not request.user.is_authenticated
+            or not hasattr(request.user, "customer_profile")
+        ):
+            login_url = (
+                f"{reverse('customer_login')}?"
+                f"{urlencode({'next': request.get_full_path()})}"
+            )
+            return redirect(login_url)
 
         form = CustomerOrderForm(
             request.POST,
@@ -1790,6 +1926,11 @@ def customer_order(request, shop_slug):
             )
 
             order.shop = shop
+            order.customer_account = request.user
+            order.customer_name = request.user.first_name.strip()
+            order.whatsapp_number = (
+                request.user.customer_profile.whatsapp_number.strip()
+            )
             order.order_source = "online"
             order.order_type = "delivery"
             order.status = "new"
@@ -1928,11 +2069,12 @@ def customer_order(request, shop_slug):
                     ]
                 )
 
-                OrderStatusHistory.objects.create(
+                status_history = OrderStatusHistory.objects.create(
                     order=order,
                     status="new",
                     notes="Customer placed order.",
                 )
+                notify_customer_for_status_history(status_history)
 
                 return redirect(
                     "order_success",
@@ -2005,6 +2147,7 @@ def customer_order(request, shop_slug):
 # ORDER SUCCESS PAGE
 # =========================================================
 
+@customer_required
 def order_success(request, shop_slug, order_id):
     shop = get_object_or_404(
         Shop,
@@ -2018,6 +2161,7 @@ def order_success(request, shop_slug, order_id):
         .prefetch_related("items__menu_item"),
         id=order_id,
         shop=shop,
+        customer_account=request.user,
     )
 
     return render(
@@ -2085,39 +2229,19 @@ def customer_banking_details(request):
     )
 
 
-@login_required
+@customer_required
 def customer_my_orders(request):
-    """
-    Display the logged-in customer's orders across all shops.
-    Customers are matched using their account name and WhatsApp number.
-    """
-
-    if not hasattr(request.user, "customer_profile"):
-        messages.error(
-            request,
-            "Your customer profile could not be found.",
-        )
-        return redirect("customer_login")
+    """Display only orders owned by the logged-in customer account."""
 
     customer_name = request.user.first_name.strip()
     whatsapp_number = request.user.customer_profile.whatsapp_number.strip()
 
     orders = (
         Order.objects
-        .filter(
-            customer_name__iexact=customer_name,
-            whatsapp_number=whatsapp_number,
-        )
-        .select_related(
-            "shop",
-            "driver",
-        )
-        .prefetch_related(
-            "items__menu_item",
-        )
-        .order_by(
-            "-created_at",
-        )
+        .filter(customer_account=request.user)
+        .select_related("shop", "driver")
+        .prefetch_related("items__menu_item")
+        .order_by("-created_at")
     )
 
     return render(
@@ -2131,7 +2255,7 @@ def customer_my_orders(request):
     )
 
 
-@login_required(login_url='/customer/login/')
+@customer_required
 def customer_refund_enquiry(request):
     """Let a customer select one paid order for a refund enquiry."""
     if not hasattr(request.user, "customer_profile"):
@@ -2143,8 +2267,7 @@ def customer_refund_enquiry(request):
 
     orders = list(
         Order.objects.filter(
-            customer_name__iexact=customer_name,
-            whatsapp_number=whatsapp_number,
+            customer_account=request.user,
             payment_status="paid",
             final_total__gt=Decimal("0.00"),
         )
@@ -2173,8 +2296,7 @@ def customer_refund_enquiry(request):
         order = get_object_or_404(
             Order.objects.select_related("shop"),
             id=int(selected_id),
-            customer_name__iexact=customer_name,
-            whatsapp_number=whatsapp_number,
+            customer_account=request.user,
             payment_status="paid",
             final_total__gt=Decimal("0.00"),
         )
@@ -2201,7 +2323,7 @@ def customer_refund_enquiry(request):
     )
 
 
-@login_required(login_url='/customer/login/')
+@customer_required
 def customer_refund_request(request, order_id):
     if not hasattr(request.user, 'customer_profile'):
         messages.error(request, 'Your customer profile could not be found.')
@@ -2213,8 +2335,7 @@ def customer_refund_request(request, order_id):
     order = get_object_or_404(
         Order.objects.select_related('shop'),
         id=order_id,
-        customer_name__iexact=customer_name,
-        whatsapp_number=whatsapp_number,
+        customer_account=request.user,
     )
 
     if order.payment_status != 'paid':
@@ -2277,6 +2398,7 @@ def customer_refund_request(request, order_id):
         'maximum_refund_amount': amount,
     })
 
+@customer_required
 def order_review(request, order_id):
     """
     Allow the logged-in customer to review a completed order.
@@ -2298,8 +2420,7 @@ def order_review(request, order_id):
         Order.objects
         .select_related("shop", "driver"),
         id=order_id,
-        customer_name__iexact=customer_name,
-        whatsapp_number=whatsapp_number,
+        customer_account=request.user,
     )
 
     if order.status not in ["delivered", "collected"]:
@@ -2708,6 +2829,7 @@ def update_driver_location(request, order_id):
         )
 
     return JsonResponse(response)
+@customer_required
 
 def customer_invoice(request, shop_slug, order_id):
     shop = get_object_or_404(
@@ -2722,6 +2844,7 @@ def customer_invoice(request, shop_slug, order_id):
         .prefetch_related("items__menu_item"),
         id=order_id,
         shop=shop,
+        customer_account=request.user,
     )
 
     food_subtotal = sum(
@@ -2745,13 +2868,9 @@ def customer_invoice(request, shop_slug, order_id):
         },
     )
 
+@customer_required
 def customer_order_history(request, shop_slug):
-    """
-    Display a customer's order history for a specific shop.
-
-    Customers are identified using their name and WhatsApp/contact
-    number stored in the session.
-    """
+    """Display this customer's orders for one shop."""
 
     shop = get_object_or_404(
         Shop,
@@ -2759,93 +2878,16 @@ def customer_order_history(request, shop_slug):
         is_active=True,
     )
 
-    customer_name = request.session.get(
-        "airxpress_customer_name",
-        "",
-    ).strip()
+    customer_name = request.user.first_name.strip()
+    whatsapp_number = request.user.customer_profile.whatsapp_number.strip()
 
-    whatsapp_number = request.session.get(
-        "airxpress_customer_whatsapp",
-        "",
-    ).strip()
-
-    orders = Order.objects.none()
-
-    if request.method == "POST":
-
-        customer_name = request.POST.get(
-            "customer_name",
-            "",
-        ).strip()
-
-        whatsapp_number = request.POST.get(
-            "whatsapp_number",
-            "",
-        ).strip()
-
-        if not customer_name:
-
-            messages.error(
-                request,
-                "Please enter your name.",
-            )
-
-        elif not whatsapp_number:
-
-            messages.error(
-                request,
-                "Please enter your WhatsApp or contact number.",
-            )
-
-        else:
-
-            request.session["airxpress_customer_name"] = (
-                customer_name
-            )
-
-            request.session["airxpress_customer_whatsapp"] = (
-                whatsapp_number
-            )
-
-            request.session.modified = True
-
-            orders = (
-                Order.objects
-                .filter(
-                    shop=shop,
-                    customer_name__iexact=customer_name,
-                    whatsapp_number=whatsapp_number,
-                )
-                .select_related(
-                    "driver",
-                )
-                .prefetch_related(
-                    "items__menu_item",
-                )
-                .order_by(
-                    "-created_at",
-                )
-            )
-
-    elif customer_name and whatsapp_number:
-
-        orders = (
-            Order.objects
-            .filter(
-                shop=shop,
-                customer_name__iexact=customer_name,
-                whatsapp_number=whatsapp_number,
-            )
-            .select_related(
-                "driver",
-            )
-            .prefetch_related(
-                "items__menu_item",
-            )
-            .order_by(
-                "-created_at",
-            )
-        )
+    orders = (
+        Order.objects
+        .filter(shop=shop, customer_account=request.user)
+        .select_related("driver")
+        .prefetch_related("items__menu_item")
+        .order_by("-created_at")
+    )
 
     return render(
         request,
@@ -2856,7 +2898,7 @@ def customer_order_history(request, shop_slug):
             "customer_name": customer_name,
             "whatsapp_number": whatsapp_number,
         },
-    )# =========================================================
+    )
 # ACCESS CHECKS
 # =========================================================
 
@@ -4336,7 +4378,7 @@ def driver_accept_request(
             responded_at=timezone.now(),
         )
 
-        OrderStatusHistory.objects.create(
+        status_history = OrderStatusHistory.objects.create(
             order=order,
             status="driver_assigned",
             notes=(
@@ -4344,6 +4386,7 @@ def driver_accept_request(
                 f"the delivery request."
             ),
         )
+        notify_customer_for_status_history(status_history)
 
     messages.success(
         request,
@@ -4533,7 +4576,7 @@ def driver_pickup_order(request, order_id):
             ]
         )
 
-        OrderStatusHistory.objects.create(
+        status_history = OrderStatusHistory.objects.create(
             order=order,
             status="picked_up",
             notes=(
@@ -4543,6 +4586,7 @@ def driver_pickup_order(request, order_id):
                 f"{pickup_distance_metres:.0f} metres."
             ),
         )
+        notify_customer_for_status_history(status_history)
 
     messages.success(
         request,
@@ -4602,7 +4646,7 @@ def driver_deliver_order(request, order_id):
             ]
         )
 
-        OrderStatusHistory.objects.create(
+        status_history = OrderStatusHistory.objects.create(
             order=order,
             status="delivered",
             notes=(
@@ -4610,6 +4654,7 @@ def driver_deliver_order(request, order_id):
                 f"Order #{order.id} as delivered."
             ),
         )
+        notify_customer_for_status_history(status_history)
 
     messages.success(
         request,
@@ -4690,7 +4735,7 @@ def driver_complete_delivery(request, order_id):
             ]
         )
 
-        OrderStatusHistory.objects.create(
+        status_history = OrderStatusHistory.objects.create(
             order=order,
             status="collected",
             notes=(
@@ -4698,6 +4743,7 @@ def driver_complete_delivery(request, order_id):
                 f"Order #{order.id} and is available again."
             ),
         )
+        notify_customer_for_status_history(status_history)
 
     messages.success(
         request,
@@ -4796,7 +4842,7 @@ def driver_verify_delivery_qr(request, order_id):
         driver.is_available = True
         driver.save(update_fields=["is_available"])
 
-        OrderStatusHistory.objects.create(
+        status_history = OrderStatusHistory.objects.create(
             order=order,
             status="collected",
             notes=(
@@ -4804,6 +4850,7 @@ def driver_verify_delivery_qr(request, order_id):
                 "after customer QR verification."
             ),
         )
+        notify_customer_for_status_history(status_history)
 
     return JsonResponse({
         "success": True,
@@ -5330,11 +5377,13 @@ def staff_update_order(
         # STATUS HISTORY
         # =============================================
 
-        OrderStatusHistory.objects.create(
+        status_history = OrderStatusHistory.objects.create(
             order=order,
             status=order.status,
             notes="Order updated by staff.",
         )
+        if previous_status != order.status:
+            notify_customer_for_status_history(status_history)
 
         # =============================================
         # AUTOMATIC DRIVER DISPATCH
@@ -8350,6 +8399,7 @@ def driver_push_service_worker(request):
 # YOCO PAYMENT
 # =========================================================
 
+@customer_required
 def yoco_payment(request, order_id, tracking_token):
     """Create a Yoco hosted checkout for an unpaid order."""
     from .yoco import create_checkout, YocoError
@@ -8358,6 +8408,7 @@ def yoco_payment(request, order_id, tracking_token):
         Order.objects.select_related("shop"),
         id=order_id,
         tracking_token=tracking_token,
+        customer_account=request.user,
     )
 
     if order.payment_status == "paid":
@@ -8596,3 +8647,66 @@ def yoco_webhook(request):
                 dispatch_order_to_available_drivers(order)
 
     return JsonResponse({"status": "payment_confirmed"}, status=200)
+
+
+# =========================================================
+# CUSTOMER NOTIFICATION CENTRE
+# =========================================================
+
+@login_required
+def customer_notifications(request):
+    notifications = CustomerNotification.objects.filter(
+        customer=request.user
+    ).select_related("order")[:100]
+
+    unread_count = CustomerNotification.objects.filter(
+        customer=request.user,
+        is_read=False,
+    ).count()
+
+    return render(
+        request,
+        "orders/customer_notifications.html",
+        {
+            "notifications": notifications,
+            "notification_unread_count": unread_count,
+        },
+    )
+
+
+@login_required
+@require_POST
+def customer_notification_mark_read(request, notification_id):
+    notification = get_object_or_404(
+        CustomerNotification,
+        id=notification_id,
+        customer=request.user,
+    )
+
+    if not notification.is_read:
+        notification.is_read = True
+        notification.read_at = timezone.now()
+        notification.save(update_fields=["is_read", "read_at"])
+
+    destination = request.POST.get("next", "")
+    if destination and url_has_allowed_host_and_scheme(
+        destination,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(destination)
+
+    return redirect("customer_notifications")
+
+
+@login_required
+@require_POST
+def customer_notifications_mark_all_read(request):
+    CustomerNotification.objects.filter(
+        customer=request.user,
+        is_read=False,
+    ).update(
+        is_read=True,
+        read_at=timezone.now(),
+    )
+    return redirect("customer_notifications")
