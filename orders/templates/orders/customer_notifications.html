@@ -135,7 +135,7 @@
 
     const publicKeyUrl = "{% url 'customer_push_vapid_public_key' %}";
     const subscribeUrl = "{% url 'customer_push_subscribe' %}";
-    const workerUrl = "{% url 'customer_push_service_worker' %}";
+    const workerUrl = "/airxpress-sw.js";
 
     function setStatus(message) {
         status.textContent = message;
@@ -256,5 +256,7 @@
     }
 })();
 </script>
+
+<script src="/static/orders/js/pwa-install.js"></script>
 </body>
 </html>

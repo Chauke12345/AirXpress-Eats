@@ -2313,50 +2313,6 @@ section:not(.hero) {
     <a href="{% url 'owner_login' %}">Admin Portal</a>
 </div>
 
-<!-- AIRXPRESS PORTALS -->
-<section class="airxpress-portals">
-    <div class="portals-inner">
-
-        <div class="portals-heading">
-            <span class="portals-kicker">AIRXPRESS EATS</span>
-            <h2>Choose Your Portal</h2>
-            <p>Secure access for AirXpress operations</p>
-        </div>
-
-        <div class="portal-cards">
-
-            <a href="{% url 'driver_login' %}" class="portal-card">
-                <div class="portal-icon">D</div>
-                <div class="portal-content">
-                    <h3>Driver Portal</h3>
-                    <p>Manage deliveries, requests and live delivery activity.</p>
-                </div>
-                <span class="portal-arrow">OPEN</span>
-            </a>
-
-            <a href="{% url 'staff_login' %}" class="portal-card">
-                <div class="portal-icon">S</div>
-                <div class="portal-content">
-                    <h3>Merchant Portal</h3>
-                    <p>Manage orders, customers, shops and daily operations.</p>
-                </div>
-                <span class="portal-arrow">OPEN</span>
-            </a>
-
-            <a href="{% url 'owner_login' %}" class="portal-card">
-                <div class="portal-icon">O</div>
-                <div class="portal-content">
-                    <h3>Admin Portal</h3>
-                    <p>Monitor the business, drivers, payments and performance.</p>
-                </div>
-                <span class="portal-arrow">OPEN</span>
-            </a>
-
-        </div>
-    </div>
-</section>
-
-
 <!-- ==============================
      HERO
 ============================== -->
@@ -3229,95 +3185,10 @@ section:not(.hero) {
 
 
 {% include 'orders/includes/customer_inactivity_warning.html' %}
-<div id="airxpress-install-banner" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:calc(100% - 32px); max-width:460px; background:#141414; color:#fff; border:1px solid #ff6800; border-radius:16px; padding:18px; z-index:99999; box-shadow:0 8px 30px rgba(0,0,0,.55);">
-    <div style="display:flex; align-items:center; gap:12px;">
-        <img src="{% static 'orders/images/Airxpress-logo.png' %}" alt="AirXpress Eats" style="width:54px;height:54px;object-fit:cover;border-radius:12px;">
-        <div style="flex:1;">
-            <strong style="font-size:16px;">Get AirXpress Eats on your phone</strong>
-            <div style="font-size:13px;color:#ccc;">Faster access to your favourite food.</div>
-        </div>
-        <button id="airxpress-dismiss" type="button" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font-size:24px;cursor:pointer;">&times;</button>
-    </div>
-    <div id="airxpress-ios-help" style="display:none;font-size:13px;color:#ddd;margin-top:12px;">
-        Tap the Share button in Safari, then choose <strong>Add to Home Screen</strong>.
-    </div>
-    <div style="display:flex;gap:10px;margin-top:15px;">
-        <button id="airxpress-install-button" type="button" style="flex:1;background:#ff6800;color:#fff;border:0;border-radius:9px;padding:12px;font-weight:700;cursor:pointer;">Install App</button>
-        <button id="airxpress-later" type="button" style="background:#292929;color:#fff;border:0;border-radius:9px;padding:12px 16px;cursor:pointer;">Not now</button>
-    </div>
-</div>
-
-<script>
-(function () {
-    const banner = document.getElementById("airxpress-install-banner");
-    const installButton = document.getElementById("airxpress-install-button");
-    const dismissButton = document.getElementById("airxpress-dismiss");
-    const laterButton = document.getElementById("airxpress-later");
-    const iosHelp = document.getElementById("airxpress-ios-help");
-
-    if (!banner || window.matchMedia("(display-mode: standalone)").matches ||
-        window.navigator.standalone === true) {
-        return;
-    }
-
-    let installPrompt = null;
-
-    function wasDismissed() {
-        try {
-            return localStorage.getItem("airxpressInstallDismissed") === "yes";
-        } catch (error) {
-            return false;
-        }
-    }
-
-    function showBanner() {
-        if (!wasDismissed()) {
-            banner.style.display = "block";
-        }
-    }
-
-    function dismissBanner() {
-        banner.style.display = "none";
-        try {
-            localStorage.setItem("airxpressInstallDismissed", "yes");
-        } catch (error) {}
-    }
-
-    window.addEventListener("beforeinstallprompt", function (event) {
-        event.preventDefault();
-        installPrompt = event;
-        setTimeout(showBanner, 3000);
-    });
-
-    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-
-    if (isIOS) {
-        installButton.style.display = "none";
-        iosHelp.style.display = "block";
-        setTimeout(showBanner, 3000);
-    }
-
-    installButton.addEventListener("click", async function () {
-        if (!installPrompt) return;
-
-        installPrompt.prompt();
-        await installPrompt.userChoice;
-        installPrompt = null;
-        banner.style.display = "none";
-    });
-
-    dismissButton.addEventListener("click", dismissBanner);
-    laterButton.addEventListener("click", dismissBanner);
-
-    window.addEventListener("appinstalled", function () {
-        banner.style.display = "none";
-    });
-})();
-</script>
-
-
 {% include "orders/partials/customer_notification_bell.html" %}
 <script defer src="{% static 'orders/js/customer-journey.js' %}" data-page="home" data-customer-authenticated="{% if user.is_authenticated and user.customer_profile and not user.is_staff and not user.is_superuser %}true{% else %}false{% endif %}"></script>
+
+<script src="/static/orders/js/pwa-install.js"></script>
 </body>
 </html>
 

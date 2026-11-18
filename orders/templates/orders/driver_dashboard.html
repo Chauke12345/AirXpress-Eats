@@ -3270,7 +3270,7 @@ function toggleDriverBanking() {
             }
 
             const registration = await navigator.serviceWorker.register(
-                "/driver-push-sw.js",
+                "/airxpress-sw.js",
                 { scope: "/" }
             );
 
@@ -3314,5 +3314,7 @@ function toggleDriverBanking() {
 })();
 </script>
 
+
+<script src="/static/orders/js/pwa-install.js"></script>
 </body>
 </html>

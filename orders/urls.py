@@ -10,6 +10,11 @@ urlpatterns = [
         views.driver_push_service_worker,
         name="driver_push_service_worker",
     ),
+    path(
+        "airxpress-sw.js",
+        views.airxpress_service_worker,
+        name="airxpress_service_worker",
+    ),
 
     path('login/', views.login_gateway, name='login_gateway'),
 

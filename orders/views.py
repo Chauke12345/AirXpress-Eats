@@ -8688,6 +8688,26 @@ def customer_push_service_worker(request):
     response["Cache-Control"] = "no-cache"
     return response
 
+def airxpress_service_worker(request):
+    """Serve the unified AirXpress service worker at the site root."""
+    from pathlib import Path
+
+    worker_path = Path(settings.BASE_DIR) / "static" / "airxpress-sw.js"
+
+    try:
+        worker_code = worker_path.read_text(encoding="utf-8")
+    except OSError:
+        return HttpResponse("Service worker unavailable.", status=404)
+
+    response = HttpResponse(
+        worker_code,
+        content_type="application/javascript; charset=utf-8",
+    )
+    response["Service-Worker-Allowed"] = "/"
+    response["Cache-Control"] = "no-cache"
+    return response
+
+
 # YOCO PAYMENT
 # =========================================================
 
