@@ -2305,12 +2305,7 @@ section:not(.hero) {
             {% csrf_token %}
             <button type="submit" class="mobile-menu-auth-button">Log Out</button>
         </form>
-    {% else %}
-        <a href="{% url 'customer_login' %}">Customer Login</a>
     {% endif %}
-    <a href="{% url 'driver_login' %}">Driver Portal</a>
-    <a href="{% url 'staff_login' %}">Merchant Portal</a>
-    <a href="{% url 'owner_login' %}">Admin Portal</a>
 </div>
 
 <!-- ==============================
