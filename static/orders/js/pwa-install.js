@@ -1,7 +1,6 @@
 (function () {
     "use strict";
 
-    const DISMISS_KEY = "airxpressInstallDismissedV2";
 
     function addAppMetadata() {
         if (!document.querySelector('link[rel="manifest"]')) {
@@ -119,12 +118,10 @@
     const installButton = document.getElementById("airxpress-install-button");
     const help = document.getElementById("airxpress-install-help");
 
+    // Show the invitation on every portal visit.
+    // Dismissing it hides it only on the current page.
     function wasDismissed() {
-        try {
-            return sessionStorage.getItem(DISMISS_KEY) === "yes";
-        } catch (error) {
-            return false;
-        }
+        return false;
     }
 
     function showBanner() {
@@ -139,9 +136,6 @@
 
     function dismissBanner() {
         hideBanner();
-        try {
-            sessionStorage.setItem(DISMISS_KEY, "yes");
-        } catch (error) {}
     }
 
     function showManualInstructions() {
