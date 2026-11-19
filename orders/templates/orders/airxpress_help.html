@@ -134,7 +134,7 @@
 
 <!-- AirXpress Eats Smart Support Chat -->
 <section class="ticket-panel" id="smartSupportChat">
-    <h2>💬 AirXpress Support Assistant</h2>
+    <h2>ðŸ’¬ AirXpress Support Assistant</h2>
     <p class="subtitle">
         Tell us what is happening. We'll help you choose the right support option.
     </p>
@@ -168,10 +168,10 @@
         </p>
         <div style="display:grid;gap:10px">
             <button type="button" class="ticket-submit" data-urgency="urgent">
-                Yes — urgent, needs attention now
+                Yes â€” urgent, needs attention now
             </button>
             <button type="button" class="ticket-submit" data-urgency="routine">
-                No — it can wait
+                No â€” it can wait
             </button>
         </div>
     </div>
@@ -432,8 +432,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         <label for="ticketCategory">What do you need help with?</label>
         <select id="ticketCategory" name="category" required>
-            <option value="technical">Technical issue — website, login, maps or payment</option>
-            <option value="operations">Operations — orders, menus or deliveries</option>
+            <option value="technical">Technical issue â€” website, login, maps or payment</option>
+            <option value="operations">Operations â€” orders, menus or deliveries</option>
             <option value="general">General enquiry</option>
         </select>
 
@@ -484,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 "Ticket reference: " + data.reference +
                 " | Priority: " + data.priority.toUpperCase() +
                 " | Team: " + data.assigned_team +
-                " — " + data.message;
+                " â€” " + data.message;
             form.reset();
         } catch (error) {
             result.textContent =
@@ -508,6 +508,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 {% include "orders/partials/customer_notification_bell.html" %}
 
-<script src="/static/orders/js/pwa-install.js?v=20261118-2"></script>
+<script src="/static/orders/js/pwa-install.js?v=20261119-3"></script>
 </body>
 </html>
