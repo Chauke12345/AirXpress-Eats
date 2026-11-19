@@ -15,7 +15,7 @@
           type="image/png"
           href="{% static 'orders/images/Airxpress-logo.png' %}?v=2">
 
-    <link rel="manifest" href="{% static 'orders/airxpress.webmanifest' %}">
+    <link rel="manifest" href="{% static 'orders/customer.webmanifest' %}">
     <meta name="theme-color" content="#ff6800">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -3183,7 +3183,7 @@ section:not(.hero) {
 {% include "orders/partials/customer_notification_bell.html" %}
 <script defer src="{% static 'orders/js/customer-journey.js' %}" data-page="home" data-customer-authenticated="{% if user.is_authenticated and user.customer_profile and not user.is_staff and not user.is_superuser %}true{% else %}false{% endif %}"></script>
 
-<script src="/static/orders/js/pwa-install.js?v=20261118-2"></script>
+<script src="/static/orders/js/pwa-install.js?v=20261118-4"></script>
 </body>
 </html>
 
@@ -3448,6 +3448,8 @@ section:not(.hero) {
     }
 }
 </style>
+
+
 
 
 

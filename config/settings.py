@@ -1,4 +1,4 @@
-"""
+﻿"""
 Django settings for AirXpress Eats.
 """
 
@@ -300,7 +300,7 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "we
 
 LOGIN_REDIRECT_URL = "/staff/dashboard/"
 
-LOGIN_URL = "/staff/login/"
+LOGIN_URL = "/merchant/login/"
 
 # =========================================================
 # YOCO PAYMENTS
@@ -448,3 +448,4 @@ AXES_USE_ATTEMPT_EXPIRATION = True
 AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
 AXES_RESET_ON_SUCCESS = True
 AXES_HTTP_RESPONSE_CODE = 429
+

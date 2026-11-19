@@ -1,0 +1,25 @@
+{
+  "id": "/merchant-app",
+  "name": "AirXpress Shops",
+  "short_name": "Shops",
+  "description": "Manage your AirXpress Eats shop and orders.",
+  "start_url": "/merchant/login/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/static/orders/images/pwa/merchant-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/orders/images/pwa/merchant-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

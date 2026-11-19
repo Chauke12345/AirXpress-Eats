@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,7 +9,9 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>AirXpress Eats | Staff Login</title>
+    <title>AirXpress Eats | Merchant Login</title>
+    <link rel="manifest" href="/static/orders/merchant.webmanifest">
+    <meta name="theme-color" content="#000000">
 
     <style>
         :root {
@@ -321,7 +323,7 @@
             </h1>
 
             <p>
-                Staff Login
+                Merchant Login
             </p>
 
             <div class="brand-line"></div>
@@ -386,7 +388,7 @@
                 type="submit"
                 class="login-btn"
             >
-                Staff Login
+                Merchant Login
             </button>
 
         </form>
@@ -398,11 +400,7 @@
                 Need Help? Contact AirXpress Support
             </a>
 
-            <div style="margin-top:14px;">
-                <a href="{% url 'home' %}">
-                    ← Back to AirXpress Eats
-                </a>
-            </div>
+
 
         </div>
 
@@ -410,13 +408,17 @@
 
 
     <div class="footer-text">
-        AIRXPRESS EATS • STAFF PORTAL
+        AIRXPRESS EATS | MERCHANT PORTAL
     </div>
 
 </div>
 
 
-<script src="/static/orders/js/pwa-install.js?v=20261118-2"></script>
+<script src="/static/orders/js/pwa-install.js?v=20261118-4"></script>
 </body>
 </html>
+
+
+
+
 

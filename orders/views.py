@@ -1,4 +1,4 @@
-import json
+﻿import json
 import math
 import secrets
 import hashlib
@@ -5034,7 +5034,7 @@ def driver_verify_delivery_qr(request, order_id):
 
 @user_passes_test(
     is_tenant_staff,
-    login_url="/staff/login/"
+    login_url="/merchant/login/"
 )
 def staff_dashboard(request):
 
@@ -5163,7 +5163,7 @@ def staff_dashboard(request):
 # SHOP BANKING DETAILS
 # =========================================================
 
-@login_required(login_url="/staff/login/")
+@login_required(login_url="/merchant/login/")
 def shop_banking_details(request):
     profile = get_staff_profile(request.user)
 
@@ -5294,7 +5294,7 @@ def dispatch_order_to_available_drivers(order):
 # =========================================================
 @user_passes_test(
     is_tenant_staff,
-    login_url="/staff/login/"
+    login_url="/merchant/login/"
 )
 
 
@@ -5302,7 +5302,7 @@ def dispatch_order_to_available_drivers(order):
 
 @user_passes_test(
     is_tenant_staff,
-    login_url="/staff/login/"
+    login_url="/merchant/login/"
 )
 def staff_notify_drivers(request, order_id):
 
@@ -5373,7 +5373,7 @@ def staff_notify_drivers(request, order_id):
 
 @user_passes_test(
     is_tenant_staff,
-    login_url="/staff/login/"
+    login_url="/merchant/login/"
 )
 def staff_update_order(
     request,
@@ -5617,7 +5617,7 @@ def staff_update_order(
 
 @user_passes_test(
     is_tenant_staff,
-    login_url="/staff/login/"
+    login_url="/merchant/login/"
 )
 def staff_order_history(request):
     # HISTORY DATE MONTH FILTERS
@@ -5691,7 +5691,7 @@ def staff_order_history(request):
 
 @user_passes_test(
     is_tenant_staff,
-    login_url="/staff/login/"
+    login_url="/merchant/login/"
 )
 def staff_daily_report(request):
 
@@ -7871,10 +7871,10 @@ def payfast_payment(request, order_id):
 # STAFF DASHBOARD AJAX UPDATES
 # =========================================================
 
-@login_required(login_url="/staff/login/")
+@login_required(login_url="/merchant/login/")
 @user_passes_test(
     is_tenant_staff,
-    login_url="/staff/login/"
+    login_url="/merchant/login/"
 )
 def staff_dashboard_updates(request):
 
@@ -9022,3 +9022,4 @@ def customer_notifications_mark_all_read(request):
         read_at=timezone.now(),
     )
     return redirect("customer_notifications")
+

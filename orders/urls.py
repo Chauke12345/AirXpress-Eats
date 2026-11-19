@@ -1,4 +1,4 @@
-from django.urls import path
+﻿from django.urls import path
 from django.contrib.auth import views as auth_views
 
 from . import views
@@ -362,7 +362,7 @@ urlpatterns = [
     # =========================================================
 
     path(
-        "staff/login/",
+        "merchant/login/",
         views.staff_login,
         name="staff_login",
     ),
@@ -595,3 +595,4 @@ path(
         name="customer_notifications_mark_all_read",
     ),
 ]
+
