@@ -4,7 +4,7 @@
     "short_name":  "Driver",
     "description":  "Manage your AirXpress Eats deliveries.",
     "start_url":  "/driver/login/",
-    "scope":  "/",
+    "scope": "/driver/",
     "display":  "standalone",
     "background_color":  "#000000",
     "theme_color":  "#000000",
