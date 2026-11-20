@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     "use strict";
 
     const path = window.location.pathname.toLowerCase();
@@ -7,58 +7,53 @@
         {
             id: "customer",
             match: p => p === "/" || p.startsWith("/customer/") || p.startsWith("/shop/"),
-            name: "AirXpress",
-            description: "Order your favourite meals with AirXpress Eats.",
-            icon: "/static/orders/images/pwa/customer-icon.png",
-            manifest: "/static/orders/customer.webmanifest"
+            name: "AirXpress Eats",
+            description: "Faster access to your favourite food.",
+            icon: "/static/orders/images/pwa/customer-icon-192.png"
         },
         {
             id: "driver",
             match: p => p.startsWith("/driver/"),
-            name: "AirXpress Driver Portal",
-            description: "Access your delivery driver portal.",
-            icon: "/static/orders/images/pwa/driver-icon.png",
-            manifest: "/static/orders/driver.webmanifest"
+            name: "AirXpress Driver",
+            description: "Quick access to your driver portal.",
+            icon: "/static/orders/images/pwa/driver-icon-192.png"
         },
         {
             id: "merchant",
             match: p => p.startsWith("/merchant/") || p.startsWith("/staff/"),
-            name: "AirXpress Merchant Portal",
-            description: "Manage your shop and customer orders.",
-            icon: "/static/orders/images/pwa/merchant-icon.png",
-            manifest: "/static/orders/merchant.webmanifest"
+            name: "AirXpress Merchant",
+            description: "Quick access to your merchant portal.",
+            icon: "/static/orders/images/pwa/merchant-icon-192.png"
         },
         {
             id: "admin",
             match: p => p.startsWith("/owner/"),
             name: "AirXpress Admin",
-            description: "Manage your AirXpress Eats platform.",
-            icon: "/static/orders/images/pwa/admin-icon.png",
-            manifest: "/static/orders/admin.webmanifest"
+            description: "Quick access to your administration portal.",
+            icon: "/static/orders/images/pwa/admin-icon-192.png"
         }
     ];
 
     const portal = portals.find(item => item.match(path));
     if (!portal) return;
 
-    const isStandalone = window.matchMedia("(display-mode: standalone)").matches ||
+    const isStandalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
         window.navigator.standalone === true;
 
     if (isStandalone) return;
 
-    const dismissalKey = "airxpress-install-dismissed-" + portal.id;
-    const dismissedAt = Number(localStorage.getItem(dismissalKey) || 0);
-    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    const dismissalKey = "airxpressInstallDismissed-" + portal.id;
 
-    if (dismissedAt && Date.now() - dismissedAt < sevenDays) return;
-
-    let manifestLink = document.querySelector('link[rel="manifest"]');
-    if (!manifestLink) {
-        manifestLink = document.createElement("link");
-        manifestLink.rel = "manifest";
-        document.head.appendChild(manifestLink);
+    function wasDismissed() {
+        try {
+            return localStorage.getItem(dismissalKey) === "yes";
+        } catch (error) {
+            return false;
+        }
     }
-    manifestLink.href = portal.manifest;
+
+    if (wasDismissed()) return;
 
     if ("serviceWorker" in navigator && window.isSecureContext) {
         navigator.serviceWorker.register("/airxpress-sw.js", {
@@ -68,56 +63,55 @@
         });
     }
 
-    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    const isIOS =
+        /iphone|ipad|ipod/i.test(navigator.userAgent) ||
         (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
-    let installPrompt = null;
 
     const markup = `
         <div id="airxpress-install-banner"
              role="dialog"
              aria-label="Install ${portal.name}"
-             style="display:none;position:fixed;left:50%;bottom:22px;
-             transform:translateX(-50%);width:calc(100% - 28px);
-             max-width:460px;background:#101010;color:#fff;
-             border:2px solid #aeb2b8;border-radius:18px;
-             padding:19px;z-index:999999;
-             box-shadow:0 10px 35px rgba(0,0,0,.65);
+             style="display:none;position:fixed;top:50%;left:50%;
+             transform:translate(-50%,-50%);width:calc(100% - 32px);
+             max-width:460px;background:#141414;color:#fff;
+             border:1px solid #ff6800;border-radius:16px;padding:18px;
+             z-index:999999;box-shadow:0 8px 30px rgba(0,0,0,.55);
              font-family:Arial,sans-serif;">
 
-            <div style="display:flex;align-items:center;gap:13px;">
-                <img src="${portal.icon}" alt=""
-                     style="width:58px;height:58px;object-fit:contain;
-                     border-radius:12px;background:#080808;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <img src="${portal.icon}" alt="${portal.name}"
+                     style="width:54px;height:54px;object-fit:contain;
+                     border-radius:12px;background:#fff;">
 
                 <div style="flex:1;">
-                    <strong style="font-size:17px;">${portal.name}</strong>
-                    <div style="font-size:13px;color:#c6c6c6;margin-top:6px;">
+                    <strong style="font-size:16px;">
+                        Get ${portal.name} on your device
+                    </strong>
+                    <div style="font-size:13px;color:#ccc;margin-top:4px;">
                         ${portal.description}
                     </div>
                 </div>
 
                 <button id="airxpress-dismiss" type="button"
-                    aria-label="Close"
+                    aria-label="Dismiss"
                     style="background:transparent;color:#fff;border:0;
-                    font-size:25px;cursor:pointer;">&times;</button>
+                    font-size:24px;cursor:pointer;">&times;</button>
             </div>
 
-            <div id="airxpress-install-help"
-                 style="font-size:13px;color:#ddd;margin-top:15px;">
-                Add this app to your home screen for quick access.
+            <div id="airxpress-ios-help"
+                 style="display:none;font-size:13px;color:#ddd;margin-top:12px;">
+                Tap the Share button in Safari, then choose
+                <strong>Add to Home Screen</strong>.
             </div>
 
             <div style="display:flex;gap:10px;margin-top:15px;">
                 <button id="airxpress-install-button" type="button"
-                    style="flex:1;background:linear-gradient(135deg,#fff,#aaa);
-                    color:#080808;border:0;border-radius:9px;
-                    padding:13px;font-weight:700;cursor:pointer;">
-                    Install App
-                </button>
+                    style="flex:1;background:#ff6800;color:#fff;border:0;
+                    border-radius:9px;padding:12px;font-weight:700;
+                    cursor:pointer;">Install App</button>
 
                 <button id="airxpress-later" type="button"
-                    style="background:#292929;color:#fff;border:1px solid #777;
+                    style="background:#292929;color:#fff;border:0;
                     border-radius:9px;padding:12px 16px;cursor:pointer;">
                     Not now
                 </button>
@@ -128,77 +122,59 @@
 
     const banner = document.getElementById("airxpress-install-banner");
     const installButton = document.getElementById("airxpress-install-button");
-    const help = document.getElementById("airxpress-install-help");
+    const dismissButton = document.getElementById("airxpress-dismiss");
+    const laterButton = document.getElementById("airxpress-later");
+    const iosHelp = document.getElementById("airxpress-ios-help");
+
+    let installPrompt = null;
 
     function showBanner() {
-        if (!isStandalone) banner.style.display = "block";
-    }
-
-    function hideBanner() {
-        banner.style.display = "none";
+        if (!wasDismissed()) {
+            banner.style.display = "block";
+        }
     }
 
     function dismissBanner() {
-        localStorage.setItem(dismissalKey, String(Date.now()));
-        hideBanner();
+        banner.style.display = "none";
+        try {
+            localStorage.setItem(dismissalKey, "yes");
+        } catch (error) {}
     }
 
-    function showManualInstructions() {
-        if (isIOS) {
-            help.innerHTML =
-                'In Safari, tap <strong>Share</strong>, then ' +
-                '<strong>Add to Home Screen</strong>.';
-        } else {
-            help.innerHTML =
-                'Open your browser menu and choose ' +
-                '<strong>Install app</strong> or ' +
-                '<strong>Add to Home Screen</strong>.';
-        }
-    }
-
-    window.addEventListener("beforeinstallprompt", event => {
+    window.addEventListener("beforeinstallprompt", function (event) {
         event.preventDefault();
         installPrompt = event;
-        installButton.textContent = "Install App";
-        help.textContent = "Install " + portal.name + " on this device.";
-    });
-
-    window.addEventListener("appinstalled", () => {
-        localStorage.removeItem(dismissalKey);
-        hideBanner();
+        window.setTimeout(showBanner, 3000);
     });
 
     if (isIOS) {
-        installButton.textContent = "How to install";
-        showManualInstructions();
+        installButton.style.display = "none";
+        iosHelp.style.display = "block";
+        window.setTimeout(showBanner, 3000);
     }
 
-    installButton.addEventListener("click", async () => {
-        if (!installPrompt) {
-            showManualInstructions();
-            return;
-        }
+    installButton.addEventListener("click", async function () {
+        if (!installPrompt) return;
+
+        const promptEvent = installPrompt;
+        installPrompt = null;
 
         try {
-            const promptEvent = installPrompt;
-            installPrompt = null;
             await promptEvent.prompt();
-
-            const choice = await promptEvent.userChoice;
-            if (choice && choice.outcome === "accepted") {
-                hideBanner();
-            }
+            await promptEvent.userChoice;
+            banner.style.display = "none";
         } catch (error) {
             console.warn("AirXpress installation prompt failed:", error);
-            showManualInstructions();
         }
     });
 
-    document.getElementById("airxpress-dismiss")
-        .addEventListener("click", dismissBanner);
+    dismissButton.addEventListener("click", dismissBanner);
+    laterButton.addEventListener("click", dismissBanner);
 
-    document.getElementById("airxpress-later")
-        .addEventListener("click", dismissBanner);
-
-    window.setTimeout(showBanner, 2500);
+    window.addEventListener("appinstalled", function () {
+        banner.style.display = "none";
+        try {
+            localStorage.removeItem(dismissalKey);
+        } catch (error) {}
+    });
 })();
