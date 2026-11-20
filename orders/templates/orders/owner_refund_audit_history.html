@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -93,7 +93,7 @@
 <body>
 <main>
     <div class="top-links">
-        <a href="{% url 'owner_dashboard' %}">← Owner Dashboard</a>
+        <a href="{% url 'owner_dashboard' %}">â† Owner Dashboard</a>
         <a href="{% url 'owner_refund_enquiries' %}">Refund Management Queue</a>
     </div>
 
@@ -171,9 +171,9 @@
                         <td>R{{ event.refund.requested_amount|floatformat:2 }}</td>
                         <td class="event">{{ event.get_event_type_display }}</td>
                         <td class="status">
-                            {{ event.previous_status|default:"—" }}
+                            {{ event.previous_status|default:"â€”" }}
                             &rarr;
-                            {{ event.new_status|default:"—" }}
+                            {{ event.new_status|default:"â€”" }}
                         </td>
                         <td>
                             {% if event.performed_by %}
@@ -182,7 +182,7 @@
                                 <span class="muted">Unknown</span>
                             {% endif %}
                         </td>
-                        <td class="notes">{{ event.notes|default:"—" }}</td>
+                        <td class="notes">{{ event.notes|default:"â€”" }}</td>
                     </tr>
                 {% empty %}
                     <tr>
@@ -196,6 +196,6 @@
     </section>
 </main>
 
-<script src="/static/orders/js/pwa-install.js?v=20261120-1"></script>
+<script src="/static/orders/js/pwa-install.js?v=20261120-2"></script>
 </body>
 </html>

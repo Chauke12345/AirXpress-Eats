@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -113,9 +113,9 @@
         <h1>AirXpress Eats Support Centre</h1>
         <p>Review incidents, manage support requests and record resolutions.</p>
         <nav class="nav" aria-label="Owner navigation">
-            <a href="{% url 'owner_dashboard' %}">â† Owner Dashboard</a>
+            <a href="{% url 'owner_dashboard' %}">Ã¢â€ Â Owner Dashboard</a>
             <a href="{% url 'owner_support_dashboard' %}">Support Tickets</a>
-            <a href="{% url 'airxpress_help' %}" target="_blank" rel="noopener">Open Help Centre â†—</a>
+            <a href="{% url 'airxpress_help' %}" target="_blank" rel="noopener">Open Help Centre Ã¢â€ â€”</a>
         </nav>
     </div>
 </header>
@@ -169,7 +169,7 @@
                     <div>
                         <h3>{{ ticket.subject|default:"Support request" }}</h3>
                         <div class="meta">
-                            Reference: {{ ticket.reference|slice:":8"|upper }} Â·
+                            Reference: {{ ticket.reference|slice:":8"|upper }} Ã‚Â·
                             Received: {{ ticket.created_at|date:"d M Y, H:i" }}
                         </div>
                     </div>
@@ -180,14 +180,14 @@
                 </div>
 
                 <p class="meta">
-                    Customer: {{ ticket.customer_name|default:"Not provided" }} Â·
-                    Phone: {{ ticket.customer_phone|default:"Not provided" }} Â·
-                    Category: {{ ticket.get_category_display }} Â·
+                    Customer: {{ ticket.customer_name|default:"Not provided" }} Ã‚Â·
+                    Phone: {{ ticket.customer_phone|default:"Not provided" }} Ã‚Â·
+                    Category: {{ ticket.get_category_display }} Ã‚Â·
                     Assigned team: {{ ticket.get_assigned_team_display|default:ticket.assigned_team|title }}
                 </p>
 
                 {% if ticket.priority == "critical" and ticket.status != "resolved" %}
-                    <p><strong>CRITICAL INCIDENT â€” Prioritise during support hours. After-hours response is optional.</strong></p>
+                    <p><strong>CRITICAL INCIDENT Ã¢â‚¬â€ Prioritise during support hours. After-hours response is optional.</strong></p>
                 {% endif %}
 
                 <div class="description">{{ ticket.description }}</div>
@@ -253,6 +253,6 @@
     </section>
 </main>
 
-<script src="/static/orders/js/pwa-install.js?v=20261120-1"></script>
+<script src="/static/orders/js/pwa-install.js?v=20261120-2"></script>
 </body>
 </html>

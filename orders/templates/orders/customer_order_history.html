@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -406,7 +406,7 @@
                                 {% if order.delivery_distance_km %}
                                     {{ order.delivery_distance_km }} km
                                 {% else %}
-                                    —
+                                    â€”
                                 {% endif %}
                             </div>
                         </div>
@@ -466,7 +466,7 @@
                             <div class="item">
 
                                 <div class="item-name">
-                                    {{ item.quantity }} ×
+                                    {{ item.quantity }} Ã—
                                     {{ item.menu_item.name }}
                                 </div>
 
@@ -538,6 +538,6 @@
 
 {% include "orders/partials/customer_notification_bell.html" %}
 
-<script src="/static/orders/js/pwa-install.js?v=20261120-1"></script>
+<script src="/static/orders/js/pwa-install.js?v=20261120-2"></script>
 </body>
 </html>

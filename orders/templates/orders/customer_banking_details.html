@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -139,11 +139,11 @@
 
 <div class="container">
 
-    <a href="{% url 'home' %}" class="back-link">† Back to AirXpress Eats</a>
+    <a href="{% url 'home' %}" class="back-link">â€ Â Back to AirXpress Eats</a>
 
     <div class="card">
 
-        <h1>Ÿ¦ Banking Details</h1>
+        <h1>Å¸ÂÂ¦ Banking Details</h1>
 
         <p class="subtitle">
             Add or update your banking details securely.
@@ -190,7 +190,7 @@
 
                 {% if profile.account_number %}
                     <div class="saved-account-number">
-                        €¢€¢€¢€¢€¢€¢€¢€¢{{ profile.account_number|slice:"-4:" }}
+                        â‚¬Â¢â‚¬Â¢â‚¬Â¢â‚¬Â¢â‚¬Â¢â‚¬Â¢â‚¬Â¢â‚¬Â¢{{ profile.account_number|slice:"-4:" }}
                     </div>
 
                     <label class="change-account-label">
@@ -258,7 +258,7 @@
         </form>
 
         <div class="security-note">
-            Ÿ”’ Your banking information is private and should only be entered
+            Å¸â€â€™ Your banking information is private and should only be entered
             on your personal AirXpress Eats account.
         </div>
 
@@ -288,6 +288,6 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 {% include "orders/partials/customer_notification_bell.html" %}
 
-<script src="/static/orders/js/pwa-install.js?v=20261120-1"></script>
+<script src="/static/orders/js/pwa-install.js?v=20261120-2"></script>
 </body>
 </html>

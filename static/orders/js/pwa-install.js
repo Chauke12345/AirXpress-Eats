@@ -1,4 +1,5 @@
-﻿(function () {
+﻿
+(function () {
     "use strict";
 
     const path = window.location.pathname.toLowerCase();
@@ -98,10 +99,8 @@
                     font-size:24px;cursor:pointer;">&times;</button>
             </div>
 
-            <div id="airxpress-ios-help"
-                 style="display:none;font-size:13px;color:#ddd;margin-top:12px;">
-                Tap the Share button in Safari, then choose
-                <strong>Add to Home Screen</strong>.
+            <div id="airxpress-install-help"
+                 style="display:none;font-size:13px;color:#ddd;margin-top:14px;line-height:1.5;">
             </div>
 
             <div style="display:flex;gap:10px;margin-top:15px;">
@@ -124,7 +123,7 @@
     const installButton = document.getElementById("airxpress-install-button");
     const dismissButton = document.getElementById("airxpress-dismiss");
     const laterButton = document.getElementById("airxpress-later");
-    const iosHelp = document.getElementById("airxpress-ios-help");
+    const installHelp = document.getElementById("airxpress-install-help");
 
     let installPrompt = null;
 
@@ -141,20 +140,43 @@
         } catch (error) {}
     }
 
+    function showManualInstructions() {
+        const ua = navigator.userAgent;
+        let instructions;
+
+        if (/EdgA|EdgiOS|Edg\//i.test(ua)) {
+            instructions = "To install this app, open the browser menu and look for 'Add to Home screen' or 'Install app'.";
+        } else if (/Chrome/i.test(ua) && /Android/i.test(ua)) {
+            instructions = "To install this app, tap the three-dot menu in Chrome and choose 'Install app' or 'Add to Home screen'.";
+        } else if (/Chrome/i.test(ua)) {
+            instructions = "To install this app, look for the install icon in Chrome's address bar, or open the three-dot menu and choose 'Cast, save and share' then 'Install page as app'.";
+        } else {
+            instructions = "To install this app, open your browser menu and look for 'Install app', 'Add to Home screen' or a similar installation option.";
+        }
+
+        installHelp.textContent = instructions;
+        installHelp.style.display = "block";
+    }
+
     window.addEventListener("beforeinstallprompt", function (event) {
         event.preventDefault();
         installPrompt = event;
-        window.setTimeout(showBanner, 3000);
+        installHelp.style.display = "none";
+        showBanner();
     });
 
     if (isIOS) {
         installButton.style.display = "none";
-        iosHelp.style.display = "block";
-        window.setTimeout(showBanner, 3000);
+        installHelp.textContent =
+            "To install this app, tap the Share button in Safari, then choose 'Add to Home Screen'.";
+        installHelp.style.display = "block";
     }
 
     installButton.addEventListener("click", async function () {
-        if (!installPrompt) return;
+        if (!installPrompt) {
+            showManualInstructions();
+            return;
+        }
 
         const promptEvent = installPrompt;
         installPrompt = null;
@@ -165,6 +187,7 @@
             banner.style.display = "none";
         } catch (error) {
             console.warn("AirXpress installation prompt failed:", error);
+            showManualInstructions();
         }
     });
 
@@ -177,4 +200,7 @@
             localStorage.removeItem(dismissalKey);
         } catch (error) {}
     });
+
+    // Show the invitation even when the browser has no native install prompt.
+    window.setTimeout(showBanner, 3000);
 })();

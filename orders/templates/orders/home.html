@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -2583,7 +2583,7 @@ section:not(.hero) {
     <div class="ax-category-row" aria-label="Homepage categories">
       {% for key, label in homepage_categories %}
         <a class="ax-category-chip" href="#category-{{ key }}">
-          <span class="ax-category-icon" aria-hidden="true">{% if key == "main_meals" %}ðŸ›{% elif key == "burgers" %}ðŸ”{% elif key == "chicken" %}ðŸ—{% elif key == "meat_braai" %}ðŸ”¥{% elif key == "sides" %}ðŸŸ{% elif key == "drinks" %}ðŸ¥¤{% elif key == "desserts" %}ðŸ°{% elif key == "groceries" %}ðŸ›’{% else %}ðŸ½ï¸{% endif %}</span>
+          <span class="ax-category-icon" aria-hidden="true">{% if key == "main_meals" %}Ã°Å¸Ââ€º{% elif key == "burgers" %}Ã°Å¸Ââ€{% elif key == "chicken" %}Ã°Å¸Ââ€”{% elif key == "meat_braai" %}Ã°Å¸â€Â¥{% elif key == "sides" %}Ã°Å¸ÂÅ¸{% elif key == "drinks" %}Ã°Å¸Â¥Â¤{% elif key == "desserts" %}Ã°Å¸ÂÂ°{% elif key == "groceries" %}Ã°Å¸â€ºâ€™{% else %}Ã°Å¸ÂÂ½Ã¯Â¸Â{% endif %}</span>
           <span>{{ label }}</span>
         </a>
       {% endfor %}
@@ -3180,7 +3180,7 @@ section:not(.hero) {
 {% include "orders/partials/customer_notification_bell.html" %}
 <script defer src="{% static 'orders/js/customer-journey.js' %}" data-page="home" data-customer-authenticated="{% if user.is_authenticated and user.customer_profile and not user.is_staff and not user.is_superuser %}true{% else %}false{% endif %}"></script>
 
-<script src="/static/orders/js/pwa-install.js?v=20261120-1"></script>
+<script src="/static/orders/js/pwa-install.js?v=20261120-2"></script>
 </body>
 </html>
 
