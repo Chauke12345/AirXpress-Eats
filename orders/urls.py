@@ -358,7 +358,7 @@ urlpatterns = [
 
 
     # =========================================================
-    # STAFF LOGIN / LOGOUT
+    # MERCHANT LOGIN / LOGOUT
     # =========================================================
 
     path(
@@ -368,56 +368,110 @@ urlpatterns = [
     ),
 
     path(
-        "staff/logout/",
+        "merchant/logout/",
         auth_views.LogoutView.as_view(
             next_page="staff_login"
         ),
         name="staff_logout",
     ),
 
-# =========================================================
-# STAFF
-# =========================================================
+    # =========================================================
+    # MERCHANT DASHBOARD
+    # =========================================================
 
-path(
-    "staff/dashboard/",
-    views.staff_dashboard,
-    name="staff_dashboard",
-),
+    path(
+        "merchant/dashboard/",
+        views.staff_dashboard,
+        name="staff_dashboard",
+    ),
 
-path(
-    "staff/banking-details/",
-    views.shop_banking_details,
-    name="shop_banking_details",
-),
+    path(
+        "merchant/banking-details/",
+        views.shop_banking_details,
+        name="shop_banking_details",
+    ),
 
-path(
-    "staff/dashboard/updates/",
-    views.staff_dashboard_updates,
-    name="staff_dashboard_updates",
-),
-path("staff/order/<int:order_id>/update/",
-    views.staff_update_order,
-    name="staff_update_order",
-),
-  path(
-      "staff/notify-drivers/<int:order_id>/",
-      views.staff_notify_drivers,
-      name="staff_notify_drivers",
-  ),
+    path(
+        "merchant/dashboard/updates/",
+        views.staff_dashboard_updates,
+        name="staff_dashboard_updates",
+    ),
 
+    path(
+        "merchant/order/<int:order_id>/update/",
+        views.staff_update_order,
+        name="staff_update_order",
+    ),
 
-path(
-    "staff/history/",
-    views.staff_order_history,
-    name="staff_order_history",
-),
+    path(
+        "merchant/notify-drivers/<int:order_id>/",
+        views.staff_notify_drivers,
+        name="staff_notify_drivers",
+    ),
 
-path(
-    "staff/reports/daily/",
-    views.staff_daily_report,
-    name="staff_daily_report",
-),
+    path(
+        "merchant/history/",
+        views.staff_order_history,
+        name="staff_order_history",
+    ),
+
+    path(
+        "merchant/reports/daily/",
+        views.staff_daily_report,
+        name="staff_daily_report",
+    ),
+
+    # =========================================================
+    # LEGACY STAFF URLS - KEEP OLD LINKS WORKING
+    # =========================================================
+
+    path(
+        "staff/logout/",
+        auth_views.LogoutView.as_view(next_page="staff_login"),
+        name="legacy_staff_logout",
+    ),
+
+    path(
+        "staff/dashboard/",
+        views.staff_dashboard,
+        name="legacy_staff_dashboard",
+    ),
+
+    path(
+        "staff/banking-details/",
+        views.shop_banking_details,
+        name="legacy_shop_banking_details",
+    ),
+
+    path(
+        "staff/dashboard/updates/",
+        views.staff_dashboard_updates,
+        name="legacy_staff_dashboard_updates",
+    ),
+
+    path(
+        "staff/order/<int:order_id>/update/",
+        views.staff_update_order,
+        name="legacy_staff_update_order",
+    ),
+
+    path(
+        "staff/notify-drivers/<int:order_id>/",
+        views.staff_notify_drivers,
+        name="legacy_staff_notify_drivers",
+    ),
+
+    path(
+        "staff/history/",
+        views.staff_order_history,
+        name="legacy_staff_order_history",
+    ),
+
+    path(
+        "staff/reports/daily/",
+        views.staff_daily_report,
+        name="legacy_staff_daily_report",
+    ),
 
     # =========================================================
     # MANAGEMENT LOGIN / LOGOUT

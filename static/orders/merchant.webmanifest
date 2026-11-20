@@ -4,7 +4,7 @@
     "short_name":  "Merchant",
     "description":  "Manage your AirXpress Eats shop and orders.",
     "start_url":  "/merchant/login/",
-    "scope":  "/",
+    "scope": "/merchant/",
     "display":  "standalone",
     "background_color":  "#000000",
     "theme_color":  "#000000",
