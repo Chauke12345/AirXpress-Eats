@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     "use strict";
 
     const path = window.location.pathname.toLowerCase();
@@ -7,7 +7,7 @@
         {
             id: "customer",
             match: p => p === "/" || p.startsWith("/customer/") || p.startsWith("/shop/"),
-            name: "AirXpress Customer",
+            name: "AirXpress",
             description: "Order your favourite meals with AirXpress Eats.",
             icon: "/static/orders/images/pwa/customer-icon.png",
             manifest: "/static/orders/customer.webmanifest"
@@ -15,7 +15,7 @@
         {
             id: "driver",
             match: p => p.startsWith("/driver/"),
-            name: "AirXpress Driver",
+            name: "AirXpress Driver Portal",
             description: "Access your delivery driver portal.",
             icon: "/static/orders/images/pwa/driver-icon.png",
             manifest: "/static/orders/driver.webmanifest"
@@ -23,7 +23,7 @@
         {
             id: "merchant",
             match: p => p.startsWith("/merchant/") || p.startsWith("/staff/"),
-            name: "AirXpress Shops",
+            name: "AirXpress Merchant Portal",
             description: "Manage your shop and customer orders.",
             icon: "/static/orders/images/pwa/merchant-icon.png",
             manifest: "/static/orders/merchant.webmanifest"
