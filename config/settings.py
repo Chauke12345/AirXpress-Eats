@@ -252,6 +252,9 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+WHITENOISE_MIMETYPES = {
+    ".webmanifest": "application/manifest+json",
+}
 
 # Collected production static files
 STATIC_ROOT = BASE_DIR / "staticfiles"
