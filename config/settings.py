@@ -4,6 +4,9 @@ Django settings for AirXpress Eats.
 
 from pathlib import Path
 import os
+import mimetypes
+
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 import dj_database_url
 
