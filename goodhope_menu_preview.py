@@ -116,7 +116,7 @@ media_root = Path(settings.MEDIA_ROOT)
 image_dir = media_root / "menu_items" / "goodhope"
 existing_names = set(MenuItem.objects.filter(shop_id=SHOP_ID).values_list("name", flat=True))
 
-print("\nGOODHOPE MENU PREVIEW â€” NO DATABASE CHANGES")
+print("\nGOODHOPE MENU PREVIEW - NO DATABASE CHANGES")
 print("Shop:", shop.name, "| ID:", shop.pk, "| slug:", shop.slug)
 print("Existing Goodhope menu items:", MenuItem.objects.filter(shop_id=SHOP_ID).count())
 print("Existing Goodhope categories:", Category.objects.filter(shop_id=SHOP_ID).count())

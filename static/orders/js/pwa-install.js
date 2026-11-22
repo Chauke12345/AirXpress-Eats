@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     "use strict";
 
     const path = window.location.pathname.toLowerCase();
@@ -9,28 +9,36 @@
             match: p => p === "/" || p.startsWith("/customer/") || p.startsWith("/shop/"),
             name: "AirXpress Eats",
             description: "Faster access to your favourite food.",
-            icon: "/static/orders/images/pwa/customer-icon-192.png"
+            icon: "/static/orders/images/pwa/customer-icon-192.png",
+            workerUrl: "/airxpress-sw.js",
+            workerScope: "/"
         },
         {
             id: "driver",
             match: p => p.startsWith("/driver/"),
             name: "AirXpress Driver",
             description: "Quick access to your driver portal.",
-            icon: "/static/orders/images/pwa/driver-icon-192.png"
+            icon: "/static/orders/images/pwa/driver-icon-192.png",
+            workerUrl: "/driver/driver-sw.js",
+            workerScope: "/driver/"
         },
         {
             id: "merchant",
             match: p => p.startsWith("/merchant/") || p.startsWith("/staff/"),
             name: "AirXpress Merchant",
             description: "Quick access to your merchant portal.",
-            icon: "/static/orders/images/pwa/merchant-icon-192.png"
+            icon: "/static/orders/images/pwa/merchant-icon-192.png",
+            workerUrl: "/merchant/merchant-sw.js",
+            workerScope: "/merchant/"
         },
         {
             id: "admin",
             match: p => p.startsWith("/owner/"),
             name: "AirXpress Admin",
             description: "Quick access to your administration portal.",
-            icon: "/static/orders/images/pwa/admin-icon-192.png"
+            icon: "/static/orders/images/pwa/admin-icon-192.png",
+            workerUrl: "/owner/admin-sw.js",
+            workerScope: "/owner/"
         }
     ];
 
@@ -55,11 +63,18 @@
 
     if (wasDismissed()) return;
 
-    if ("serviceWorker" in navigator && window.isSecureContext) {
-        navigator.serviceWorker.register("/airxpress-sw.js", {
-            scope: "/"
+    if (
+        "serviceWorker" in navigator &&
+        window.isSecureContext &&
+        !(portal.id === "merchant" && path.startsWith("/staff/"))
+    ) {
+        navigator.serviceWorker.register(portal.workerUrl, {
+            scope: portal.workerScope
         }).catch(error => {
-            console.warn("AirXpress service worker registration failed:", error);
+            console.warn(
+                "AirXpress " + portal.id + " service worker registration failed:",
+                error
+            );
         });
     }
 

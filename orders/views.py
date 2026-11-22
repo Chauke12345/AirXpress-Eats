@@ -1,4 +1,4 @@
-﻿import json
+import json
 import math
 import secrets
 import hashlib
@@ -8707,6 +8707,44 @@ def airxpress_service_worker(request):
     response["Cache-Control"] = "no-cache"
     return response
 
+
+
+def portal_service_worker(request, filename, allowed_scope):
+    """Serve a portal-specific service worker with its permitted scope."""
+    from pathlib import Path
+
+    worker_path = Path(settings.BASE_DIR) / "static" / filename
+
+    try:
+        worker_code = worker_path.read_text(encoding="utf-8")
+    except OSError:
+        return HttpResponse("Service worker unavailable.", status=404)
+
+    response = HttpResponse(
+        worker_code,
+        content_type="application/javascript; charset=utf-8",
+    )
+    response["Service-Worker-Allowed"] = allowed_scope
+    response["Cache-Control"] = "no-cache"
+    return response
+
+
+def driver_portal_service_worker(request):
+    return portal_service_worker(
+        request, "driver-push-sw.js", "/driver/"
+    )
+
+
+def merchant_portal_service_worker(request):
+    return portal_service_worker(
+        request, "merchant-sw.js", "/merchant/"
+    )
+
+
+def admin_portal_service_worker(request):
+    return portal_service_worker(
+        request, "admin-sw.js", "/owner/"
+    )
 
 # YOCO PAYMENT
 # =========================================================

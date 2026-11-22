@@ -1,10 +1,10 @@
-{
+﻿{
     "id":  "/admin-app",
     "name":  "AirXpress Admin",
     "short_name":  "Admin",
     "description":  "Manage the AirXpress Eats platform.",
     "start_url":  "/owner/login/",
-    "scope":  "/",
+    "scope":  "/owner/",
     "display":  "standalone",
     "background_color":  "#000000",
     "theme_color":  "#000000",

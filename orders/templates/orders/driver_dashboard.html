@@ -5,11 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <link rel="manifest" href="/static/orders/driver.webmanifest">
     <link
         rel="icon"
         type="image/png"
-        href="{% static 'orders/images/Airxpress-logo.png' %}"
+        href="/static/orders/images/pwa/driver-icon-192.png"
     >
+
+    <link rel="apple-touch-icon" href="/static/orders/images/pwa/driver-icon-192.png">
 
     <link
         href="https://api.mapbox.com/mapbox-gl-js/v3.32.0/mapbox-gl.css"
@@ -1867,16 +1870,16 @@ function toggleDriverBanking() {
                                         <div class="detail">
                         {% if order.status == "driver_assigned" %}
                             {% if order.shop.latitude and order.shop.longitude %}
-                                <a href="https://www.google.com/maps/dir/?api=1&amp;destination={{ order.shop.latitude }},{{ order.shop.longitude }}" target="_blank" rel="noopener" style="display:inline-block;margin:10px 8px 10px 0;background:#111;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Pickup Ã¢â‚¬â€ Google Maps</a>
-                                <a href="https://waze.com/ul?ll={{ order.shop.latitude }},{{ order.shop.longitude }}&amp;navigate=yes" target="_blank" rel="noopener" style="display:inline-block;margin:10px 0;background:#087eec;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Pickup Ã¢â‚¬â€ Waze</a>
+                                <a href="https://www.google.com/maps/dir/?api=1&amp;destination={{ order.shop.latitude }},{{ order.shop.longitude }}" target="_blank" rel="noopener" style="display:inline-block;margin:10px 8px 10px 0;background:#111;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Pickup - Google Maps</a>
+                                <a href="https://waze.com/ul?ll={{ order.shop.latitude }},{{ order.shop.longitude }}&amp;navigate=yes" target="_blank" rel="noopener" style="display:inline-block;margin:10px 0;background:#087eec;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Pickup -  Waze</a>
                             {% endif %}
                         {% elif order.status == "picked_up" %}
                             {% if order.customer_latitude and order.customer_longitude %}
-                                <a href="https://www.google.com/maps/dir/?api=1&amp;destination={{ order.customer_latitude }},{{ order.customer_longitude }}" target="_blank" rel="noopener" style="display:inline-block;margin:10px 8px 10px 0;background:#111;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Customer Ã¢â‚¬â€ Google Maps</a>
-                                <a href="https://waze.com/ul?ll={{ order.customer_latitude }},{{ order.customer_longitude }}&amp;navigate=yes" target="_blank" rel="noopener" style="display:inline-block;margin:10px 0;background:#087eec;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Customer Ã¢â‚¬â€ Waze</a>
+                                <a href="https://www.google.com/maps/dir/?api=1&amp;destination={{ order.customer_latitude }},{{ order.customer_longitude }}" target="_blank" rel="noopener" style="display:inline-block;margin:10px 8px 10px 0;background:#111;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Customer &rarr; Google Maps</a>
+                                <a href="https://waze.com/ul?ll={{ order.customer_latitude }},{{ order.customer_longitude }}&amp;navigate=yes" target="_blank" rel="noopener" style="display:inline-block;margin:10px 0;background:#087eec;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Customer &rarr; Waze</a>
                             {% elif order.delivery_address %}
-                                <a href="https://www.google.com/maps/dir/?api=1&amp;destination={{ order.delivery_address|urlencode }}" target="_blank" rel="noopener" style="display:inline-block;margin:10px 8px 10px 0;background:#111;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Customer Ã¢â‚¬â€ Google Maps</a>
-                                <a href="https://waze.com/ul?q={{ order.delivery_address|urlencode }}&amp;navigate=yes" target="_blank" rel="noopener" style="display:inline-block;margin:10px 0;background:#087eec;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Customer Ã¢â‚¬â€ Waze</a>
+                                <a href="https://www.google.com/maps/dir/?api=1&amp;destination={{ order.delivery_address|urlencode }}" target="_blank" rel="noopener" style="display:inline-block;margin:10px 8px 10px 0;background:#111;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Customer &rarr; Google Maps</a>
+                                <a href="https://waze.com/ul?q={{ order.delivery_address|urlencode }}&amp;navigate=yes" target="_blank" rel="noopener" style="display:inline-block;margin:10px 0;background:#087eec;color:#fff;padding:11px 18px;border-radius:9px;font-weight:800;text-decoration:none;">Navigate to Customer &rarr; Waze</a>
                             {% else %}
                                 <p style="margin-top:10px;color:#9a3412;font-weight:700;">Customer destination is missing. Contact the customer before proceeding.</p>
                             {% endif %}
@@ -3270,11 +3273,32 @@ function toggleDriverBanking() {
             }
 
             const registration = await navigator.serviceWorker.register(
-                "/airxpress-sw.js",
-                { scope: "/" }
+                "/driver/driver-sw.js",
+                { scope: "/driver/" }
             );
 
-            await navigator.serviceWorker.ready;
+            if (!registration.active) {
+                const worker = registration.installing || registration.waiting;
+
+                if (!worker) {
+                    throw new Error("Driver notification service worker could not start.");
+                }
+
+                await new Promise(function (resolve, reject) {
+                    function checkWorkerState() {
+                        if (worker.state === "activated") {
+                            worker.removeEventListener("statechange", checkWorkerState);
+                            resolve();
+                        } else if (worker.state === "redundant") {
+                            worker.removeEventListener("statechange", checkWorkerState);
+                            reject(new Error("Driver notification service worker failed to activate."));
+                        }
+                    }
+
+                    worker.addEventListener("statechange", checkWorkerState);
+                    checkWorkerState();
+                });
+            }
 
             let subscription = await registration.pushManager.getSubscription();
             if (!subscription) {
@@ -3301,6 +3325,43 @@ function toggleDriverBanking() {
 
             if (!saveResponse.ok) {
                 throw new Error(result.error || "Could not save this device's subscription.");
+            }
+
+            // Retire the previous root-worker Driver subscription only after the
+            // new Driver subscription has been saved successfully.
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                const rootScope = new URL("/", window.location.origin).href;
+                const rootRegistration = registrations.find(function (item) {
+                    return item.scope === rootScope;
+                });
+
+                if (rootRegistration) {
+                    const oldSubscription = await rootRegistration.pushManager.getSubscription();
+
+                    if (oldSubscription && oldSubscription.endpoint !== subscription.endpoint) {
+                        const removalResponse = await fetch("/driver/push/unsubscribe/", {
+                            method: "POST",
+                            credentials: "same-origin",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRFToken": csrfInput.value,
+                                "Accept": "application/json"
+                            },
+                            body: JSON.stringify({ endpoint: oldSubscription.endpoint })
+                        });
+
+                        const removalResult = await removalResponse.json().catch(function () {
+                            return {};
+                        });
+
+                        if (!(removalResponse.ok && removalResult.removed === true)) {
+                            console.warn("Old Driver database subscription was not confirmed as removed.");
+                        }
+                    }
+                }
+            } catch (cleanupError) {
+                console.warn("Driver push subscription migration cleanup was incomplete:", cleanupError);
             }
 
             setStatus("Notifications are enabled on this device. Keep browser notifications allowed.");

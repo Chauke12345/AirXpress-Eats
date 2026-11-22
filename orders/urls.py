@@ -1,4 +1,4 @@
-﻿from django.urls import path
+from django.urls import path
 from django.contrib.auth import views as auth_views
 
 from . import views
@@ -14,6 +14,21 @@ urlpatterns = [
         "airxpress-sw.js",
         views.airxpress_service_worker,
         name="airxpress_service_worker",
+    ),
+    path(
+        "driver/driver-sw.js",
+        views.driver_portal_service_worker,
+        name="driver_portal_service_worker",
+    ),
+    path(
+        "merchant/merchant-sw.js",
+        views.merchant_portal_service_worker,
+        name="merchant_portal_service_worker",
+    ),
+    path(
+        "owner/admin-sw.js",
+        views.admin_portal_service_worker,
+        name="admin_portal_service_worker",
     ),
 
     path('login/', views.login_gateway, name='login_gateway'),

@@ -13,14 +13,14 @@
 
     <link rel="icon"
           type="image/png"
-          href="{% static 'orders/images/Airxpress-logo.png' %}?v=2">
+          href="/static/orders/images/pwa/customer-icon-192.png">
 
     <link rel="manifest" href="{% static 'orders/customer.webmanifest' %}">
     <meta name="theme-color" content="#bdbdbd">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="AirXpress Eats">
-    <link rel="apple-touch-icon" href="{% static 'orders/images/Airxpress-logo.png' %}">
+    <link rel="apple-touch-icon" href="/static/orders/images/pwa/customer-icon-192.png">
     <style>
 
         * {
@@ -2583,7 +2583,7 @@ section:not(.hero) {
     <div class="ax-category-row" aria-label="Homepage categories">
       {% for key, label in homepage_categories %}
         <a class="ax-category-chip" href="#category-{{ key }}">
-          <span class="ax-category-icon" aria-hidden="true">{% if key == "main_meals" %}Ã°Å¸Ââ€º{% elif key == "burgers" %}Ã°Å¸Ââ€{% elif key == "chicken" %}Ã°Å¸Ââ€”{% elif key == "meat_braai" %}Ã°Å¸â€Â¥{% elif key == "sides" %}Ã°Å¸ÂÅ¸{% elif key == "drinks" %}Ã°Å¸Â¥Â¤{% elif key == "desserts" %}Ã°Å¸ÂÂ°{% elif key == "groceries" %}Ã°Å¸â€ºâ€™{% else %}Ã°Å¸ÂÂ½Ã¯Â¸Â{% endif %}</span>
+          <span class="ax-category-icon" aria-hidden="true">{% if key == "main_meals" %}&#127869;{% elif key == "burgers" %}&#127828;{% elif key == "chicken" %}&#127831;{% elif key == "meat_braai" %}&#129385;{% elif key == "sides" %}&#127839;{% elif key == "drinks" %}&#129380;{% elif key == "desserts" %}&#127856;{% elif key == "groceries" %}&#128722;{% else %}&#128717;{% endif %}</span>
           <span>{{ label }}</span>
         </a>
       {% endfor %}

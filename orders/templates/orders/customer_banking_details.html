@@ -139,11 +139,11 @@
 
 <div class="container">
 
-    <a href="{% url 'home' %}" class="back-link">â€ Â Back to AirXpress Eats</a>
+    <a href="{% url 'home' %}" class="back-link">&larr; Back to AirXpress Eats</a>
 
     <div class="card">
 
-        <h1>Å¸ÂÂ¦ Banking Details</h1>
+        <h1>Banking Details</h1>
 
         <p class="subtitle">
             Add or update your banking details securely.
@@ -190,7 +190,7 @@
 
                 {% if profile.account_number %}
                     <div class="saved-account-number">
-                        â‚¬Â¢â‚¬Â¢â‚¬Â¢â‚¬Â¢â‚¬Â¢â‚¬Â¢â‚¬Â¢â‚¬Â¢{{ profile.account_number|slice:"-4:" }}
+                        &bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;{{ profile.account_number|slice:"-4:" }}
                     </div>
 
                     <label class="change-account-label">
@@ -258,7 +258,7 @@
         </form>
 
         <div class="security-note">
-            Å¸â€â€™ Your banking information is private and should only be entered
+            Security: Your banking information is private and should only be entered
             on your personal AirXpress Eats account.
         </div>
 
