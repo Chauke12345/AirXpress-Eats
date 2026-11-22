@@ -1,4 +1,19 @@
-﻿/* AirXpress Eats driver push service worker */
+// Activate the Driver portal worker promptly.
+self.addEventListener("install", function (event) {
+    self.skipWaiting();
+});
+
+self.addEventListener("activate", function (event) {
+    const scopePath = new URL(self.registration.scope).pathname;
+
+    // Only claim pages inside the Driver portal.
+    // Do not let the legacy root registration claim the whole website.
+    if (scopePath === "/driver/") {
+        event.waitUntil(self.clients.claim());
+    }
+});
+
+/* AirXpress Eats driver push service worker */
 
 self.addEventListener("push", function (event) {
     let payload = {
