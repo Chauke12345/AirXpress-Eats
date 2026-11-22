@@ -248,6 +248,15 @@ class Driver(models.Model):
         ],
         default="pending",
     )
+    profile_details_locked = models.BooleanField(
+        default=False,
+        help_text="Locks personal and vehicle details after driver submission.",
+    )
+
+    banking_details_locked = models.BooleanField(
+        default=False,
+        help_text="Locks banking details after driver submission or owner verification.",
+    )
 
 
     is_available = models.BooleanField(

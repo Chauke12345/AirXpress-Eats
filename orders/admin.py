@@ -1,4 +1,4 @@
-from django.contrib import admin
+﻿from django.contrib import admin
 
 from .models import (
     Shop,
@@ -327,9 +327,14 @@ class DriverAdmin(admin.ModelAdmin):
 
     list_display = (
         "name",
+        "phone_number",
+        "vehicle_registration",
         "is_available",
         "airxpress_verified",
         "license_verification_status",
+        "banking_status",
+        "profile_details_locked",
+        "banking_details_locked",
         "created_at",
     )
 
@@ -337,17 +342,69 @@ class DriverAdmin(admin.ModelAdmin):
         "is_available",
         "airxpress_verified",
         "license_verification_status",
+        "banking_status",
+        "profile_details_locked",
+        "banking_details_locked",
     )
 
     search_fields = (
         "name",
+        "phone_number",
         "user__username",
+        "vehicle_registration",
+        "account_holder_name",
     )
 
     readonly_fields = (
         "created_at",
     )
+
+    fieldsets = (
+        ("Driver Account", {
+            "fields": (
+                "user",
+                "name",
+                "phone_number",
+                "photo",
+                "created_at",
+            ),
+        }),
+        ("Vehicle Details", {
+            "fields": (
+                "vehicle_make_model",
+                "vehicle_colour",
+                "vehicle_registration",
+                "profile_details_locked",
+            ),
+        }),
+        ("Licence Verification", {
+            "fields": (
+                "driver_license",
+                "license_verification_status",
+                "airxpress_verified",
+            ),
+        }),
+        ("Banking Details - Owner Review", {
+            "fields": (
+                "bank_name",
+                "account_holder_name",
+                "account_number",
+                "account_type",
+                "branch_code",
+                "physical_address",
+                "banking_status",
+                "banking_details_locked",
+            ),
+        }),
+        ("Availability", {
+            "fields": (
+                "is_available",
+            ),
+        }),
+    )
+
 # =========================================================
+
 
 
 
