@@ -45,12 +45,6 @@
     const portal = portals.find(item => item.match(path));
     if (!portal) return;
 
-    const isStandalone =
-        window.matchMedia("(display-mode: standalone)").matches ||
-        window.navigator.standalone === true;
-
-    if (isStandalone) return;
-
     const dismissalKey = "airxpressInstallDismissed-" + portal.id;
 
     function wasDismissed() {
@@ -61,8 +55,7 @@
         }
     }
 
-    if (wasDismissed()) return;
-
+    // Register the selected portal worker before installation checks.
     if (
         "serviceWorker" in navigator &&
         window.isSecureContext &&
@@ -77,6 +70,13 @@
             );
         });
     }
+
+    const isStandalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true;
+
+    if (isStandalone) return;
+    if (wasDismissed()) return;
 
     const isIOS =
         /iphone|ipad|ipod/i.test(navigator.userAgent) ||

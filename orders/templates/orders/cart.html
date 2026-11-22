@@ -1071,6 +1071,6 @@ function getCookie(name) {
 {% include "orders/partials/customer_notification_bell.html" %}
 <script defer src="{% static 'orders/js/customer-journey.js' %}" data-page="cart" data-shop-slug="{{ shop.slug }}" data-shop-name="{{ shop.name|escape }}" data-customer-authenticated="{% if user.is_authenticated and user.customer_profile and not user.is_staff and not user.is_superuser %}true{% else %}false{% endif %}"></script>
 
-<script src="/static/orders/js/pwa-install.js?v=20261120-2"></script>
+<script src="/static/orders/js/pwa-install.js?v=20261122-1"></script>
 </body>
 </html>
