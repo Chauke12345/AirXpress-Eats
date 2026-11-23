@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -1447,6 +1447,7 @@
     }
 
       function renderTracking(data) {
+          const driverLocation = data.driver_location || null;
           const statusCard = document.getElementById("current-status-card");
           if (statusCard) {
               const statusKey = String(data.status || "").toLowerCase().trim();
@@ -1629,8 +1630,7 @@
                 const trackingNote =
                     document.getElementById("tracking-note");
 
-                const driverLocation =
-                    data.driver_location || null;
+
 
                 const updatedAt =
                     driverLocation && driverLocation.updated_at
