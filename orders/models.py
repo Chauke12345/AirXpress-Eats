@@ -1763,3 +1763,82 @@ class RefundAuditLog(models.Model):
             f"Refund audit {self.refund_id}: "
             f"{self.event_type} at {self.created_at}"
         )
+
+# =========================================================
+# DEVICE & APP PERFORMANCE MONITORING
+# =========================================================
+
+class DevicePerformanceReport(models.Model):
+
+    MODE_CHOICES = [
+        ("normal", "Normal"),
+        ("lite", "Lite"),
+        ("basic", "Basic"),
+    ]
+
+    ISSUE_CHOICES = [
+        ("slow_page", "Slow Page"),
+        ("long_task", "Unresponsive Page"),
+        ("javascript_error", "JavaScript Error"),
+        ("slow_map", "Slow Map"),
+        ("other", "Other"),
+    ]
+
+    device_category = models.CharField(
+        max_length=30,
+        blank=True,
+        db_index=True,
+    )
+
+    browser_family = models.CharField(
+        max_length=40,
+        blank=True,
+    )
+
+    os_family = models.CharField(
+        max_length=40,
+        blank=True,
+    )
+
+    performance_mode = models.CharField(
+        max_length=10,
+        choices=MODE_CHOICES,
+        default="normal",
+        db_index=True,
+    )
+
+    lite_mode_enabled = models.BooleanField(
+        default=False,
+        db_index=True,
+    )
+
+    page_path = models.CharField(
+        max_length=120,
+        blank=True,
+    )
+
+    issue_type = models.CharField(
+        max_length=30,
+        choices=ISSUE_CHOICES,
+        default="other",
+        db_index=True,
+    )
+
+    response_time_ms = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return (
+            f"{self.device_category or 'Unknown device'} - "
+            f"{self.performance_mode} - {self.created_at}"
+        )

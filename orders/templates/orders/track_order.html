@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -941,6 +941,12 @@
     {% if delivery_qr_data_uri %}
     <section id="delivery-qr-section" style="margin:24px auto;padding:20px;max-width:440px;text-align:center;background:#fff;border:1px solid #e5e7eb;border-radius:16px;">
         <h2 style="margin-top:0;">Your Delivery QR Code</h2>
+<div style="margin:15px auto;padding:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;">
+    <div style="font-size:12px;color:#166534;font-weight:bold;">DELIVERY REFERENCE NUMBER</div>
+    <div style="font-size:23px;font-weight:bold;letter-spacing:1px;color:#14532d;">
+        AX-{{ order.created_at|date:"Ymd" }}-{{ order.id|stringformat:"06d" }}
+    </div>
+</div>
         <p>Show this code to your assigned driver at handover to complete your delivery.</p>
         <img
             src="{{ delivery_qr_data_uri }}"
@@ -1775,6 +1781,9 @@
 {% include "orders/partials/customer_notification_bell.html" %}
 
 <script src="/static/orders/js/pwa-install.js?v=20261122-1"></script>
+{% include "orders/includes/device_performance_monitor.html" %}
 </body>
 
 </html>
+
+

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 {% load static %}
 <html lang="en">
 <head>
@@ -32,6 +32,8 @@
 </head>
 
 <body>
+{% include 'orders/includes/app_splash.html' with splash_session_key='driver' %}
+
 
     <header class="header">
 
@@ -2560,3 +2562,4 @@ function toggleDriverBanking() {
 <script src="/static/orders/js/pwa-install.js?v=20261122-1"></script>
 </body>
 </html>
+

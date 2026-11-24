@@ -1,4 +1,4 @@
-import json
+﻿import json
 import math
 import secrets
 import hashlib
@@ -79,6 +79,7 @@ from .models import (
     OrderReview,
     RefundRequest,
     RefundAuditLog,
+    DevicePerformanceReport,
     Shop,
     StaffProfile,
     ShopSubscriptionPayment,
@@ -7044,9 +7045,57 @@ def owner_dashboard(request):
         )
     )
 
+    # =========================================================
+    # CUSTOMER DEVICE & APP PERFORMANCE MONITORING
+    # =========================================================
+
+    device_reports = DevicePerformanceReport.objects.all()
+
+    device_performance_total = device_reports.count()
+
+    device_mode_counts = {
+        "normal": device_reports.filter(performance_mode="normal").count(),
+        "lite": device_reports.filter(performance_mode="lite").count(),
+        "basic": device_reports.filter(performance_mode="basic").count(),
+    }
+
+    device_category_counts = {
+        "mobile": device_reports.filter(device_category="mobile").count(),
+        "tablet": device_reports.filter(device_category="tablet").count(),
+        "desktop": device_reports.filter(device_category="desktop").count(),
+        "unknown": device_reports.filter(device_category="unknown").count(),
+    }
+
+    device_browser_counts = {
+        "chrome": device_reports.filter(browser_family="chrome").count(),
+        "safari": device_reports.filter(browser_family="safari").count(),
+        "firefox": device_reports.filter(browser_family="firefox").count(),
+        "edge": device_reports.filter(browser_family="edge").count(),
+        "samsung": device_reports.filter(browser_family="samsung").count(),
+        "opera": device_reports.filter(browser_family="opera").count(),
+        "other": device_reports.filter(browser_family="other").count(),
+        "unknown": device_reports.filter(browser_family="unknown").count(),
+    }
+
+    device_issue_counts = {
+        "slow_page": device_reports.filter(issue_type="slow_page").count(),
+        "long_task": device_reports.filter(issue_type="long_task").count(),
+        "javascript_error": device_reports.filter(issue_type="javascript_error").count(),
+        "slow_map": device_reports.filter(issue_type="slow_map").count(),
+        "other": device_reports.filter(issue_type="other").count(),
+    }
+
+    lite_mode_total = device_mode_counts["lite"] + device_mode_counts["basic"]
     context = {
         "connected_shops": shops.count(),
 
+        # Customer device and app performance
+        "device_performance_total": device_performance_total,
+        "device_mode_counts": device_mode_counts,
+        "device_category_counts": device_category_counts,
+        "device_browser_counts": device_browser_counts,
+        "device_issue_counts": device_issue_counts,
+        "lite_mode_total": lite_mode_total,
         # Live operations
         "live_status_counts": live_status_counts,
 
@@ -9060,4 +9109,113 @@ def customer_notifications_mark_all_read(request):
         read_at=timezone.now(),
     )
     return redirect("customer_notifications")
+
+
+
+
+# =========================================================
+# CUSTOMER DEVICE & APP PERFORMANCE REPORTING
+# =========================================================
+
+@require_POST
+def customer_device_performance_report(request):
+    now = int(timezone.now().timestamp())
+    window_start = request.session.get("device_report_window", 0)
+    report_count = request.session.get("device_report_count", 0)
+
+    if now - window_start >= 3600:
+        window_start = now
+        report_count = 0
+
+    if report_count >= 20:
+        return JsonResponse(
+            {"ok": False, "message": "Report limit reached."},
+            status=429,
+        )
+
+    request.session["device_report_window"] = window_start
+    request.session["device_report_count"] = report_count + 1
+
+    if len(request.body) > 2048:
+        return JsonResponse(
+            {"ok": False, "message": "Report too large."},
+            status=413,
+        )
+
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse(
+            {"ok": False, "message": "Invalid report."},
+            status=400,
+        )
+
+    if not isinstance(data, dict):
+        return JsonResponse({"ok": False}, status=400)
+
+    allowed_devices = {"mobile", "tablet", "desktop", "unknown"}
+    allowed_browsers = {
+        "chrome", "safari", "firefox", "edge", "samsung",
+        "opera", "other", "unknown",
+    }
+    allowed_os = {
+        "android", "ios", "windows", "macos", "linux",
+        "other", "unknown",
+    }
+    allowed_modes = {"normal", "lite", "basic"}
+    allowed_issues = {
+        "slow_page", "long_task", "javascript_error",
+        "slow_map", "other",
+    }
+    allowed_pages = {
+        "home", "menu", "cart", "checkout",
+        "tracking", "account", "other",
+    }
+
+    device = data.get("device_category", "unknown")
+    browser = data.get("browser_family", "unknown")
+    os_family = data.get("os_family", "unknown")
+    mode = data.get("performance_mode", "normal")
+    issue = data.get("issue_type", "other")
+    page = data.get("page_path", "other")
+    response_time = data.get("response_time_ms")
+
+    if not all([
+        isinstance(device, str) and device in allowed_devices,
+        isinstance(browser, str) and browser in allowed_browsers,
+        isinstance(os_family, str) and os_family in allowed_os,
+        isinstance(mode, str) and mode in allowed_modes,
+        isinstance(issue, str) and issue in allowed_issues,
+        isinstance(page, str) and page in allowed_pages,
+    ]):
+        return JsonResponse(
+            {"ok": False, "message": "Invalid report fields."},
+            status=400,
+        )
+
+    if response_time is not None:
+        if (
+            isinstance(response_time, bool)
+            or not isinstance(response_time, int)
+            or not 0 <= response_time <= 120000
+        ):
+            return JsonResponse(
+                {"ok": False, "message": "Invalid response time."},
+                status=400,
+            )
+
+    DevicePerformanceReport.objects.create(
+        device_category=device,
+        browser_family=browser,
+        os_family=os_family,
+        performance_mode=mode,
+        lite_mode_enabled=mode in {"lite", "basic"},
+        page_path=page,
+        issue_type=issue,
+        response_time_ms=response_time,
+    )
+
+    return JsonResponse({"ok": True})
+
+
 

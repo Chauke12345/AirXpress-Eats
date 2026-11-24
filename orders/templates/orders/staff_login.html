@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -306,6 +306,8 @@
 </head>
 
 <body>
+{% include 'orders/includes/app_splash.html' with splash_session_key='merchant' %}
+
 
 <div class="login-wrapper">
 
@@ -419,3 +421,4 @@
 <script src="/static/orders/js/pwa-install.js?v=20261122-1"></script>
 </body>
 </html>
+

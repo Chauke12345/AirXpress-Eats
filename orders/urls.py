@@ -1,4 +1,4 @@
-from django.urls import path
+﻿from django.urls import path
 from django.contrib.auth import views as auth_views
 
 from . import views
@@ -663,5 +663,11 @@ urlpatterns = [
         views.customer_notifications_mark_all_read,
         name="customer_notifications_mark_all_read",
     ),
-]
 
+    # CUSTOMER DEVICE PERFORMANCE REPORTING
+    path(
+        "customer/device-performance/report/",
+        views.customer_device_performance_report,
+        name="customer_device_performance_report",
+    ),
+]

@@ -538,6 +538,19 @@ body {
     color: #111111;
 }
 
+.restaurant-kicker {
+    display: block;
+    margin-bottom: 5px;
+    color: #f5c451;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    line-height: 1.3;
+}
+.restaurant-display-name {
+    display: block;
+    overflow-wrap: anywhere;
+}
 .customer-subtitle {
     margin: 0 0 13px;
     color: #666666;
@@ -2632,8 +2645,9 @@ textarea {
         <div class="customer-header-text">
 
             <div class="customer-title">
-                {{ shop.name }}
-            </div>
+    <span class="restaurant-kicker">RESTAURANT</span>
+    <span class="restaurant-display-name">{{ shop.name }}</span>
+</div>
 
             <div class="customer-subtitle">
                 Food delivered to your door
@@ -3379,6 +3393,7 @@ function updateCartCount(count) {
 <script defer src="{% static 'orders/js/customer-journey.js' %}" data-page="menu" data-shop-slug="{{ shop.slug }}" data-shop-name="{{ shop.name|escape }}" data-customer-authenticated="{% if user.is_authenticated and user.customer_profile and not user.is_staff and not user.is_superuser %}true{% else %}false{% endif %}"></script>
 
 <script src="/static/orders/js/pwa-install.js?v=20261122-1"></script>
+{% include "orders/includes/device_performance_monitor.html" %}
 </body>
 
 </html>
@@ -3629,3 +3644,5 @@ document.addEventListener("DOMContentLoaded", function () {
 }
 
 </style>
+
+

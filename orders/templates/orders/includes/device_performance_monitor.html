@@ -1,0 +1,22 @@
+﻿{% load static %}
+
+<form id="ax-device-monitor-csrf" hidden>
+    {% csrf_token %}
+</form>
+
+<style>
+html.ax-lite-mode *,
+html.ax-lite-mode *::before,
+html.ax-lite-mode *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+}
+
+html.ax-lite-mode {
+    scroll-behavior: auto !important;
+}
+</style>
+
+<script defer src="{% static 'orders/js/device-performance-monitor.js' %}"></script>

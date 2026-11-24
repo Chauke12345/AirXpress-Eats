@@ -482,6 +482,8 @@
 </head>
 
 <body>
+{% include 'orders/includes/app_splash.html' with splash_session_key='owner' %}
+
 
 <header class="owner-header">
 
@@ -556,6 +558,13 @@
                     class="owner-nav-icon"
                 >
                 Driver Payouts
+            </a>
+            <a
+                href="#owner-device-performance"
+                class="owner-nav-link"
+            >
+                <span class="owner-nav-icon" aria-hidden="true">&#128187;</span>
+                Device &amp; App Performance
             </a>
 
             <a
@@ -1189,6 +1198,73 @@
         </div>
     {% endfor %}
 </div>
+<h2 id="owner-device-performance" class="section-title">
+    Device &amp; App Performance
+</h2>
+
+<div class="summary-grid">
+    <div class="summary-card">
+        <div class="summary-label">Total Performance Reports</div>
+        <div class="summary-value">{{ device_performance_total }}</div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Lite / Basic Mode Reports</div>
+        <div class="summary-value">{{ lite_mode_total }}</div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Normal Mode</div>
+        <div class="summary-value">{{ device_mode_counts.normal }}</div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Lite Mode</div>
+        <div class="summary-value">{{ device_mode_counts.lite }}</div>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-label">Basic Mode</div>
+        <div class="summary-value">{{ device_mode_counts.basic }}</div>
+    </div>
+</div>
+
+<div class="summary-grid">
+    <div class="summary-card">
+        <h3>Device Types</h3>
+        <p>Mobile: <strong>{{ device_category_counts.mobile }}</strong></p>
+        <p>Tablet: <strong>{{ device_category_counts.tablet }}</strong></p>
+        <p>Desktop: <strong>{{ device_category_counts.desktop }}</strong></p>
+        <p>Unknown: <strong>{{ device_category_counts.unknown }}</strong></p>
+    </div>
+
+    <div class="summary-card">
+        <h3>Browsers</h3>
+        <p>Chrome: <strong>{{ device_browser_counts.chrome }}</strong></p>
+        <p>Safari: <strong>{{ device_browser_counts.safari }}</strong></p>
+        <p>Firefox: <strong>{{ device_browser_counts.firefox }}</strong></p>
+        <p>Edge: <strong>{{ device_browser_counts.edge }}</strong></p>
+        <p>Samsung: <strong>{{ device_browser_counts.samsung }}</strong></p>
+        <p>Opera: <strong>{{ device_browser_counts.opera }}</strong></p>
+        <p>Other / Unknown:
+            <strong>{{ device_browser_counts.other|add:device_browser_counts.unknown }}</strong>
+        </p>
+    </div>
+
+    <div class="summary-card">
+        <h3>Reported Problems</h3>
+        <p>Slow pages: <strong>{{ device_issue_counts.slow_page }}</strong></p>
+        <p>Unresponsive pages: <strong>{{ device_issue_counts.long_task }}</strong></p>
+        <p>JavaScript errors: <strong>{{ device_issue_counts.javascript_error }}</strong></p>
+        <p>Slow maps: <strong>{{ device_issue_counts.slow_map }}</strong></p>
+        <p>Other: <strong>{{ device_issue_counts.other }}</strong></p>
+    </div>
+</div>
+
+<p style="color:#777;font-size:13px;margin:12px 0 25px;">
+    Reports contain aggregated device and performance information.
+    They do not identify individual customers.
+</p>
 <h2 id="owner-payments" class="section-title">
     Payment Monitoring
 </h2>
@@ -1370,3 +1446,7 @@ document.addEventListener("DOMContentLoaded", function () {
 <script src="/static/orders/js/pwa-install.js?v=20261122-1"></script>
 </body>
 </html>
+
+
+
+

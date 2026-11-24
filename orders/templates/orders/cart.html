@@ -93,7 +93,16 @@
         display: block;
     }
 
-    .header-text h1 {
+    .restaurant-kicker {
+    display: block;
+    margin-bottom: 5px;
+    color: #f5c451;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    line-height: 1.3;
+}
+.header-text h1 {
         margin: 0 0 5px;
         font-size: 30px;
         font-weight: 800;
@@ -420,7 +429,16 @@
             width: 125px;
         }
 
-        .header-text h1 {
+        .restaurant-kicker {
+    display: block;
+    margin-bottom: 5px;
+    color: #f5c451;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    line-height: 1.3;
+}
+.header-text h1 {
             font-size: 25px;
         }
 
@@ -515,6 +533,7 @@
         >
 
         <div class="header-text">
+            <span class="restaurant-kicker">RESTAURANT</span>
             <h1>{{ shop.name }}</h1>
             <p>Your delivery cart</p>
         </div>
@@ -1072,5 +1091,8 @@ function getCookie(name) {
 <script defer src="{% static 'orders/js/customer-journey.js' %}" data-page="cart" data-shop-slug="{{ shop.slug }}" data-shop-name="{{ shop.name|escape }}" data-customer-authenticated="{% if user.is_authenticated and user.customer_profile and not user.is_staff and not user.is_superuser %}true{% else %}false{% endif %}"></script>
 
 <script src="/static/orders/js/pwa-install.js?v=20261122-1"></script>
+{% include "orders/includes/device_performance_monitor.html" %}
 </body>
 </html>
+
+

@@ -2542,9 +2542,30 @@ section:not(.hero) {
     line-height: 1.35;
 }
 .ax-product-shop {
-    color: #b8b8b8;
-    font-size: .8rem;
-    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 3px;
+    color: #ffffff;
+    background: rgba(245, 196, 81, .10);
+    border: 1px solid rgba(245, 196, 81, .35);
+    border-radius: 6px;
+    padding: 7px 8px;
+    font-size: .82rem;
+    font-weight: 700;
+    line-height: 1.4;
+    margin: 4px 0 9px;
+    overflow-wrap: anywhere;
+}
+.ax-product-shop::before {
+    content: "RESTAURANT";
+    display: block;
+    color: #f5c451;
+    font-size: .65rem;
+    font-weight: 900;
+    letter-spacing: .08em;
 }
 .ax-product-price {
     color: #fff;
@@ -3181,6 +3202,7 @@ section:not(.hero) {
 <script defer src="{% static 'orders/js/customer-journey.js' %}" data-page="home" data-customer-authenticated="{% if user.is_authenticated and user.customer_profile and not user.is_staff and not user.is_superuser %}true{% else %}false{% endif %}"></script>
 
 <script src="/static/orders/js/pwa-install.js?v=20261122-1"></script>
+{% include "orders/includes/device_performance_monitor.html" %}
 </body>
 </html>
 
@@ -3445,3 +3467,6 @@ section:not(.hero) {
     }
 }
 </style>
+
+
+
